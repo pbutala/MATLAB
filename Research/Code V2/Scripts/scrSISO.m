@@ -14,7 +14,7 @@ dfigvis = get(0,'DefaultFigureVisible');
 set(0,'DefaultFigureVisible','On');
 
 %% FLAGS
-fSTATION = 3;   % 1.PHO445 2.ENGGRID 3.LAPTOP
+fSTATION = 1;   % 1.PHO445 2.ENGGRID 3.LAPTOP
 fSAVEALL = true;
 fFILTBLUE = false;
 fNOISESHOTONLY = false;
@@ -33,13 +33,13 @@ varRxTau = 0;
 %% SETUP
 switch fSTATION
     case 1
-        ctDirRes = '\\ad\eng\users\p\b\pbutala\My Documents\MATLAB\Research\Code V2\Results\1. SISO\1. Basic\';
+        ctDirRes = '\\ad\eng\users\p\b\pbutala\My Documents\MatlabResults\1. SISO\1. Basic\';
         ctFileCodeSrc = '\\ad\eng\users\p\b\pbutala\My Documents\MATLAB\Research\Code V2\Scripts\scrSISO.m';
     case 2
-        ctDirRes = '/home/pbutala/My Documents/MATLAB/Research/Code V2/Results/1. SISO/1. Basic/';
+        ctDirRes = '/home/pbutala/My Documents/MatlabResults/1. SISO/1. Basic/';
         ctFileCodeSrc = '/home/pbutala/My Documents/MATLAB/Research/Code V2/Scripts/scrSISO.m';
     case 3
-        ctDirRes = 'C:\\Users\\pbutala\\Documents\\MATLAB\\Research\\Code V2\\Results\\1. SISO\\1. Basic\\';
+        ctDirRes = 'C:\\Users\\pbutala\\Documents\\MatlabResults\\1. SISO\\1. Basic\\';
         ctFileCodeSrc = 'C:\\Users\\pbutala\\Documents\\MATLAB\\Research\\Code V2\\Scripts\\scrSISO.m';
     otherwise
         error('Station not defined');

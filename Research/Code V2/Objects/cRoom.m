@@ -167,16 +167,14 @@ classdef cRoom < handle
         function setIlluminance(obj,rxLoc,vIll)
             % the function calculates the scale to multiply the luminaire
             % output powers with such that the rxLoc specified will have
-            % vIll illumination
-            % rxLoc must point to one location only.
+            % maximum vIll illumination
             Ill = obj.getIlluminance(rxLoc,cOrientation(0,0,0));
-            scale = vIll/Ill;
+            scale = vIll/max(Ill(:));
             nL = numel(obj.luminaire);
             for iL = 1:nL
                 obj.luminaire(iL).scaleOutputFlux(scale);
             end
         end
-        
     end
     
     %% drawing methods
@@ -189,7 +187,7 @@ classdef cRoom < handle
             % -OUTPUT-
             % H: handle to the surface
             if nargin == 1 % plLoc not provided
-                [plX plY plZ] = getGrid(obj.L,obj.W,1,0.2,0.2,2,'Fill');
+                [plX,plY,plZ] = getGrid(obj.L,obj.W,1,0.2,0.2,2,'Fill');
                 plX = plX + obj.L/2;
                 plY = plY + obj.W/2;
                 plZ = plZ + 1;
@@ -223,7 +221,7 @@ classdef cRoom < handle
                 IlmCvg = zeros(size(Ilm));
                 IlmCvg(Ilm >= ilTh) = 1;
                 ilCvgPerc = (sum(IlmCvg(:))*100)/numel(IlmCvg);
-                if exist('Hax','var')
+                if exist('Hax','var') && (numel(Hax)>1)
                     H = Hax(2);
                 else
                     figure;
@@ -277,7 +275,15 @@ classdef cRoom < handle
             % H = drawRoomSetup(rxLoc)
             % draws the room setup on current axis
             txLoc = obj.lmLocation;
-            txOri = obj.luminaire.orientation;
+            nL = numel(obj.luminaire);
+            Zs = [];As = [];Ts = [];
+            for j=1:nL
+                Zs(end+1:end+obj.lmCount(j)) = repmat(obj.luminaire(j).orientation.Z,obj.lmCount(j),1);
+                As(end+1:end+obj.lmCount(j)) = repmat(obj.luminaire(j).orientation.A,obj.lmCount(j),1);
+                Ts(end+1:end+obj.lmCount(j)) = repmat(obj.luminaire(j).orientation.T,obj.lmCount(j),1);
+            end
+            txOri = cOrientation(Zs,As,Ts);
+%             txOri = obj.luminaire.orientation;
             drSetupImg(obj.L,obj.W,obj.H,...
                 txLoc.X,txLoc.Y,txLoc.Z,...
                 rxLoc.X,rxLoc.Y,rxLoc.Z,'LightRays','FOV',...

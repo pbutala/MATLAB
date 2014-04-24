@@ -2,39 +2,68 @@ close all
 clearvars
 clc
 
+%% FLAGS
 fSTATION = 1;   % 1.PHO445 2.ENGGRID 3.LAPTOP
-% STATION
+
+LAMBDAMIN = 200;
+LAMBDADELTA = 1;
+LAMBDAMAX = 1100;
+lambdas = LAMBDAMIN:LAMBDADELTA:LAMBDAMAX;
+
+s1=18; m1=450; a1=1; s2=60; m2=555; a2=2.15*a1; s3=25; m3=483; a3=-0.2*a1;
+Wpsd = getSOG([m1 m2 m3],[s1 s2 s3],[a1 a2 a3],lambdas);
+Wpsd = Wpsd/(sum(Wpsd)*LAMBDADELTA);
+Wch = cPSD(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,Wpsd);
+obs = cCIE;
+[x,y] = obs.getCoordinates(Wch.npsd);
+
+%% SETUP
 switch fSTATION
     case 1
-        ctDirRes = '\\ad\eng\users\p\b\pbutala\My Documents\MatlabResults\9. OSM OFDM\';
-        
+        ctDirRes = '\\ad\eng\users\p\b\pbutala\My Documents\MatlabResults\BeamSteering\';
+        ctFileCodeSrc = '\\ad\eng\users\p\b\pbutala\My Documents\MATLAB\Research\Code V2\Scripts\scrBeamSteering.m';
+        ctMatDir = '\\ad\eng\users\p\b\pbutala\My Documents\MATLAB\Research\Code V2\Matfiles\';
+    case 2
+        ctDirRes = '/home/pbutala/My Documents/MatlabResults/BeamSteering/';
+        ctFileCodeSrc = '/home/pbutala/My Documents/MATLAB/Research/Code V2/Scripts/scrBeamSteering.m';
+        ctMatDir = '/home/pbutala/My Documents/MATLAB/Research/Code V2/Matfiles/';
+    case 3
+        ctDirRes = 'C:\\Users\\pbutala\\Documents\\MATLAB\\MatlabResults\\BeamSteering\\';
+        ctFileCodeSrc = 'C:\\Users\\pbutala\\Documents\\MATLAB\\Research\\Code V2\\Scripts\\scrBeamSteering.m';
+        ctMatDir = 'C:\\Users\\pbutala\\Documents\\MATLAB\\Research\\Code V2\\Matfiles\\';
+    otherwise
+        error('Station not defined');
 end
-figname = 'SIM_03_SNR vs Offset';
-% fname = [ctDirRes figname];
-fname = '\\ad\eng\users\p\b\pbutala\My Documents\MatlabResults\9. OSM OFDM\SIM_03_SNR vs Offset';
-% Y = 1:2:20;
-% X = 1:numel(Y);
-uiopen([fname '.fig'],1);
 
-fig = gcf;
-title('SNR vs Offset, Target BER = 10^{-3}');
-set(fig,'DefaultLineLineWidth',2);
-set(fig,'DefaultAxesFontName','Helvetica');
-set(fig,'DefaultAxesFontSize',16);
-% strLgd = [{'SM: \mu_s=0.50'}...
-%     {'SMP: \mu_s=0.00'},...
-%     {'SM: \mu_s=1.00'},...
-%     {'SMP: \mu_s=1.00'},...
-%     {'SM: \mu_s=1.41'},...
-%     {'SMP: \mu_s=1.41'},...
-%     {'SM: \mu_s=2.00'},...
-%     {'SMP: \mu_s=2.00'}];
-% legend(strLgd,'Location','SouthWest');
-% plot(X,Y);
-set(gcf, 'PaperPositionMode', 'manual');
-set(gcf, 'PaperUnits', 'inches');
-set(gcf, 'PaperPosition', [0 0 6 4]);
+RGBledmat = [ctMatDir 'defLEDrgb01.mat'];
+if exist(RGBledmat,'file')
+    load(RGBledmat,'RGB');
+else
+    RES = 0.1;
+    RGB = cLEDrgb(RES);
+    RGB.initialize();
+    save(RGBledmat,'RGB');
+end
 
-saveas(fig,[fname '.fig'],'fig');
-saveas(fig,[fname '.png'],'png');
-% saveas(fig,[fname '.eps'],'eps');
+[S,R,G,B,tr,tg,tb] = RGB.getPSD(x,y);
+scl = Wch.lmFlux/S.lmFlux;
+S.scaleOutputFlux(scl);
+R.scaleOutputFlux(scl);
+G.scaleOutputFlux(scl);
+B.scaleOutputFlux(scl);
+subplot(2,1,1);
+plot(S.npsd.X,S.npsd.Y);
+axis tight;
+title('white psd');
+subplot(2,3,6);
+plot(R.npsd.X,R.npsd.Y);
+axis tight;
+title('red psd');
+subplot(2,3,5);
+plot(G.npsd.X,G.npsd.Y);
+axis tight;
+title('green psd');
+subplot(2,3,4);
+plot(B.npsd.X,B.npsd.Y);
+axis tight;
+title('blue psd');

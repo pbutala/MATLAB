@@ -15,7 +15,7 @@ set(0,'DefaultFigureVisible','On');
 
 %% FLAGS
 fSTATION = 1;   % 1.PHO445 2.ENGGRID 3.LAPTOP
-fSAVEALL = true;
+fSAVEALL = false;
 fCLOSEFIGS = false;
 
 %% VARIABLE PARAMS

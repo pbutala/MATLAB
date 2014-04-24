@@ -1,4 +1,4 @@
-function [Xs Ys Zs] = getGrid(varargin)
+function [Xs,Ys,Zs] = getGrid(varargin)
 % Computes and returns grid coordinates
 % [Xs Ys Zs] = getGrid(X,Y,Z)
 % -INPUT-
@@ -34,5 +34,5 @@ Xa = getArray(X,Px);
 Ya = getArray(Y,Py);
 Za = getArray(Z,Pz);
 
-[Xs Ys Zs] = meshgrid(Xa,Ya,Za);
+[Xs,Ys,Zs] = meshgrid(Xa,Ya,Za);
 end

@@ -27,7 +27,7 @@ classdef cCIE
             obj.ob3 = cCurve(Lmin,dL,Lmax,Z);
         end
         
-        function [t1 t2 t3] = getTristimulusValues(obj,psd)
+        function [t1,t2,t3] = getTristimulusValues(obj,psd)
             % [t1 t2 t3] = getTristimulusValues(psd)
             % computes and returns the tristimulus values for the psd
             if isa(psd,'cCurve')
@@ -47,12 +47,12 @@ classdef cCIE
             end
         end
         
-        function [c1 c2 c3] = getCoordinates(obj,psd)
+        function [c1,c2,c3] = getCoordinates(obj,psd)
             % [c1 c2 c3] = getCoordinates(psd)
             % computes and returns the CIE xyz valuescolor space coordinates
             % for the psd
             if isa(psd,'cCurve')
-                [X Y Z] = obj.getTristimulusValues(psd);
+                [X,Y,Z] = obj.getTristimulusValues(psd);
                 sm = X+Y+Z;
                 c1 = X./sm;
                 c2 = Y./sm;
