@@ -1,7 +1,19 @@
 % scrOSM_ofdm_NI
-
+fSTATION = 1;   % 1.PHO445 2.ENGGRID 3.LAPTOP
+% STATION
+switch fSTATION
+    case 1
+        ctFileCodeSrcIMG = '\\ad\eng\users\p\b\pbutala\My Documents\MATLAB\Research\Code V2\Scripts\scrSISOFDM_IMG.m';
+    case 2
+        ctFileCodeSrcIMG = '/home/pbutala/My Documents/MATLAB/Research/Code V2/Scripts/scrSISOFDM_IMG.m';
+    case 3
+        ctFileCodeSrcIMG = 'C:\\Users\\pbutala\\My Documents\\MATLAB\\Research\\Code V2\\Scripts\\scrSISOFDM_IMG.m';
+    otherwise
+        error('Station not defined');
+end
+run(ctFileCodeSrcIMG);
 close all;
-clearvars;
+clearvars -except 'fSTATION';
 clc;
 
 % DEFAULT COSMETIC SETTINGS
@@ -23,7 +35,7 @@ dlinems = get(0,'DefaultLineMarkerSize');
 set(0,'DefaultLineMarkerSize',6);
 
 % FLAGS
-fSTATION = 3;   % 1.PHO445 2.ENGGRID 3.LAPTOP
+% fSTATION = 1;   % 1.PHO445 2.ENGGRID 3.LAPTOP
 fSAVEALL = true;
 fARCHIVE = false;
 fFILTBLUE = false;
@@ -37,25 +49,29 @@ MODgSM = 3;
 MODeSM = 4;
 
 CHAROVERWRITE = '~';
-STRPREFIX = 'H_';
+STRPREFIX = '3_SISO_H_';
 if(fARCHIVE)
     CHARIDXARCHIVE = '';           % ARCHIVE INDEX
 else
     CHARIDXARCHIVE = CHAROVERWRITE; % OK TO OVERWRITE
 end
-% CHARIDXARCHIVENI = '_varNI';
+STRPREFIXIMG = '3_SIS_IMG_';
+CHARIDXARCHIVEIMG = '~';
 
 % STATION
 switch fSTATION
     case 1
         ctDirRes = '\\ad\eng\users\p\b\pbutala\My Documents\MatlabResults\11. SISO OFDM H\';
         ctFileCodeSrc = '\\ad\eng\users\p\b\pbutala\My Documents\MATLAB\Research\Code V2\Scripts\scrSISO_OFDM_H.m';
+        ctDirResIMG = '\\ad\eng\users\p\b\pbutala\My Documents\MatlabResults\11. SISOFDM all\';
     case 2
         ctDirRes = '/home/pbutala/My Documents/MatlabResults/11. SISO OFDM H/';
         ctFileCodeSrc = '/home/pbutala/My Documents/MATLAB/Research/Code V2/Scripts/scrSISO_OFDM_H.m';
+        ctDirResIMG = '/home/pbutala/My Documents/MatlabResults/11. SISOFDM all/';
     case 3
         ctDirRes = 'C:\\Users\\pbutala\\Documents\\MatlabResults\\11. SISO OFDM H\\';
         ctFileCodeSrc = 'C:\\Users\\pbutala\\My Documents\\MATLAB\\Research\\Code V2\\Scripts\\scrSISO_OFDM_H.m';
+        ctDirResIMG = 'C:\\Users\\pbutala\\Documents\\MatlabResults\\11. SISOFDM all\\';
     otherwise
         error('Station not defined');
 end
@@ -77,32 +93,38 @@ Nrxy = 1;
 Nr = Nrxx*Nrxy;
 rxZAT = cOrientation(0,0,0); % receiver orientation
 %%% OSM
-rngSNRdb = 150:20:350;
+rngSNRdb = 150:10:350;
 % rngSNRdb = [200 400];
 lenSNRdb = length(rngSNRdb);
 rngOfdmType = {'DCOOFDM','ACOOFDM'};
 lenOfdmType = length(rngOfdmType);
-rngOfstSD = 3.5;
+rngOfstSDDcoS = 3.5;
+rngOfstSDAcoS = 0;
+rngOfstSDDcoM = 3.5;
+rngOfstSDAcoM = 0.5;
 % rngOfstSD = 0:0.5:5;
 % rngOfstSD = 1:1:2;
-lenOfstSD = length(rngOfstSD);
+lenOfstSD = length(rngOfstSDDcoS);
 
 % rngMaco = [16 64];
 % rngMdco = power(2,log2(sqrt(rngMaco)));
-rngMaco = 16384;
-rngMdco = 128;
-lenM = length(rngMaco);
+rngMacoS = 16384;
+rngMdcoS = 128;
+rngMacoM = 64;
+rngMdcoM = 8;
+
+lenM = length(rngMacoS);
 Nsc = 64; % number of subcarriers
 
 Ntx = 1;     % 1 transmitters
 dtk = log2(Ntx);
 
 % CONSTANTS
-TOTALBITS = 1e4;
+TOTALBITS = 5e4;
 BERTH = 1e-3;
 BITSTREAM = randi([0 1],[1,TOTALBITS]);
 IDXBRK = 0;
-STRNI = 'SISO';
+STRSS = 'SISO';
 % constants
 LAMBDAMIN = 200; LAMBDADELTA = 1; LAMBDAMAX = 1100;
 lambdas = LAMBDAMIN:LAMBDADELTA:LAMBDAMAX; % wavelengths
@@ -191,13 +213,15 @@ txOri = room.luminaire(1).orientation;              % get tx orientations
 % OVERWRITE CHANNEL MATRIX
 Hp = 0.1526e-7;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
-BPS = zeros(lenM,lenOfdmType);
+BPSS = zeros(lenM,lenOfdmType);
+BPSM = zeros(lenM,lenOfdmType);
 % LEDLEN = zeros(lenM,lenOfdmType);
 SYMLEN = zeros(lenM,lenOfdmType);
 % bit_err_sym = zeros(lenSNRdb,lenM,lenOfdmType,lenOfstSD);
 % bit_err_led = zeros(lenSNRdb,lenM,lenOfdmType,lenOfstSD);
 bit_err = zeros(lenSNRdb,lenM,lenOfdmType,lenOfstSD);
 figBER = zeros(lenOfstSD,lenM);
+figBERall = zeros(lenOfstSD,lenM);
 % figBERSplit = zeros(lenOfstSD,lenM);
 
 OffsetDcoStddev = 0;
@@ -211,25 +235,28 @@ for iM = 1:lenM
         ofdmType = rngOfdmType{iOfdm};
         switch lower(ofdmType)
             case 'acoofdm'
-                M = rngMaco(iM);
+                Ms = rngMacoS(iM);
+                Mm = rngMacoM(iM);
                 d = Nsc/4;      % number of data carriers per ACOOFDM symbol
                 STROFDM = 'ACO';
             case {'dcoofdm', 'dmt'}
-                M = rngMdco(iM);
+                Ms = rngMdcoS(iM);
+                Mm = rngMdcoM(iM);
                 d = Nsc/2-1;      % number of data carriers per DCOOFDM/DMT symbol
                 STROFDM = 'DCO';
         end
-        dtm = log2(M);
-        Syms = getQAMsyms(M);
+        dtm = log2(Ms);
+        Syms = getQAMsyms(Ms);
         SYMLEN(iM,iOfdm) = d*dtm;
 %         LEDLEN(iM,iOfdm) = Nsc*dtk;
 %         BPS(iM,iOfdm) = SYMLEN(iM,iOfdm) + LEDLEN(iM,iOfdm);
-        BPS(iM,iOfdm) = SYMLEN(iM,iOfdm);
+        BPSS(iM,iOfdm) = SYMLEN(iM,iOfdm);
+        BPSM(iM,iOfdm) = d*log2(Mm) + Nsc*2;
         for iOfst = 1:lenOfstSD
-            OffsetDcoStddev = rngOfstSD(iOfst);
-            OffsetAcoStddev = rngOfstSD(iOfst);
-            STROFST = sprintf('OFST:%0.2f SD',rngOfstSD(iOfst));
-            dStr = sprintf('%s, %s, BPS:%d, Nsc:%d, M:%d',STROFST,STROFDM,BPS(iM,iOfdm),Nsc,M);
+            OffsetDcoStddev = rngOfstSDDcoS(iOfst);
+            OffsetAcoStddev = rngOfstSDAcoS(iOfst);
+            STROFST = sprintf('OFST:%0.2f SD',rngOfstSDDcoS(iOfst));
+            dStr = sprintf('%s, %s, BPS:%d, Nsc:%d, M:%d',STROFST,STROFDM,BPSS(iM,iOfdm),Nsc,Ms);
             disp(dStr);
             for idb = 1:lenSNRdb
                 vSNRdb = rngSNRdb(idb);
@@ -239,7 +266,7 @@ for iM = 1:lenM
                 err = 0;
                 iBits = 0;
                 
-                while(iBits < TOTALBITS-BPS(iM,iOfdm)+1);
+                while(iBits < TOTALBITS-BPSS(iM,iOfdm)+1);
                     SYMSTART = iBits+1;
                     SYMSTOP = SYMSTART+SYMLEN(iM,iOfdm)-1;
                     sym_bits = reshape(BITSTREAM(SYMSTART:SYMSTOP),d,dtm);
@@ -285,7 +312,7 @@ for iM = 1:lenM
                     
 %                     iBit_sym = iBit_sym + SYMLEN(iM,iOfdm);
 %                     iBit_led = iBit_led + LEDLEN(iM,iOfdm);
-                    iBits = iBits + BPS(iM,iOfdm);
+                    iBits = iBits + BPSS(iM,iOfdm);
                 end
 %                 bit_err_sym(idb,iM,iOfdm,iOfst) = err_sym/iBit_sym;
 %                 bit_err_led(idb,iM,iOfdm,iOfst) = err_led/iBit_led;
@@ -328,15 +355,27 @@ PLOTDMIN = 5;
 SNRD = zeros(lenOfstSD,lenM);
 SNRA = zeros(lenOfstSD,lenM);
 for iOfst = 1:lenOfstSD
+    STROFST = sprintf('OfstSD_%0.2f',rngOfstSDDcoS(iOfst));
     for iM = 1:lenM
+        STRMS = sprintf('_adM_%d_%d',rngMacoS(iM),rngMdcoS(iM));
+        STRMM = sprintf('_adM_%d_%d',rngMacoM(iM),rngMdcoM(iM));
+        clLgdall = {};
         figBER(iOfst,iM) = figure;
         set(gca,'YScale','log');
         hold all;
 %         figBERSplit(iOfst,iM) = figure;
 %         set(gca,'YScale','log');
 %         hold all;
+        fnameIMG = [ctDirResIMG STRPREFIXIMG STROFST STRMM '_ALL BER vs SNR' CHARIDXARCHIVEIMG];
+        uiopen([fnameIMG '.fig'],1);
+        figBERall(iOfst,iM) = gcf;
+        [~,~,~,text_strings] = legend;
+        for l=1:numel(text_strings)
+            clLgdall{end+1} = text_strings{l};
+        end
+        
         clLgd = {};
-        clLgdSplit = {};
+%         clLgdSplit = {};
         iLC = 0;
         iLS = 0;
         iMK = 0;
@@ -346,7 +385,7 @@ for iOfst = 1:lenOfstSD
             switch lower(ofdmType)
                 case 'acoofdm'
                     STROFDM = 'ACO';
-                    STRM = sprintf('M:%d',rngMaco(iM));
+                    STRMS = sprintf('M:%d',rngMacoS(iM));
                     if ~isempty(iSnrTh)
                         SNRA(iOfst,iM) = rngSNRdb(iSnrTh);
                     else
@@ -354,7 +393,7 @@ for iOfst = 1:lenOfstSD
                     end
                 case {'dcoofdm', 'dmt'}
                     STROFDM = 'DCO';
-                    STRM = sprintf('M:%d',rngMdco(iM));
+                    STRMS = sprintf('M:%d',rngMdcoS(iM));
                     if ~isempty(iSnrTh)
                         SNRD(iOfst,iM) = rngSNRdb(iSnrTh);
                     else
@@ -371,16 +410,28 @@ for iOfst = 1:lenOfstSD
             [Xc,Yc] = getCleanPoints(rngSNRdb,log10(bit_err(:,iM,iOfdm,iOfst)),PLOTDMIN);
 %             semilogy(gca,rngSNRdb,bit_err(:,iM,iOfdm,iOfst),plStyle);
             semilogy(gca,Xc-150,power(10,Yc),plStyle);
-            clLgd{end+1} = [STRNI ' ' STROFDM ' ' STRM];
+            clLgd{end+1} = [STRSS ' ' STROFDM ' ' STRMS];
+            clLgdall{end+1} = clLgd{end};
             legend(gca,clLgd,'Location','NorthEast');
 %             xlabel('{P_{avg}^{tx}}/{N_{0}} (dB)');
             xlabel('{SNR_{avg}^{tx}} - 150 (dB)');
             ylabel('BER');
-            tStr = sprintf('BER vs SNR, Offset: %0.2f SD\nN_{sc}:%d, DCO:%d/ACO:%d bits/sym',rngOfstSD(iOfst),Nsc,BPS(iM,1),BPS(iM,2));
+            tStr = sprintf('BER vs SNR, N_{sc}:%d, Offset SISO DCO:%0.2f/ACO:%0.2f SD,\nDCO:%d/ACO:%d bits/sym',Nsc,rngOfstSDDcoS(iOfst),rngOfstSDAcoS(iOfst),BPSS(iM,1),BPSS(iM,2));
             title(tStr);
             grid on;
             axis([rngSNRdb(1)-150 rngSNRdb(end)-150 BERTH/5 1]);
             
+            set(0,'CurrentFigure',figBERall(iOfst,iM));
+            iLS = rem(2,lenLS)+1;
+            iMK = rem(iMK+3,lenMK)+1;
+            plStyle = [clLC{iLC} clLS{iLS} clMK{iMK}];
+            [Xc,Yc] = getCleanPoints(rngSNRdb,log10(bit_err(:,iM,iOfdm,iOfst)),PLOTDMIN);
+%             semilogy(gca,rngSNRdb,bit_err(:,iM,iOfdm,iOfst),plStyle);
+            semilogy(gca,Xc-150,power(10,Yc),plStyle);
+            legend(gca,clLgdall,'Location','NorthEast');
+            tStr = sprintf('BER vs SNR, N_{sc}:%d, Offset SISO DCO:%0.2f/ACO:%0.2f SD, SIS DCO:%0.2f/ACO:%0.2f SD\nSISO DCO:%d/ACO:%d bits/sym, SIS DCO:%d/ACO:%d bits/sym',...
+                            Nsc,rngOfstSDDcoS(iOfst),rngOfstSDAcoS(iOfst),rngOfstSDDcoM(iOfst),rngOfstSDAcoM(iOfst),BPSS(iM,1),BPSS(iM,2),BPSM(iM,1),BPSM(iM,2));
+            title(tStr);
 %             set(0,'CurrentFigure',figBERSplit(iOfst,iM));
 %             iLS = rem(2,lenLS)+1;
 %             iMK = rem(iMK+1,lenMK)+1;
@@ -419,24 +470,24 @@ if lenOfstSD > 1
         iLS = rem(1,lenLS)+1;
         iMK = rem(iMK+1,lenMK)+1;
         plStyle = [clLC{iLC} clLS{iLS} clMK{iMK}];
-        plot(rngOfstSD,SNRD(:,iM),plStyle);
-        STRM = sprintf('M:%d',rngMdco(iM));
-        clLgdOfst{end+1} = [STRNI ' ' 'DCO ' STRM];
+        plot(rngOfstSDDcoS,SNRD(:,iM),plStyle);
+        STRMS = sprintf('M:%d',rngMdcoS(iM));
+        clLgdOfst{end+1} = [STRSS ' ' 'DCO ' STRMS];
         
         iLC = rem(2,lenLC)+1;
         iMK = rem(iMK+1,lenMK)+1;
         plStyle = [clLC{iLC} clLS{iLS} clMK{iMK}];
-        plot(rngOfstSD,SNRA(:,iM),plStyle);
-        STRM = sprintf('M:%d',rngMaco(iM));
-        clLgdOfst{end+1} = [STRNI ' ' 'ACO ' STRM];
+        plot(rngOfstSDDcoS,SNRA(:,iM),plStyle);
+        STRMS = sprintf('M:%d',rngMacoS(iM));
+        clLgdOfst{end+1} = [STRSS ' ' 'ACO ' STRMS];
     end
     xlabel('Offset (Std Dev)');
-    yStr = sprintf('SNR (BER=10^{%d})',log10(BERTH));
+    yStr = sprintf('{SNR_{avg}^{tx}} - 150 (dB) (BER=10^{%d})',log10(BERTH));
     ylabel(yStr);
     tStr = sprintf('SNR vs Offset, Target BER = 10^{%d}',log10(BERTH));
     title(tStr);
     grid on;
-    axis([rngOfstSD(1)-150 rngOfstSD(end)-150 rngSNRdb(1) rngSNRdb(end)]);
+    axis([rngOfstSDDcoS(1)-150 rngOfstSDDcoS(end)-150 rngSNRdb(1) rngSNRdb(end)]);
     legend(gca,clLgdOfst,'Location','NorthEast');
 end
 
@@ -457,11 +508,16 @@ if fSAVEALL
     saveas(figSetup,[fname '.fig'],'fig');
         saveas(figSetup,[fname '.eps'],'epsc');
     for iOfst = 1:lenOfstSD
-        STROFST = sprintf('OfstSD_%0.2f',rngOfstSD(iOfst));
+        STROFST = sprintf('OfstSD_%0.2f',rngOfstSDDcoS(iOfst));
         for iM = 1:lenM
-            STRM = sprintf('_adM_%d_%d',rngMaco(iM),rngMdco(iM));
+            STRMS = sprintf('_adM_%d_%d_%d_%d',rngMacoS(iM),rngMdcoS(iM),rngMacoM(iM),rngMdcoM(iM));
             f = figure(figBER(iOfst,iM));
-            fname = [ctDirRes STRPREFIX STROFST STRM '_BER vs SNR' CHARIDXARCHIVE];
+            fname = [ctDirRes STRPREFIX STROFST STRMS '_BER vs SNR' CHARIDXARCHIVE];
+            saveas(f,[fname '.png'],'png');
+            saveas(f,[fname '.fig'],'fig');
+            saveas(f,[fname '.eps'],'epsc');
+            f = figure(figBERall(iOfst,iM));
+            fname = [ctDirRes STRPREFIX STROFST STRMS '_ALL BER vs SNR' CHARIDXARCHIVE];
             saveas(f,[fname '.png'],'png');
             saveas(f,[fname '.fig'],'fig');
             saveas(f,[fname '.eps'],'epsc');
@@ -493,13 +549,6 @@ set(0,'DefaultFigurePaperPositionMode',dfigppm);
 
 disp(' ');
 disp('--DONE--');
-
-
-
-
-
-
-
 
 
 

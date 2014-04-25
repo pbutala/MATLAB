@@ -40,7 +40,7 @@ set(0,'DefaultLineMarkerSize',6);
 % FLAGS
 fSTATION = 1;   % 1.PHO445 2.ENGGRID 3.LAPTOP
 fSAVEALL = true;
-fARCHIVE = false;
+fARCHIVE = true;
 fFILTBLUE = false;
 
 rand('seed',0); % seed for Random Number Generator
@@ -52,13 +52,13 @@ MODgSM = 3;
 MODeSM = 4;
 
 CHAROVERWRITE = '~';
-STRPREFIX = '1_SIS_IMG_';
+STRPREFIX = '3_SIS_IMG_';
 if(fARCHIVE)
     CHARIDXARCHIVE = '';           % ARCHIVE INDEX
 else
     CHARIDXARCHIVE = CHAROVERWRITE; % OK TO OVERWRITE
 end
-STRPREFIXNI = '1_SIS_NI_';
+STRPREFIXNI = '3_SIS_NI_';
 CHARIDXARCHIVENI = '~';
 
 % STATION
@@ -98,18 +98,19 @@ opD = sqrt(4*(rxal.*rxal)/pi); % keep D such that aperture area equals pixel are
 opfN = opf/opD; % f/#
 rxZAT = cOrientation(0,0,0); % receiver orientation
 %%% OSM
-rngSNRdb = 150:1:350;
+rngSNRdb = 150:0.25:350;
 % rngSNRdb = 150:30:350;
 % rngSNRdb = [200 400];
 lenSNRdb = length(rngSNRdb);
 rngOfdmType = {'DCOOFDM','ACOOFDM'};
 lenOfdmType = length(rngOfdmType);
-% rngOfstSD = 3.5;
-rngOfstSD = 0:0.5:5;
-% rngOfstSD = 1:1:2;
-lenOfstSD = length(rngOfstSD);
+% rngOfstSDDco = 3.5;
+% rngOfstSDAco = 0.5;
+rngOfstSDDco = 0:0.25:5;
+rngOfstSDAco = 0:0.25:5;
+lenOfstSD = length(rngOfstSDDco);
 
-rngMaco = [16 64];
+rngMaco = 64;
 rngMdco = power(2,log2(sqrt(rngMaco)));
 lenM = length(rngMaco);
 Nsc = 64; % number of subcarriers
@@ -259,9 +260,9 @@ for iM = 1:lenM
         LEDLEN(iM,iOfdm) = Nsc*dtk;
         BPS(iM,iOfdm) = SYMLEN(iM,iOfdm) + LEDLEN(iM,iOfdm);
         for iOfst = 1:lenOfstSD
-            OffsetDcoStddev = rngOfstSD(iOfst);
-            OffsetAcoStddev = rngOfstSD(iOfst);
-            STROFST = sprintf('OFST:%0.2f SD',rngOfstSD(iOfst));
+            OffsetDcoStddev = rngOfstSDDco(iOfst);
+            OffsetAcoStddev = rngOfstSDAco(iOfst);
+            STROFST = sprintf('OFST:%0.2f SD',rngOfstSDDco(iOfst));
             dStr = sprintf('%s, %s, BPS:%d, SYMLEN:%d, LEDLEN:%d, Nsc:%d, M:%d',STROFST,STROFDM,BPS(iM,iOfdm),SYMLEN(iM,iOfdm),LEDLEN(iM,iOfdm),Nsc,M);
             disp(dStr);
             for idb = 1:lenSNRdb
@@ -355,11 +356,11 @@ end % M
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Plot
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-PLOTDMIN = 5;
+PLOTDMIN = 4;
 SNRD = zeros(lenOfstSD,lenM);
 SNRA = zeros(lenOfstSD,lenM);
 for iOfst = 1:lenOfstSD
-    STROFST = sprintf('OfstSD_%0.2f',rngOfstSD(iOfst));
+    STROFST = sprintf('OfstSD_%0.2f',rngOfstSDDco(iOfst));
     for iM = 1:lenM
         STRM = sprintf('_adM_%d_%d',rngMaco(iM),rngMdco(iM));
         clLgdall = {};
@@ -427,7 +428,7 @@ for iOfst = 1:lenOfstSD
             legend(gca,clLgd,'Location','NorthEast');
             xlabel('{SNR_{avg}^{tx}} - 150 (dB)');
             ylabel('BER');
-            tStr = sprintf('BER vs SNR, Offset: %0.2f SD\nN_{sc}:%d, DCO:%d/ACO:%d bits/sym',rngOfstSD(iOfst),Nsc,BPS(iM,1),BPS(iM,2));
+            tStr = sprintf('BER vs SNR, Offset: DCO=%0.2f SD ACO=%0.2f SD\nN_{sc}:%d, DCO:%d/ACO:%d bits/sym',rngOfstSDDco(iOfst),rngOfstSDAco(iOfst),Nsc,BPS(iM,1),BPS(iM,2));
             title(tStr);
             grid on;
             axis([rngSNRdb(1)-150 rngSNRdb(end)-150 BERTH/5 1]);
@@ -462,7 +463,7 @@ for iOfst = 1:lenOfstSD
             legend(gca,clLgdSplit,'Location','NorthEast');
             xlabel('{SNR_{avg}^{tx}} - 150 (dB)');
             ylabel('BER (Individual)');
-            tStr = sprintf('BER (Split) vs SNR, Offset: %0.2f SD\nN_{sc}:%d, DCO:%d/ACO:%d bits/sym',rngOfstSD(iOfst),Nsc,BPS(iM,1),BPS(iM,2));
+            tStr = sprintf('BER (Split) vs SNR, Offset: DCO=%0.2f SD ACO=%0.2f SD\nN_{sc}:%d, DCO:%d/ACO:%d bits/sym',rngOfstSDDco(iOfst),rngOfstSDAco(iOfst),Nsc,BPS(iM,1),BPS(iM,2));
             title(tStr);
             grid on;
             axis([rngSNRdb(1)-150 rngSNRdb(end)-150 BERTH/5 1]);
@@ -487,6 +488,15 @@ for iOfst = 1:lenOfstSD
 end % Ofst
 
 if lenOfstSD > 1
+    clLgdofstAll = {};
+    fnameNIofst = [ctDirResNI STRPREFIXNI 'SNR vs Offset' CHARIDXARCHIVENI];
+    uiopen([fnameNIofst '.fig'],1);
+    figOFSTNI = gcf;
+    [~,~,~,text_strings] = legend;
+    for l=1:numel(text_strings)
+        clLgdofstAll{end+1} = text_strings{l};
+    end
+        
     figOFST = figure;
     clLgdOfst = {};
     hold all;
@@ -496,25 +506,57 @@ if lenOfstSD > 1
         iLS = rem(1,lenLS)+1;
         iMK = rem(iMK+1,lenMK)+1;
         plStyle = [clLC{iLC} clLS{iLS} clMK{iMK}];
-        plot(rngOfstSD,SNRD(:,iM),plStyle);
+        plot(rngOfstSDDco,SNRD(:,iM)-150,plStyle);
         STRM = sprintf('M:%d',rngMdco(iM));
         clLgdOfst{end+1} = [STRIM ' ' 'DCO ' STRM];
         
         iLC = rem(2,lenLC)+1;
         iMK = rem(iMK+1,lenMK)+1;
         plStyle = [clLC{iLC} clLS{iLS} clMK{iMK}];
-        plot(rngOfstSD,SNRA(:,iM),plStyle);
+%         plot(rngOfstSDDco,SNRA(:,iM),plStyle);
+        plot(rngOfstSDAco,SNRA(:,iM)-150,plStyle);
+
         STRM = sprintf('M:%d',rngMaco(iM));
         clLgdOfst{end+1} = [STRIM ' ' 'ACO ' STRM];
     end
     xlabel('Offset (Std Dev)');
-    yStr = sprintf('SNR (BER=10^{%d})',log10(BERTH));
+    yStr = sprintf('{SNR_{avg}^{tx}} - 150 (dB)');
     ylabel(yStr);
     tStr = sprintf('SNR vs Offset, Target BER = 10^{%d}',log10(BERTH));
     title(tStr);
     grid on;
-    axis([rngOfstSD(1) rngOfstSD(end) rngSNRdb(1) rngSNRdb(end)]);
+%     axis([rngOfstSDDco(1) rngOfstSDDco(end) rngSNRdb(1)-150 rngSNRdb(end)-150]);
+    axis([rngOfstSDDco(1) rngOfstSDDco(end) rngSNRdb(1)-150 80]);
     legend(gca,clLgdOfst,'Location','NorthEast');
+    
+    set(0,'CurrentFigure',figOFSTNI);
+    hold all;
+    for iM = 1:lenM
+        iLC = rem(1,lenLC)+1;
+        iLS = rem(1,lenLS)+1;
+        iMK = rem(iMK+1,lenMK)+1;
+        plStyle = [clLC{iLC} clLS{iLS} clMK{iMK}];
+        plot(rngOfstSDDco,SNRD(:,iM)-150,plStyle);
+        STRM = sprintf('M:%d',rngMdco(iM));
+        clLgdofstAll{end+1} = [STRIM ' ' 'DCO ' STRM];
+        
+        iLC = rem(2,lenLC)+1;
+        iMK = rem(iMK+1,lenMK)+1;
+        plStyle = [clLC{iLC} clLS{iLS} clMK{iMK}];
+%         plot(rngOfstSDDco,SNRA(:,iM),plStyle);
+        plot(rngOfstSDAco,SNRA(:,iM)-150,plStyle);
+
+        STRM = sprintf('M:%d',rngMaco(iM));
+        clLgdofstAll{end+1} = [STRIM ' ' 'ACO ' STRM];
+    end
+    xlabel('Offset (Std Dev)');
+    yStr = sprintf('{SNR_{avg}^{tx}} - 150 (dB)');
+    ylabel(yStr);
+    tStr = sprintf('SNR vs Offset, Target BER = 10^{%d}',log10(BERTH));
+    title(tStr);
+    grid on;
+    axis([rngOfstSDDco(1) rngOfstSDDco(end) rngSNRdb(1)-150 rngSNRdb(end)-150]);
+    legend(gca,clLgdofstAll,'Location','NorthEast');
 end
 % draw setup
 figSetup = figure;
@@ -534,7 +576,7 @@ if fSAVEALL
     saveas(figSetup,[fname '.fig'],'fig');
     saveas(figSetup,[fname '.eps'],'epsc');
     for iOfst = 1:lenOfstSD
-        STROFST = sprintf('OfstSD_%0.2f',rngOfstSD(iOfst));
+        STROFST = sprintf('OfstSD_%0.2f',rngOfstSDDco(iOfst));
         for iM = 1:lenM
             STRM = sprintf('_adM_%d_%d',rngMaco(iM),rngMdco(iM));
             f = figure(figBER(iOfst,iM));
@@ -565,6 +607,10 @@ if fSAVEALL
         saveas(figOFST,[fname '.png'],'png');
         saveas(figOFST,[fname '.fig'],'fig');
         saveas(figOFST,[fname '.eps'],'epsc');
+        fname = [ctDirRes STRPREFIX 'ALL SNR vs Offset' CHARIDXARCHIVE];
+        saveas(figOFSTNI,[fname '.png'],'png');
+        saveas(figOFSTNI,[fname '.fig'],'fig');
+        saveas(figOFSTNI,[fname '.eps'],'epsc');
     end
 end
 
