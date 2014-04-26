@@ -59,7 +59,7 @@ else
     CHARIDXARCHIVE = CHAROVERWRITE; % OK TO OVERWRITE
 end
 STRPREFIXNI = '3_SIS_NI_';
-CHARIDXARCHIVENI = '~';
+CHARIDXARCHIVENI = '';
 
 % STATION
 switch fSTATION
@@ -106,8 +106,8 @@ rngOfdmType = {'DCOOFDM','ACOOFDM'};
 lenOfdmType = length(rngOfdmType);
 % rngOfstSDDco = 3.5;
 % rngOfstSDAco = 0.5;
-rngOfstSDDco = 0:0.25:5;
-rngOfstSDAco = 0:0.25:5;
+rngOfstSDDco = [0:0.25:5 3.5];
+rngOfstSDAco = [0:0.25:5 0.5];
 lenOfstSD = length(rngOfstSDDco);
 
 rngMaco = 64;
@@ -262,7 +262,8 @@ for iM = 1:lenM
         for iOfst = 1:lenOfstSD
             OffsetDcoStddev = rngOfstSDDco(iOfst);
             OffsetAcoStddev = rngOfstSDAco(iOfst);
-            STROFST = sprintf('OFST:%0.2f SD',rngOfstSDDco(iOfst));
+            STROFST = sprintf('OFST DCO:%0.2f ACO:%0.2f SD',rngOfstSDDco(iOfst),rngOfstSDAco(iOfst));
+%             STROFST = sprintf('OFST:%0.2f SD',rngOfstSDDco(iOfst));
             dStr = sprintf('%s, %s, BPS:%d, SYMLEN:%d, LEDLEN:%d, Nsc:%d, M:%d',STROFST,STROFDM,BPS(iM,iOfdm),SYMLEN(iM,iOfdm),LEDLEN(iM,iOfdm),Nsc,M);
             disp(dStr);
             for idb = 1:lenSNRdb
@@ -360,7 +361,8 @@ PLOTDMIN = 4;
 SNRD = zeros(lenOfstSD,lenM);
 SNRA = zeros(lenOfstSD,lenM);
 for iOfst = 1:lenOfstSD
-    STROFST = sprintf('OfstSD_%0.2f',rngOfstSDDco(iOfst));
+    STROFST = sprintf('OfstSD_%0.2f_%0.2f',rngOfstSDDco(iOfst),rngOfstSDAco(iOfst));
+%     STROFST = sprintf('OfstSD_%0.2f',rngOfstSDDco(iOfst));
     for iM = 1:lenM
         STRM = sprintf('_adM_%d_%d',rngMaco(iM),rngMdco(iM));
         clLgdall = {};
@@ -506,7 +508,7 @@ if lenOfstSD > 1
         iLS = rem(1,lenLS)+1;
         iMK = rem(iMK+1,lenMK)+1;
         plStyle = [clLC{iLC} clLS{iLS} clMK{iMK}];
-        plot(rngOfstSDDco,SNRD(:,iM)-150,plStyle);
+        plot(rngOfstSDDco(1:end-1),SNRD(1:end-1,iM)-150,plStyle);
         STRM = sprintf('M:%d',rngMdco(iM));
         clLgdOfst{end+1} = [STRIM ' ' 'DCO ' STRM];
         
@@ -514,7 +516,7 @@ if lenOfstSD > 1
         iMK = rem(iMK+1,lenMK)+1;
         plStyle = [clLC{iLC} clLS{iLS} clMK{iMK}];
 %         plot(rngOfstSDDco,SNRA(:,iM),plStyle);
-        plot(rngOfstSDAco,SNRA(:,iM)-150,plStyle);
+        plot(rngOfstSDAco(1:end-1),SNRA(1:end-1,iM)-150,plStyle);
 
         STRM = sprintf('M:%d',rngMaco(iM));
         clLgdOfst{end+1} = [STRIM ' ' 'ACO ' STRM];
@@ -536,7 +538,7 @@ if lenOfstSD > 1
         iLS = rem(1,lenLS)+1;
         iMK = rem(iMK+1,lenMK)+1;
         plStyle = [clLC{iLC} clLS{iLS} clMK{iMK}];
-        plot(rngOfstSDDco,SNRD(:,iM)-150,plStyle);
+        plot(rngOfstSDDco(1:end-1),SNRD(1:end-1,iM)-150,plStyle);
         STRM = sprintf('M:%d',rngMdco(iM));
         clLgdofstAll{end+1} = [STRIM ' ' 'DCO ' STRM];
         
@@ -544,7 +546,7 @@ if lenOfstSD > 1
         iMK = rem(iMK+1,lenMK)+1;
         plStyle = [clLC{iLC} clLS{iLS} clMK{iMK}];
 %         plot(rngOfstSDDco,SNRA(:,iM),plStyle);
-        plot(rngOfstSDAco,SNRA(:,iM)-150,plStyle);
+        plot(rngOfstSDAco(1:end-1),SNRA(1:end-1,iM)-150,plStyle);
 
         STRM = sprintf('M:%d',rngMaco(iM));
         clLgdofstAll{end+1} = [STRIM ' ' 'ACO ' STRM];
@@ -576,7 +578,7 @@ if fSAVEALL
     saveas(figSetup,[fname '.fig'],'fig');
     saveas(figSetup,[fname '.eps'],'epsc');
     for iOfst = 1:lenOfstSD
-        STROFST = sprintf('OfstSD_%0.2f',rngOfstSDDco(iOfst));
+        STROFST = sprintf('OfstSD_%0.2f_%0.2f',rngOfstSDDco(iOfst),rngOfstSDAco(iOfst));
         for iM = 1:lenM
             STRM = sprintf('_adM_%d_%d',rngMaco(iM),rngMdco(iM));
             f = figure(figBER(iOfst,iM));

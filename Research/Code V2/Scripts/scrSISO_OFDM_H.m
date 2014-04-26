@@ -37,7 +37,7 @@ set(0,'DefaultLineMarkerSize',6);
 % FLAGS
 % fSTATION = 1;   % 1.PHO445 2.ENGGRID 3.LAPTOP
 fSAVEALL = true;
-fARCHIVE = false;
+fARCHIVE = true;
 fFILTBLUE = false;
 
 rand('seed',0); % seed for Random Number Generator
@@ -56,7 +56,7 @@ else
     CHARIDXARCHIVE = CHAROVERWRITE; % OK TO OVERWRITE
 end
 STRPREFIXIMG = '3_SIS_IMG_';
-CHARIDXARCHIVEIMG = '~';
+CHARIDXARCHIVEIMG = '';
 
 % STATION
 switch fSTATION
@@ -93,7 +93,7 @@ Nrxy = 1;
 Nr = Nrxx*Nrxy;
 rxZAT = cOrientation(0,0,0); % receiver orientation
 %%% OSM
-rngSNRdb = 150:10:350;
+rngSNRdb = 150:0.25:350;
 % rngSNRdb = [200 400];
 lenSNRdb = length(rngSNRdb);
 rngOfdmType = {'DCOOFDM','ACOOFDM'};
@@ -351,7 +351,7 @@ end % M
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Plot
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-PLOTDMIN = 5;
+PLOTDMIN = 4;
 SNRD = zeros(lenOfstSD,lenM);
 SNRA = zeros(lenOfstSD,lenM);
 for iOfst = 1:lenOfstSD
@@ -422,7 +422,7 @@ for iOfst = 1:lenOfstSD
             axis([rngSNRdb(1)-150 rngSNRdb(end)-150 BERTH/5 1]);
             
             set(0,'CurrentFigure',figBERall(iOfst,iM));
-            iLS = rem(2,lenLS)+1;
+            iLS = rem(3,lenLS)+1;
             iMK = rem(iMK+3,lenMK)+1;
             plStyle = [clLC{iLC} clLS{iLS} clMK{iMK}];
             [Xc,Yc] = getCleanPoints(rngSNRdb,log10(bit_err(:,iM,iOfdm,iOfst)),PLOTDMIN);
