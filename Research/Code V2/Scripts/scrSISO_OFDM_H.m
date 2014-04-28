@@ -32,7 +32,7 @@ set(0,'DefaultFigurePaperUnits','Inches');
 dfigpp = get(0,'DefaultFigurePaperPosition');
 set(0,'DefaultFigurePaperPosition',[0 0 8 6]);
 dlinems = get(0,'DefaultLineMarkerSize');
-set(0,'DefaultLineMarkerSize',6);
+set(0,'DefaultLineMarkerSize',4);
 
 % FLAGS
 % fSTATION = 1;   % 1.PHO445 2.ENGGRID 3.LAPTOP
@@ -49,13 +49,13 @@ MODgSM = 3;
 MODeSM = 4;
 
 CHAROVERWRITE = '~';
-STRPREFIX = '3_SISO_H_';
+STRPREFIX = '5_SISO_H_';
 if(fARCHIVE)
     CHARIDXARCHIVE = '';           % ARCHIVE INDEX
 else
     CHARIDXARCHIVE = CHAROVERWRITE; % OK TO OVERWRITE
 end
-STRPREFIXIMG = '3_SIS_IMG_';
+STRPREFIXIMG = '5_SIS_IMG_';
 CHARIDXARCHIVEIMG = '';
 
 % STATION
@@ -93,15 +93,15 @@ Nrxy = 1;
 Nr = Nrxx*Nrxy;
 rxZAT = cOrientation(0,0,0); % receiver orientation
 %%% OSM
-rngSNRdb = 150:0.25:350;
+rngSNRdb = 150:1:350;
 % rngSNRdb = [200 400];
 lenSNRdb = length(rngSNRdb);
 rngOfdmType = {'DCOOFDM','ACOOFDM'};
 lenOfdmType = length(rngOfdmType);
-rngOfstSDDcoS = 3.5;
+rngOfstSDDcoS = 3.2;
 rngOfstSDAcoS = 0;
-rngOfstSDDcoM = 3.5;
-rngOfstSDAcoM = 0.5;
+rngOfstSDDcoM = 3.2;
+rngOfstSDAcoM = 0.2;
 % rngOfstSD = 0:0.5:5;
 % rngOfstSD = 1:1:2;
 lenOfstSD = length(rngOfstSDDcoS);
@@ -120,7 +120,7 @@ Ntx = 1;     % 1 transmitters
 dtk = log2(Ntx);
 
 % CONSTANTS
-TOTALBITS = 5e4;
+TOTALBITS = 2e4;
 BERTH = 1e-3;
 BITSTREAM = randi([0 1],[1,TOTALBITS]);
 IDXBRK = 0;
@@ -255,7 +255,7 @@ for iM = 1:lenM
         for iOfst = 1:lenOfstSD
             OffsetDcoStddev = rngOfstSDDcoS(iOfst);
             OffsetAcoStddev = rngOfstSDAcoS(iOfst);
-            STROFST = sprintf('OFST:%0.2f SD',rngOfstSDDcoS(iOfst));
+            STROFST = sprintf('OFST:%0.1f SD',rngOfstSDDcoS(iOfst));
             dStr = sprintf('%s, %s, BPS:%d, Nsc:%d, M:%d',STROFST,STROFDM,BPSS(iM,iOfdm),Nsc,Ms);
             disp(dStr);
             for idb = 1:lenSNRdb
@@ -341,7 +341,7 @@ for iM = 1:lenM
                 else
                     IDXBRK = 0;
                 end
-                dStr = sprintf('iter SNR:%0.2f BER:%0.5f',vSNRdb,bit_err(idb,iM,iOfdm,iOfst));
+                dStr = sprintf('iter SNR:%0.1f BER:%0.5f',vSNRdb,bit_err(idb,iM,iOfdm,iOfst));
                 disp(dStr);
             end % SNR
         end % Ofst
@@ -351,11 +351,12 @@ end % M
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Plot
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-PLOTDMIN = 4;
+PLOTDMIN = 3;
 SNRD = zeros(lenOfstSD,lenM);
 SNRA = zeros(lenOfstSD,lenM);
 for iOfst = 1:lenOfstSD
-    STROFST = sprintf('OfstSD_%0.2f',rngOfstSDDcoS(iOfst));
+    STROFSTS = sprintf('OfstSD_%0.1f_%0.1f',rngOfstSDDcoS(iOfst),rngOfstSDAcoS(iOfst));
+    STROFSTM = sprintf('OfstSD_%0.1f_%0.1f',rngOfstSDDcoM(iOfst),rngOfstSDAcoM(iOfst));
     for iM = 1:lenM
         STRMS = sprintf('_adM_%d_%d',rngMacoS(iM),rngMdcoS(iM));
         STRMM = sprintf('_adM_%d_%d',rngMacoM(iM),rngMdcoM(iM));
@@ -366,7 +367,7 @@ for iOfst = 1:lenOfstSD
 %         figBERSplit(iOfst,iM) = figure;
 %         set(gca,'YScale','log');
 %         hold all;
-        fnameIMG = [ctDirResIMG STRPREFIXIMG STROFST STRMM '_ALL BER vs SNR' CHARIDXARCHIVEIMG];
+        fnameIMG = [ctDirResIMG STRPREFIXIMG STROFSTM STRMM '_ALL BER vs SNR' CHARIDXARCHIVEIMG];
         uiopen([fnameIMG '.fig'],1);
         figBERall(iOfst,iM) = gcf;
         [~,~,~,text_strings] = legend;
@@ -416,7 +417,7 @@ for iOfst = 1:lenOfstSD
 %             xlabel('{P_{avg}^{tx}}/{N_{0}} (dB)');
             xlabel('{SNR_{avg}^{tx}} - 150 (dB)');
             ylabel('BER');
-            tStr = sprintf('BER vs SNR, N_{sc}:%d, Offset SISO DCO:%0.2f/ACO:%0.2f SD,\nDCO:%d/ACO:%d bits/sym',Nsc,rngOfstSDDcoS(iOfst),rngOfstSDAcoS(iOfst),BPSS(iM,1),BPSS(iM,2));
+            tStr = sprintf('BER vs SNR, N_{sc}:%d, Offset SISO DCO:%0.1f/ACO:%0.1f SD,\nDCO:%d/ACO:%d bits/sym',Nsc,rngOfstSDDcoS(iOfst),rngOfstSDAcoS(iOfst),BPSS(iM,1),BPSS(iM,2));
             title(tStr);
             grid on;
             axis([rngSNRdb(1)-150 rngSNRdb(end)-150 BERTH/5 1]);
@@ -429,7 +430,7 @@ for iOfst = 1:lenOfstSD
 %             semilogy(gca,rngSNRdb,bit_err(:,iM,iOfdm,iOfst),plStyle);
             semilogy(gca,Xc-150,power(10,Yc),plStyle);
             legend(gca,clLgdall,'Location','NorthEast');
-            tStr = sprintf('BER vs SNR, N_{sc}:%d, Offset SISO DCO:%0.2f/ACO:%0.2f SD, SIS DCO:%0.2f/ACO:%0.2f SD\nSISO DCO:%d/ACO:%d bits/sym, SIS DCO:%d/ACO:%d bits/sym',...
+            tStr = sprintf('BER vs SNR, N_{sc}:%d, Offset SISO DCO:%0.1f/ACO:%0.1f SD, SIS DCO:%0.1f/ACO:%0.1f SD\nSISO DCO:%d/ACO:%d bits/sym, SIS DCO:%d/ACO:%d bits/sym',...
                             Nsc,rngOfstSDDcoS(iOfst),rngOfstSDAcoS(iOfst),rngOfstSDDcoM(iOfst),rngOfstSDAcoM(iOfst),BPSS(iM,1),BPSS(iM,2),BPSM(iM,1),BPSM(iM,2));
             title(tStr);
 %             set(0,'CurrentFigure',figBERSplit(iOfst,iM));
@@ -452,7 +453,7 @@ for iOfst = 1:lenOfstSD
 % %             xlabel('{P_{avg}^{tx}}/{N_{0}} (dB)');
 %             xlabel('{SNR_{avg}^{tx}} - 150 (dB)');
 %             ylabel('BER (Individual)');
-%             tStr = sprintf('BER (Split) vs SNR, Offset: %0.2f SD\nN_{sc}:%d, DCO:%d/ACO:%d bits/sym',rngOfstSD(iOfst),Nsc,BPS(iM,1),BPS(iM,2));
+%             tStr = sprintf('BER (Split) vs SNR, Offset: %0.1f SD\nN_{sc}:%d, DCO:%d/ACO:%d bits/sym',rngOfstSD(iOfst),Nsc,BPS(iM,1),BPS(iM,2));
 %             title(tStr);
 %             grid on;
 %             axis([rngSNRdb(1)-150 rngSNRdb(end)-150 BERTH/5 1]);
@@ -508,21 +509,21 @@ if fSAVEALL
     saveas(figSetup,[fname '.fig'],'fig');
         saveas(figSetup,[fname '.eps'],'epsc');
     for iOfst = 1:lenOfstSD
-        STROFST = sprintf('OfstSD_%0.2f',rngOfstSDDcoS(iOfst));
+        STROFSTS = sprintf('OfstSD_%0.1f_%0.1f',rngOfstSDDcoS(iOfst),rngOfstSDAcoS(iOfst));
         for iM = 1:lenM
             STRMS = sprintf('_adM_%d_%d_%d_%d',rngMacoS(iM),rngMdcoS(iM),rngMacoM(iM),rngMdcoM(iM));
             f = figure(figBER(iOfst,iM));
-            fname = [ctDirRes STRPREFIX STROFST STRMS '_BER vs SNR' CHARIDXARCHIVE];
+            fname = [ctDirRes STRPREFIX STROFSTS STRMS '_BER vs SNR' CHARIDXARCHIVE];
             saveas(f,[fname '.png'],'png');
             saveas(f,[fname '.fig'],'fig');
             saveas(f,[fname '.eps'],'epsc');
             f = figure(figBERall(iOfst,iM));
-            fname = [ctDirRes STRPREFIX STROFST STRMS '_ALL BER vs SNR' CHARIDXARCHIVE];
+            fname = [ctDirRes STRPREFIX STROFSTS STRMS '_ALL BER vs SNR' CHARIDXARCHIVE];
             saveas(f,[fname '.png'],'png');
             saveas(f,[fname '.fig'],'fig');
             saveas(f,[fname '.eps'],'epsc');
 %             f = figure(figBERSplit(iOfst,iM));
-%             fname = [ctDirRes STRPREFIX STROFST STRM '_BER vs SNR Split' CHARIDXARCHIVE];
+%             fname = [ctDirRes STRPREFIX STROFSTS STRM '_BER vs SNR Split' CHARIDXARCHIVE];
 %             saveas(f,[fname '.png'],'png');
 %             saveas(f,[fname '.fig'],'fig');
 %             saveas(f,[fname '.eps'],'epsc');

@@ -35,7 +35,7 @@ set(0,'DefaultFigurePaperUnits','Inches');
 dfigpp = get(0,'DefaultFigurePaperPosition');
 set(0,'DefaultFigurePaperPosition',[0 0 8 6]);
 dlinems = get(0,'DefaultLineMarkerSize');
-set(0,'DefaultLineMarkerSize',6);
+set(0,'DefaultLineMarkerSize',4);
 
 % FLAGS
 fSTATION = 1;   % 1.PHO445 2.ENGGRID 3.LAPTOP
@@ -52,13 +52,13 @@ MODgSM = 3;
 MODeSM = 4;
 
 CHAROVERWRITE = '~';
-STRPREFIX = '3_SIS_IMG_';
+STRPREFIX = '5_SIS_IMG_';
 if(fARCHIVE)
     CHARIDXARCHIVE = '';           % ARCHIVE INDEX
 else
     CHARIDXARCHIVE = CHAROVERWRITE; % OK TO OVERWRITE
 end
-STRPREFIXNI = '3_SIS_NI_';
+STRPREFIXNI = '5_SIS_NI_';
 CHARIDXARCHIVENI = '';
 
 % STATION
@@ -98,7 +98,7 @@ opD = sqrt(4*(rxal.*rxal)/pi); % keep D such that aperture area equals pixel are
 opfN = opf/opD; % f/#
 rxZAT = cOrientation(0,0,0); % receiver orientation
 %%% OSM
-rngSNRdb = 150:0.25:350;
+rngSNRdb = 150:1:350;
 % rngSNRdb = 150:30:350;
 % rngSNRdb = [200 400];
 lenSNRdb = length(rngSNRdb);
@@ -106,8 +106,10 @@ rngOfdmType = {'DCOOFDM','ACOOFDM'};
 lenOfdmType = length(rngOfdmType);
 % rngOfstSDDco = 3.5;
 % rngOfstSDAco = 0.5;
-rngOfstSDDco = [0:0.25:5 3.5];
-rngOfstSDAco = [0:0.25:5 0.5];
+% rngOfstSDDco = [0:0.1:0.5 0.75:0.25:2.5 2.6:0.1:3.5 3.75:0.25:5 3.25];
+% rngOfstSDAco = [0:0.1:0.5 0.75:0.25:2.5 2.6:0.1:3.5 3.75:0.25:5 0.2];
+rngOfstSDDco = [0:0.1:5 3.2];
+rngOfstSDAco = [0:0.1:5 0.2];
 lenOfstSD = length(rngOfstSDDco);
 
 rngMaco = 64;
@@ -126,7 +128,7 @@ Mg0 = D0*rxal*sqrt(2)/txD;
 txa = A0*rxal/(Mg0*sqrt(2));
 
 % CONSTANTS
-TOTALBITS = 5e4;
+TOTALBITS = 2e4;
 BERTH = 1e-3;
 BITSTREAM = randi([0 1],[1,TOTALBITS]);
 IDXBRK = 0;
@@ -262,8 +264,8 @@ for iM = 1:lenM
         for iOfst = 1:lenOfstSD
             OffsetDcoStddev = rngOfstSDDco(iOfst);
             OffsetAcoStddev = rngOfstSDAco(iOfst);
-            STROFST = sprintf('OFST DCO:%0.2f ACO:%0.2f SD',rngOfstSDDco(iOfst),rngOfstSDAco(iOfst));
-%             STROFST = sprintf('OFST:%0.2f SD',rngOfstSDDco(iOfst));
+            STROFST = sprintf('OFST DCO:%0.1f ACO:%0.1f SD',rngOfstSDDco(iOfst),rngOfstSDAco(iOfst));
+%             STROFST = sprintf('OFST:%0.1f SD',rngOfstSDDco(iOfst));
             dStr = sprintf('%s, %s, BPS:%d, SYMLEN:%d, LEDLEN:%d, Nsc:%d, M:%d',STROFST,STROFDM,BPS(iM,iOfdm),SYMLEN(iM,iOfdm),LEDLEN(iM,iOfdm),Nsc,M);
             disp(dStr);
             for idb = 1:lenSNRdb
@@ -346,7 +348,7 @@ for iM = 1:lenM
                 else
                     IDXBRK = 0;
                 end
-                dStr = sprintf('iter SNR:%0.2f BER:%0.5f',vSNRdb,bit_err(idb,iM,iOfdm,iOfst));
+                dStr = sprintf('iter SNR:%0.1f BER:%0.5f',vSNRdb,bit_err(idb,iM,iOfdm,iOfst));
                 disp(dStr);
                 
             end % SNR
@@ -357,12 +359,12 @@ end % M
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Plot
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-PLOTDMIN = 4;
+PLOTDMIN = 3;
 SNRD = zeros(lenOfstSD,lenM);
 SNRA = zeros(lenOfstSD,lenM);
 for iOfst = 1:lenOfstSD
-    STROFST = sprintf('OfstSD_%0.2f_%0.2f',rngOfstSDDco(iOfst),rngOfstSDAco(iOfst));
-%     STROFST = sprintf('OfstSD_%0.2f',rngOfstSDDco(iOfst));
+    STROFST = sprintf('OfstSD_%0.1f_%0.1f',rngOfstSDDco(iOfst),rngOfstSDAco(iOfst));
+%     STROFST = sprintf('OfstSD_%0.1f',rngOfstSDDco(iOfst));
     for iM = 1:lenM
         STRM = sprintf('_adM_%d_%d',rngMaco(iM),rngMdco(iM));
         clLgdall = {};
@@ -430,7 +432,7 @@ for iOfst = 1:lenOfstSD
             legend(gca,clLgd,'Location','NorthEast');
             xlabel('{SNR_{avg}^{tx}} - 150 (dB)');
             ylabel('BER');
-            tStr = sprintf('BER vs SNR, Offset: DCO=%0.2f SD ACO=%0.2f SD\nN_{sc}:%d, DCO:%d/ACO:%d bits/sym',rngOfstSDDco(iOfst),rngOfstSDAco(iOfst),Nsc,BPS(iM,1),BPS(iM,2));
+            tStr = sprintf('BER vs SNR, Offset: DCO=%0.1f SD ACO=%0.1f SD\nN_{sc}:%d, DCO:%d/ACO:%d bits/sym',rngOfstSDDco(iOfst),rngOfstSDAco(iOfst),Nsc,BPS(iM,1),BPS(iM,2));
             title(tStr);
             grid on;
             axis([rngSNRdb(1)-150 rngSNRdb(end)-150 BERTH/5 1]);
@@ -465,7 +467,7 @@ for iOfst = 1:lenOfstSD
             legend(gca,clLgdSplit,'Location','NorthEast');
             xlabel('{SNR_{avg}^{tx}} - 150 (dB)');
             ylabel('BER (Individual)');
-            tStr = sprintf('BER (Split) vs SNR, Offset: DCO=%0.2f SD ACO=%0.2f SD\nN_{sc}:%d, DCO:%d/ACO:%d bits/sym',rngOfstSDDco(iOfst),rngOfstSDAco(iOfst),Nsc,BPS(iM,1),BPS(iM,2));
+            tStr = sprintf('BER (Split) vs SNR, Offset: DCO=%0.1f SD ACO=%0.1f SD\nN_{sc}:%d, DCO:%d/ACO:%d bits/sym',rngOfstSDDco(iOfst),rngOfstSDAco(iOfst),Nsc,BPS(iM,1),BPS(iM,2));
             title(tStr);
             grid on;
             axis([rngSNRdb(1)-150 rngSNRdb(end)-150 BERTH/5 1]);
@@ -528,7 +530,7 @@ if lenOfstSD > 1
     title(tStr);
     grid on;
 %     axis([rngOfstSDDco(1) rngOfstSDDco(end) rngSNRdb(1)-150 rngSNRdb(end)-150]);
-    axis([rngOfstSDDco(1) rngOfstSDDco(end) rngSNRdb(1)-150 80]);
+    axis([rngOfstSDDco(1) rngOfstSDDco(end-1) rngSNRdb(1)-150 80]);
     legend(gca,clLgdOfst,'Location','NorthEast');
     
     set(0,'CurrentFigure',figOFSTNI);
@@ -557,7 +559,7 @@ if lenOfstSD > 1
     tStr = sprintf('SNR vs Offset, Target BER = 10^{%d}',log10(BERTH));
     title(tStr);
     grid on;
-    axis([rngOfstSDDco(1) rngOfstSDDco(end) rngSNRdb(1)-150 rngSNRdb(end)-150]);
+    axis([rngOfstSDDco(1) rngOfstSDDco(end-1) rngSNRdb(1)-150 rngSNRdb(end)-150]);
     legend(gca,clLgdofstAll,'Location','NorthEast');
 end
 % draw setup
@@ -578,7 +580,7 @@ if fSAVEALL
     saveas(figSetup,[fname '.fig'],'fig');
     saveas(figSetup,[fname '.eps'],'epsc');
     for iOfst = 1:lenOfstSD
-        STROFST = sprintf('OfstSD_%0.2f_%0.2f',rngOfstSDDco(iOfst),rngOfstSDAco(iOfst));
+        STROFST = sprintf('OfstSD_%0.1f_%0.1f',rngOfstSDDco(iOfst),rngOfstSDAco(iOfst));
         for iM = 1:lenM
             STRM = sprintf('_adM_%d_%d',rngMaco(iM),rngMdco(iM));
             f = figure(figBER(iOfst,iM));
