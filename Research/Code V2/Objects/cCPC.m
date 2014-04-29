@@ -17,7 +17,7 @@ classdef cCPC < handle
         end
         % get CPC gain
         function G = get.gain(obj)
-            G = (obj.index*obj.index)/sin(obj.fov);
+            G = (obj.index*obj.index)/(sin(obj.fov)*sin(obj.fov));
         end
     end
 end
