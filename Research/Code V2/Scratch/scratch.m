@@ -15,8 +15,10 @@ Wpsd = getSOG([m1 m2 m3],[s1 s2 s3],[a1 a2 a3],lambdas);
 Wpsd = Wpsd/(sum(Wpsd)*LAMBDADELTA);
 Wch = cPSD(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,Wpsd);
 obs = cCIE;
-[x,y] = obs.getCoordinates(Wch.npsd);
-
+% [x,y] = obs.getCoordinates(Wch.npsd);
+% obs.getCoordinates(Wch.npsd);
+x = 0.3823;
+y = 0.3837;
 %% SETUP
 switch fSTATION
     case 1
@@ -51,10 +53,13 @@ S.scaleOutputFlux(scl);
 R.scaleOutputFlux(scl);
 G.scaleOutputFlux(scl);
 B.scaleOutputFlux(scl);
+CCT = mccamy(x,y);
+
+figure;
 subplot(2,1,1);
 plot(S.npsd.X,S.npsd.Y);
 axis tight;
-title('white psd');
+title(sprintf('white psd\nCCT=%0.1fK',CCT));
 subplot(2,3,6);
 plot(R.npsd.X,R.npsd.Y);
 axis tight;

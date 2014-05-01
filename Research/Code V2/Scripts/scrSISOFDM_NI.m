@@ -37,7 +37,7 @@ MODgSM = 3;
 MODeSM = 4;
 
 CHAROVERWRITE = '~';
-STRPREFIX = '5_SIS_NI_';
+STRPREFIX = '9_SIS_NI_';
 if(fARCHIVE)
     CHARIDXARCHIVE = '';           % ARCHIVE INDEX
 else
@@ -48,13 +48,13 @@ end
 % STATION
 switch fSTATION
     case 1
-        ctDirRes = '\\ad\eng\users\p\b\pbutala\My Documents\MatlabResults\11. SISOFDM ni\';
+        ctDirRes = '\\ad\eng\users\p\b\pbutala\My Documents\MatlabResults\11b. SISOFDM ni\';
         ctFileCodeSrc = '\\ad\eng\users\p\b\pbutala\My Documents\MATLAB\Research\Code V2\Scripts\scrSISOFDM_NI.m';
     case 2
-        ctDirRes = '/home/pbutala/My Documents/MatlabResults/11. SISOFDM ni/';
+        ctDirRes = '/home/pbutala/My Documents/MatlabResults/11b. SISOFDM ni/';
         ctFileCodeSrc = '/home/pbutala/My Documents/MATLAB/Research/Code V2/Scripts/scrSISOFDM_NI.m';
     case 3
-        ctDirRes = 'C:\\Users\\pbutala\\Documents\\MatlabResults\\11. SISOFDM ni\\';
+        ctDirRes = 'C:\\Users\\pbutala\\Documents\\MatlabResults\\11b. SISOFDM ni\\';
         ctFileCodeSrc = 'C:\\Users\\pbutala\\My Documents\\MATLAB\\Research\\Code V2\\Scripts\\scrSISOFDM_NI.m';
     otherwise
         error('Station not defined');
@@ -82,8 +82,8 @@ rngSNRdb = 150:1:350;
 lenSNRdb = length(rngSNRdb);
 rngOfdmType = {'DCOOFDM','ACOOFDM'};
 lenOfdmType = length(rngOfdmType);
-% rngOfstSDDco = 3.5;
-% rngOfstSDAco = 0.5;
+% rngOfstSDDco = 3.2;
+% rngOfstSDAco = 0.2;
 % rngOfstSDDco = [0:0.1:0.5 0.75:0.25:2.5 2.6:0.1:3.5 3.75:0.25:5 3.25];
 % rngOfstSDAco = [0:0.1:0.5 0.75:0.25:2.5 2.6:0.1:3.5 3.75:0.25:5 0.2];
 rngOfstSDDco = [0:0.1:5 3.2];
@@ -99,7 +99,7 @@ Ntx = 4;     % 4 transmitters
 dtk = log2(Ntx);
 
 % CONSTANTS
-TOTALBITS = 2e4;
+TOTALBITS = 5e4;
 BERTH = 1e-3;
 BITSTREAM = randi([0 1],[1,TOTALBITS]);
 IDXBRK = 0;
@@ -319,7 +319,7 @@ end % M
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Plot
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-PLOTDMIN = 3;
+PLOTDMIN = 4;
 SNRD = zeros(lenOfstSD,lenM);
 SNRA = zeros(lenOfstSD,lenM);
 for iOfst = 1:lenOfstSD

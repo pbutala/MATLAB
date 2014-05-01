@@ -12,8 +12,9 @@ switch fSTATION
         error('Station not defined');
 end
 run(ctFileCodeSrcIMG);
+CHNLGAIN = Hp(find(Hp~=0,1,'first'));
 close all;
-clearvars -except 'fSTATION';
+clearvars -except 'fSTATION' 'CHNLGAIN';
 clc;
 
 % DEFAULT COSMETIC SETTINGS
@@ -49,29 +50,29 @@ MODgSM = 3;
 MODeSM = 4;
 
 CHAROVERWRITE = '~';
-STRPREFIX = '5_SISO_H_';
+STRPREFIX = '9_SISO_H_';
 if(fARCHIVE)
     CHARIDXARCHIVE = '';           % ARCHIVE INDEX
 else
     CHARIDXARCHIVE = CHAROVERWRITE; % OK TO OVERWRITE
 end
-STRPREFIXIMG = '5_SIS_IMG_';
+STRPREFIXIMG = '9_SIS_IMG_';
 CHARIDXARCHIVEIMG = '';
 
 % STATION
 switch fSTATION
     case 1
-        ctDirRes = '\\ad\eng\users\p\b\pbutala\My Documents\MatlabResults\11. SISO OFDM H\';
+        ctDirRes = '\\ad\eng\users\p\b\pbutala\My Documents\MatlabResults\11b. SISO OFDM H\';
         ctFileCodeSrc = '\\ad\eng\users\p\b\pbutala\My Documents\MATLAB\Research\Code V2\Scripts\scrSISO_OFDM_H.m';
-        ctDirResIMG = '\\ad\eng\users\p\b\pbutala\My Documents\MatlabResults\11. SISOFDM all\';
+        ctDirResIMG = '\\ad\eng\users\p\b\pbutala\My Documents\MatlabResults\11b. SISOFDM all\';
     case 2
-        ctDirRes = '/home/pbutala/My Documents/MatlabResults/11. SISO OFDM H/';
+        ctDirRes = '/home/pbutala/My Documents/MatlabResults/11b. SISO OFDM H/';
         ctFileCodeSrc = '/home/pbutala/My Documents/MATLAB/Research/Code V2/Scripts/scrSISO_OFDM_H.m';
-        ctDirResIMG = '/home/pbutala/My Documents/MatlabResults/11. SISOFDM all/';
+        ctDirResIMG = '/home/pbutala/My Documents/MatlabResults/11b. SISOFDM all/';
     case 3
-        ctDirRes = 'C:\\Users\\pbutala\\Documents\\MatlabResults\\11. SISO OFDM H\\';
+        ctDirRes = 'C:\\Users\\pbutala\\Documents\\MatlabResults\\11b. SISO OFDM H\\';
         ctFileCodeSrc = 'C:\\Users\\pbutala\\My Documents\\MATLAB\\Research\\Code V2\\Scripts\\scrSISO_OFDM_H.m';
-        ctDirResIMG = 'C:\\Users\\pbutala\\Documents\\MatlabResults\\11. SISOFDM all\\';
+        ctDirResIMG = 'C:\\Users\\pbutala\\Documents\\MatlabResults\\11b. SISOFDM all\\';
     otherwise
         error('Station not defined');
 end
@@ -79,7 +80,7 @@ ctFileCodeDest = [ctDirRes STRPREFIX 'scrSISO_OFDM_H' CHARIDXARCHIVE '.m'];
 ctFileVars = [ctDirRes STRPREFIX 'scrSISO_OFDM_H' CHARIDXARCHIVE '.mat'];      % file to store workspace
 
 % VARIABLES
-%%% Setup
+%% Setup
 lkIl = 400;
 lkPl = 1;       % plane for illumination
 txa = 20e-2;     % transmitter side length
@@ -92,7 +93,7 @@ Nrxx = 1;
 Nrxy = 1;
 Nr = Nrxx*Nrxy;
 rxZAT = cOrientation(0,0,0); % receiver orientation
-%%% OSM
+% %%% OSM
 rngSNRdb = 150:1:350;
 % rngSNRdb = [200 400];
 lenSNRdb = length(rngSNRdb);
@@ -120,7 +121,7 @@ Ntx = 1;     % 1 transmitters
 dtk = log2(Ntx);
 
 % CONSTANTS
-TOTALBITS = 2e4;
+TOTALBITS = 5e4;
 BERTH = 1e-3;
 BITSTREAM = randi([0 1],[1,TOTALBITS]);
 IDXBRK = 0;
@@ -149,12 +150,12 @@ if fSAVEALL
     delete([ctDirRes '*' CHAROVERWRITE '.*']);
 end
 
-if fFILTBLUE        % if blue filtering selected
-    Bf = zeros(size(lambdas));
-    Bf(lambdas > 300 & lambdas < 500) = 1;
-end
+% if fFILTBLUE        % if blue filtering selected
+%     Bf = zeros(size(lambdas));
+%     Bf(lambdas > 300 & lambdas < 500) = 1;
+% end
 
-% initialize room
+% % initialize room
 room = cRoom(4,4,4);        % create room and set size (4m x 4m x 4m)
 locCntr = cLocation(room.L/2,room.W/2,1);
 k = log2(Ntx);
@@ -206,12 +207,13 @@ txOri = room.luminaire(1).orientation;              % get tx orientations
 [Hp,Iambpx] = ...
     Wrx.getSignal(txSPD,Hfs,Ambch);  % get p-channel matrix
 % Hp = squeeze(tHp(1,:,:))';                        % reshape p-channel matrix
-% if size(Hp,1) == 1
-%     Hp = Hp';
-% end
+if size(Hp,1) == 1
+    Hp = Hp';
+end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % OVERWRITE CHANNEL MATRIX
-Hp = 0.1526e-7;
+% Hp = 0.1526e-7;
+Hp = CHNLGAIN;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 BPSS = zeros(lenM,lenOfdmType);
 BPSM = zeros(lenM,lenOfdmType);
@@ -351,7 +353,7 @@ end % M
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Plot
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-PLOTDMIN = 3;
+PLOTDMIN = 4;
 SNRD = zeros(lenOfstSD,lenM);
 SNRA = zeros(lenOfstSD,lenM);
 for iOfst = 1:lenOfstSD
@@ -420,7 +422,7 @@ for iOfst = 1:lenOfstSD
             tStr = sprintf('BER vs SNR, N_{sc}:%d, Offset SISO DCO:%0.1f/ACO:%0.1f SD,\nDCO:%d/ACO:%d bits/sym',Nsc,rngOfstSDDcoS(iOfst),rngOfstSDAcoS(iOfst),BPSS(iM,1),BPSS(iM,2));
             title(tStr);
             grid on;
-            axis([rngSNRdb(1)-150 rngSNRdb(end)-150 BERTH/5 1]);
+            axis([rngSNRdb(1)-150 rngSNRdb(end)-150 0.9*BERTH 1]);
             
             set(0,'CurrentFigure',figBERall(iOfst,iM));
             iLS = rem(3,lenLS)+1;
@@ -433,6 +435,7 @@ for iOfst = 1:lenOfstSD
             tStr = sprintf('BER vs SNR, N_{sc}:%d, Offset SISO DCO:%0.1f/ACO:%0.1f SD, SIS DCO:%0.1f/ACO:%0.1f SD\nSISO DCO:%d/ACO:%d bits/sym, SIS DCO:%d/ACO:%d bits/sym',...
                             Nsc,rngOfstSDDcoS(iOfst),rngOfstSDAcoS(iOfst),rngOfstSDDcoM(iOfst),rngOfstSDAcoM(iOfst),BPSS(iM,1),BPSS(iM,2),BPSM(iM,1),BPSM(iM,2));
             title(tStr);
+            axis([rngSNRdb(1)-150 rngSNRdb(end)-150 0.9*BERTH 1]);
 %             set(0,'CurrentFigure',figBERSplit(iOfst,iM));
 %             iLS = rem(2,lenLS)+1;
 %             iMK = rem(iMK+1,lenMK)+1;
@@ -522,11 +525,6 @@ if fSAVEALL
             saveas(f,[fname '.png'],'png');
             saveas(f,[fname '.fig'],'fig');
             saveas(f,[fname '.eps'],'epsc');
-%             f = figure(figBERSplit(iOfst,iM));
-%             fname = [ctDirRes STRPREFIX STROFSTS STRM '_BER vs SNR Split' CHARIDXARCHIVE];
-%             saveas(f,[fname '.png'],'png');
-%             saveas(f,[fname '.fig'],'fig');
-%             saveas(f,[fname '.eps'],'epsc');
         end
     end
     if lenOfstSD > 1

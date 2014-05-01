@@ -13,9 +13,10 @@ switch fSTATION
         error('Station not defined');
 end
 run(ctFileCodeSrcNI);
-
+GAINNI = Wrx.optics.gain;
+% GAINNI = 2.25;
 close all;
-clearvars -except 'ctFileCodeSrc';
+clearvars -except 'ctFileCodeSrc' 'GAINNI';
 ctFileCodeSrcNI = ctFileCodeSrc;
 clc;
 
@@ -52,29 +53,29 @@ MODgSM = 3;
 MODeSM = 4;
 
 CHAROVERWRITE = '~';
-STRPREFIX = '5_SIS_IMG_';
+STRPREFIX = '9_SIS_IMG_';
 if(fARCHIVE)
     CHARIDXARCHIVE = '';           % ARCHIVE INDEX
 else
     CHARIDXARCHIVE = CHAROVERWRITE; % OK TO OVERWRITE
 end
-STRPREFIXNI = '5_SIS_NI_';
+STRPREFIXNI = '9_SIS_NI_';
 CHARIDXARCHIVENI = '';
 
 % STATION
 switch fSTATION
     case 1
-        ctDirRes = '\\ad\eng\users\p\b\pbutala\My Documents\MatlabResults\11. SISOFDM all\';
+        ctDirRes = '\\ad\eng\users\p\b\pbutala\My Documents\MatlabResults\11b. SISOFDM all\';
         ctFileCodeSrc = '\\ad\eng\users\p\b\pbutala\My Documents\MATLAB\Research\Code V2\Scripts\scrSISOFDM_IMG.m';
-        ctDirResNI = '\\ad\eng\users\p\b\pbutala\My Documents\MatlabResults\11. SISOFDM ni\';
+        ctDirResNI = '\\ad\eng\users\p\b\pbutala\My Documents\MatlabResults\11b. SISOFDM ni\';
     case 2
-        ctDirRes = '/home/pbutala/My Documents/MatlabResults/11. SISOFDM all/';
+        ctDirRes = '/home/pbutala/My Documents/MatlabResults/11b. SISOFDM all/';
         ctFileCodeSrc = '/home/pbutala/My Documents/MATLAB/Research/Code V2/Scripts/scrSISOFDM_IMG.m';
-        ctDirResNI = '/home/pbutala/My Documents/MatlabResults/11. SISOFDM ni/';
+        ctDirResNI = '/home/pbutala/My Documents/MatlabResults/11b. SISOFDM ni/';
     case 3
-        ctDirRes = 'C:\\Users\\pbutala\\Documents\\MatlabResults\\11. SISOFDM all\\';
+        ctDirRes = 'C:\\Users\\pbutala\\Documents\\MatlabResults\\11b. SISOFDM all\\';
         ctFileCodeSrc = 'C:\\Users\\pbutala\\My Documents\\MATLAB\\Research\\Code V2\\Scripts\\scrSISOFDM_IMG.m';
-        ctDirResNI = 'C:\\Users\\pbutala\\Documents\\MatlabResults\\11. SISOFDM ni\\';
+        ctDirResNI = 'C:\\Users\\pbutala\\Documents\\MatlabResults\\11b. SISOFDM ni\\';
     otherwise
         error('Station not defined');
 end
@@ -94,7 +95,7 @@ opf = 5e-3;     % focal length
 opFOV = pi/3;   % optics FOV
 rxa = 2e-3;     % sensor side length
 rxal = 1e-3;    % pixel side length
-opD = sqrt(4*(rxal.*rxal)/pi); % keep D such that aperture area equals pixel area
+opD = sqrt(4*(rxal.*rxal)*GAINNI/pi); % keep D such that aperture area equals pixel area
 opfN = opf/opD; % f/#
 rxZAT = cOrientation(0,0,0); % receiver orientation
 %%% OSM
@@ -104,8 +105,8 @@ rngSNRdb = 150:1:350;
 lenSNRdb = length(rngSNRdb);
 rngOfdmType = {'DCOOFDM','ACOOFDM'};
 lenOfdmType = length(rngOfdmType);
-% rngOfstSDDco = 3.5;
-% rngOfstSDAco = 0.5;
+% rngOfstSDDco = 3.2;
+% rngOfstSDAco = 0.2;
 % rngOfstSDDco = [0:0.1:0.5 0.75:0.25:2.5 2.6:0.1:3.5 3.75:0.25:5 3.25];
 % rngOfstSDAco = [0:0.1:0.5 0.75:0.25:2.5 2.6:0.1:3.5 3.75:0.25:5 0.2];
 rngOfstSDDco = [0:0.1:5 3.2];
@@ -121,14 +122,15 @@ Ntx = 4;     % 4 transmitters
 dtk = log2(Ntx);
 rngMS = 0.5;
 lenMS = length(rngMS);
-E0 = 1/sqrt(2);
-A0 = 1;
+% E0 = 1/sqrt(2);
+E0 = 0.5;
+A0 = 0.5;
 D0 = E0+A0/sqrt(2);
 Mg0 = D0*rxal*sqrt(2)/txD;
 txa = A0*rxal/(Mg0*sqrt(2));
 
 % CONSTANTS
-TOTALBITS = 2e4;
+TOTALBITS = 5e4;
 BERTH = 1e-3;
 BITSTREAM = randi([0 1],[1,TOTALBITS]);
 IDXBRK = 0;
@@ -174,7 +176,7 @@ txX = txX + room.L/2;       % add length location offset
 txY = txY + room.W/2;       % add width location offset
 txZ = txZ + 3;              % add height location offset
 txLoc = cLocation(txX,txY,txZ); % tx location object
-txOri = cOrientation(pi,pi/4,0);   % tx orientation
+txOri = cOrientation(pi,0,0);   % tx orientation
 txSz = cSize(txa,txa,1e-3);     % tx size
 for iL = 1:1:Ntx            % need in case transmitters have different output flux
     Wch(iL) = cPSD(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,Wpsd);   % luminaire SPD
@@ -225,7 +227,8 @@ Hp = squeeze(tHp(1,:,:))';                        % reshape p-channel matrix
 if size(Hp,1) == 1
     Hp = Hp';
 end
-
+% figure;
+% Wrx.getImage(locCntr,txLoc,txSz,txOri,gca);
 BPS = zeros(lenM,lenOfdmType);
 LEDLEN = zeros(lenM,lenOfdmType);
 SYMLEN = zeros(lenM,lenOfdmType);
@@ -359,7 +362,7 @@ end % M
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Plot
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-PLOTDMIN = 3;
+PLOTDMIN = 4;
 SNRD = zeros(lenOfstSD,lenM);
 SNRA = zeros(lenOfstSD,lenM);
 for iOfst = 1:lenOfstSD
