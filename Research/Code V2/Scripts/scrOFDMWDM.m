@@ -41,6 +41,7 @@ lambdas = LAMBDAMIN:LAMBDADELTA:LAMBDAMAX;
 RMN = 627; RSD = 10; RSC = 1;
 GMN = 530; GSD = 10; GSC = 1;
 BMN = 470; BSD = 10; BSC = 1;
+% RES = 0.001;
 RES = 0.1;
 sPSDTYP = 'Gaussian';
 TOTALBITS = 1e4;
