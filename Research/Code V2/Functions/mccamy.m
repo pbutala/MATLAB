@@ -5,8 +5,10 @@ function CCT = mccamy(x,y)
 %   The calculated CCT becomes less meaningful as the source moves further
 %   away from the plankian locus. CCT is only meant to characterize near
 %   white lights.
-n = (x - 0.3320)/(0.1858 - y);
-CCT = 449*(n^3) + 3525*(n^2) + 6823.3*n + 5520.33;
+%   Source(s): http://www.ams.com/eng/content/download/251586/993227/version/2
+%              http://en.wikipedia.org/wiki/Color_temperature#Approximation
+n = (x - 0.3320)./(0.1858 - y);
+CCT = 449*(n.^3) + 3525*(n.^2) + 6823.3.*n + 5520.33;
 
 end
 

@@ -84,6 +84,11 @@ classdef cPSD < handle
             end
         end
         
+        % Overload './' operator
+        function res = rdivide(obj1,obj2) 
+            res = obj1.*(1/obj2);
+        end
+        
         % Overload '*' operator
         function res = mtimes(obj1,obj2) 
             if ~ismatrix(obj1) || ~ismatrix(obj2)

@@ -11,6 +11,7 @@ classdef cLEDrgb < handle
     properties(SetAccess = private)
         tn;     % tristimulus values
         xyz;    % SPD XY coordinate on CIE 1978
+%         cct;    % correlated color temperature for each xyz(:,i) combination. using mccamy's formula. More accurate 
     end
     
     methods
@@ -48,7 +49,7 @@ classdef cLEDrgb < handle
                     error('''Gpsd'' must be of type cPSD');
                 end
             else
-                Gpsd = getSOG(530,15,1,lambdas);
+                Gpsd = getSOG(530,10,1,lambdas);
                 Gpsd = Gpsd/(sum(Gpsd)*LAMBDADELTA);
                 obj.G = cPSD(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,Gpsd);
             end

@@ -10,7 +10,7 @@ ctDirRes = 'C:\\Users\\pbutala\\Documents\\_Work\\Code V2\\Results\\2. l-MIMO\\2
 ctFileCodeSrc = 'C:\\Users\\pbutala\\Documents\\_Work\\Code V2\\Scratch\\scratchMIMOlambda.m';
 ctFileCodeDest = [ctDirRes 'l-MIMOcode.m'];
 ctFileVars = [ctDirRes 'l-MIMOdata.mat'];
-fSAVEALL = true;
+fSAVEALL = false;
 
 %% constants
 LAMBDAMIN = 200;

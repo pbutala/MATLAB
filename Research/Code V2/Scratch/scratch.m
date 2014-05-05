@@ -54,6 +54,9 @@ R.scaleOutputFlux(scl);
 G.scaleOutputFlux(scl);
 B.scaleOutputFlux(scl);
 CCT = mccamy(x,y);
+[x1,y1] = planckXY(CCT);
+figure;
+obs.getCoordinates(S.npsd);
 
 figure;
 subplot(2,1,1);
