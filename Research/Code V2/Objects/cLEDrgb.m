@@ -122,7 +122,7 @@ classdef cLEDrgb < handle
             waitbar(1);
             obj.tn = unique(obj.tn','rows')';
             obj.xyz = unique(obj.xyz','rows')';
-            close(h);
+            delete(h);
 %             NLEN = 8;
 %             NSTART = 1;
 %             h = waitbar(0,'1','Name','Characterizing LED...',...

@@ -22,7 +22,7 @@ dlinems = get(0,'DefaultLineMarkerSize');
 set(0,'DefaultLineMarkerSize',4);
 
 % FLAGS
-fSTATION = 1;   % 1.PHO445 2.ENGGRID 3.LAPTOP
+fSTATION = 4;   % 1.PHO445 2.ENGGRID 3.LAPTOP 4.Optimus
 fSAVEALL = true;
 fARCHIVE = false;
 rng('default');
@@ -35,17 +35,32 @@ else
     CHARIDXARCHIVE = CHAROVERWRITE; % OK TO OVERWRITE
 end
 
-% constants
+%% CONSTANTS
 LAMBDAMIN = 200; LAMBDADELTA = 1; LAMBDAMAX = 1100;
 lambdas = LAMBDAMIN:LAMBDADELTA:LAMBDAMAX;
 RMN = 627; RSD = 10; RSC = 1;
 GMN = 530; GSD = 10; GSC = 1;
 BMN = 470; BSD = 10; BSC = 1;
-% RES = 0.001;
 RES = 0.1;
 sPSDTYP = 'Gaussian';
 TOTALBITS = 1e4;
 BERTH = 1e-3;
+MODNSC = 1024;
+
+%% ranges
+RNGCCT = 4000;                          LENCCT = numel(RNGCCT);
+RNGOFDMTYPES = {'dcoofdm';'acoofdm'};   LENOFDMTYPES = numel(RNGOFDMTYPES);
+RNGOFDMOFST = [3.2;0];                  LENOFDMOFST = size(RNGOFDMOFST,2);
+RNGMOD = [8;8^2];                       LENMOD  = size(RNGMOD,2);
+RNGSNRDB = 200;                         LENSNRDB = numel(RNGSNRDB);
+
+%% config
+lkIl = 400;
+lkPl = 1;       % plane for illumination
+lkTx = 3;       % plane for transmitters
+rmL = 4; rmW = 4; rmH = 4; % room L,W,H
+rxX = 2; rxY = 2; rxZ = lkPl; % receiver location
+flT = 1;
 
 % STATION
 switch fSTATION
@@ -54,19 +69,25 @@ switch fSTATION
         ctFileCodeSrc = '\\ad\eng\users\p\b\pbutala\My Documents\MATLAB\Research\Code V2\Scripts\scrOFDMWDM.m';
         ctMatDir = '\\ad\eng\users\p\b\pbutala\My Documents\MATLAB\Research\Code V2\Matfiles\LEDPSD\';
         sPSDDIR = [ctMatDir sPSDTYP '\' sprintf('R_%d_%d_%d_G_%d_%d_%d_B_%d_%d_%d',...
-                   RMN,RSD,RSC,GMN,GSD,GSC,BMN,BSD,BSC) '\'];
+            RMN,RSD,RSC,GMN,GSD,GSC,BMN,BSD,BSC) '\'];
     case 2
         ctDirRes = '/home/pbutala/My Documents/MatlabResults/12 WDMOFDM/';
         ctFileCodeSrc = '/home/pbutala/My Documents/MATLAB/Research/Code V2/Scripts/scrOFDMWDM.m';
         ctMatDir = '/home/pbutala/My Documents/MATLAB/Research/Code V2/Matfiles/LEDPSD/';
         sPSDDIR = [ctMatDir sPSDTYP '/' sprintf('R_%d_%d_%d_G_%d_%d_%d_B_%d_%d_%d',...
-                   RMN,RSD,RSC,GMN,GSD,GSC,BMN,BSD,BSC) '/'];
+            RMN,RSD,RSC,GMN,GSD,GSC,BMN,BSD,BSC) '/'];
     case 3
         ctDirRes = 'C:\\Users\\pbutala\\Documents\\MatlabResults\\12 WDMOFDM\\';
         ctFileCodeSrc = 'C:\\Users\\pbutala\\My Documents\\MATLAB\\Research\\Code V2\\Scripts\\scrOFDMWDM.m';
         ctMatDir = 'C:\\Users\\pbutala\\Documents\\MATLAB\\Research\\Code V2\\Matfiles\\LEDPSD\\';
-        sPSDDIR = [ctMatDir sPSDTYP '\\' sprintf('R_%d_%d_%d_G_%d_%d_%d_B_%d_%d_%d\\',...
-                   RMN,RSD,RSC,GMN,GSD,GSC,BMN,BSD,BSC) '\\'];
+        sPSDDIR = [ctMatDir sPSDTYP '\\' sprintf('R_%d_%d_%d_G_%d_%d_%d_B_%d_%d_%d',...
+            RMN,RSD,RSC,GMN,GSD,GSC,BMN,BSD,BSC) '\\'];
+    case 4
+        ctDirRes = 'C:\\Users\\Pankil\\Documents\\MatlabResults\\12 WDMOFDM\\';
+        ctFileCodeSrc = 'C:\\Users\\Pankil\\My Documents\\MATLAB\\Research\\Code V2\\Scripts\\scrOFDMWDM.m';
+        ctMatDir = 'C:\\Users\\Pankil\\Documents\\MATLAB\\Research\\Code V2\\Matfiles\\LEDPSD\\';
+        sPSDDIR = [ctMatDir sPSDTYP '\\' sprintf('R_%d_%d_%d_G_%d_%d_%d_B_%d_%d_%d',...
+            RMN,RSD,RSC,GMN,GSD,GSC,BMN,BSD,BSC) '\\'];
     otherwise
         error('Station not defined');
 end
@@ -74,13 +95,7 @@ ctFileCodeDest = [ctDirRes STRPREFIX 'scrOFDMWDM' CHARIDXARCHIVE '.m'];
 ctFileVars = [ctDirRes STRPREFIX 'datOFDMWDM' CHARIDXARCHIVE '.mat'];      % file to store workspace
 RGBledmat = [sPSDDIR sprintf('res_%0.5f',RES) '.mat'];
 
-%% config
-lkIl = 400;
-lkPl = 1;       % plane for illumination
-lkTx = 3;       % plane for transmitters
-rmL = 4; rmW = 4; rmH = 4; % room L,W,H
-rxX = 2; rxY = 2; rxZ = lkPl; % receiver location
-flT = 0.7;
+
 
 %% PSDs
 
@@ -99,9 +114,7 @@ Bch = cPSD(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,Bpsd);
 Ambpsd = 5.8e-2*ones(size(lambdas));        % Ambient PSD
 Ambch = cPSD(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,Ambpsd);   % Ambient Channel
 
-%% ranges
-rngCCT = 25000;
-lenCCT = numel(rngCCT);
+
 
 %% variables
 % TODO: NEED MORE RESOLUTION ON XYZ
@@ -134,10 +147,13 @@ Brx = cSinglePixelReceiverWhiteReflection(rxX,rxY,rxZ);
 Brx.sensor.filter = cCurve(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,Bf);
 
 %% logic
-BITSTREAM = randi([0 1],[1,TOTALBITS]);
-for iT = 1:lenCCT
+
+% result variable buffers
+BPS = zeros(LENOFDMTYPES,1);
+% BPS = zeros(
+for iT = 1:LENCCT
     % initialize transmitter
-    [x,y] = planckXY(rngCCT(iT));
+    [x,y] = planckXY(RNGCCT(iT));
     [~,R,G,B] = RGB.getPSD(x,y);
     
     % set room with new transmitter
@@ -168,13 +184,59 @@ for iT = 1:lenCCT
     [HBb,~] = Brx.getSignal(B./B.rdFlux,tHfs(3),Ambch);
     % construct channel matrix (does not include transmitted power)
     H = [HRr HRg HRb;...
-         HGr HGg HGb;...
-         HBr HBg HBb];
-     
-    % Monte-Carlo O-OFDM runs
-    
+        HGr HGg HGb;...
+        HBr HBg HBb];
+    [NRX,NTX] = size(H);
+    % Loop through different configurations
+    for iOf = 1:LENOFDMTYPES
+        ofdmType = lower(RNGOFDMTYPES{iOf});
+        switch lower(ofdmType)
+            case 'acoofdm'
+                d = MODNSC/4;
+                STROFDM = 'ACO';
+                OffsetDcoStddev = 0;
+                OffsetAcoStddev = RNGOFDMOFST(iOf);
+            case 'dcoofdm'
+                d = MODNSC/2-1;
+                STROFDM = 'DCO';
+                OffsetDcoStddev = RNGOFDMOFST(iOf);
+                OffsetAcoStddev = 0;
+        end
+        M = RNGMOD(iOf);
+        SYMS = getQAMsyms(M);
+        getQAMsyms(M);
+        BPS(iOf) = d*log2(M);
+        X = zeros(NTX,MODNSC);
+        Y = zeros(NRX,MODNSC);
+        
+        % Monte-Carlo O-OFDM runs
+        BITSTREAM = randi([0 1],[NTX,TOTALBITS]);
+        for iSNR = 1:LENSNRDB
+            SNRDB = RNGSNRDB(iSNR);
+            SNR = power(10,SNRDB/10);
+            SNRrt = sqrt(SNR);
+            
+            BITSTART = 1;
+            while(BITSTART <= TOTALBITS-BPS(iOf)+1)
+                BITSTOP = BITSTART + BPS(iOf) - 1;
+                sym_bits = BITSTREAM(:,BITSTART:BITSTOP);
+                for iTx = 1:NTX
+                    sym_dec = bin2decMat(reshape(sym_bits(iTx,:),d,log2(M)))+1;
+                    X(iTx,:) = genOFDMsignal(... % Variable Arguments to the function
+                        'data',sym_dec,...
+                        'OFDMtype',ofdmType,...
+                        'N',MODNSC,...
+                        'Symbols',SYMS,...
+                        'OffsetDcoStddev', OffsetDcoStddev,...
+                        'OffsetAcoStddev', OffsetAcoStddev)';
+                end
+                Xmn = mean(X,2);
+%                 W = (Xmn/SNRrt)*randn(NRX,MODNSC);
+                BITSTART = BITSTOP + 1;
+            end % while loop
+        end % SNR
+    end % OFDM
 end
-
 
 
 
