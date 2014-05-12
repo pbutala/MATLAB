@@ -28,7 +28,7 @@ classdef cSensor < handle
             else
                 obj.location = cLocation(0,0,0);
             end
-            [m n] = size(Xs);
+            [m,n] = size(Xs);
             obj.dimension.L(1:m,1:n) = 1e-3;
             obj.dimension.W(1:m,1:n) = 1e-3;
             obj.dimension.H(1:m,1:n) = 1e-3;

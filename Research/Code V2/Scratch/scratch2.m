@@ -1,17 +1,8 @@
-close all;
-clearvars;
-clc;
-disp('MS');
-run('C:\\Users\\pbutala\\Documents\\MatlabResults\\8. OSM All 1-M\\3. SNR v BER, MS\\scrOSM_varMS.m');
+fName = 'C:\\Users\\Pankil\\Documents\\MATLAB\\Research\\Code V2\\Objects\\SiPin.mat';
+LAMBDAMIN = 400; LAMBDAPEAK = 900; LAMBDAMAX = 1100;
+QEFFMIN = 65; QEFFPEAK = 90; QEFCUTOFFF = 0;
 
-close all;
-clearvars;
-clc;
-disp('AS');
-run('C:\\Users\\pbutala\\Documents\\MatlabResults\\8. OSM All 1-M\\3. SNR v BER, AS\\scrOSM_varAS.m');
 
-close all;
-clearvars;
-clc;
-disp('ES');
-run('C:\\Users\\pbutala\\Documents\\MatlabResults\\8. OSM All 1-M\\3. SNR v BER, ES\\scrOSM_varES.m');
+
+LAMBDAS = LAMBDAMIN:1:LAMBDAMAX;
+RESPONSIVITY = QEFFL*LAMBDAS*1e3/1.24;

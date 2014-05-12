@@ -28,7 +28,7 @@ set(0,'DefaultFigurePaperUnits','Inches');
 dfigpp = get(0,'DefaultFigurePaperPosition');
 set(0,'DefaultFigurePaperPosition',[0 0 11 8.5]);
 dlinems = get(0,'DefaultLineMarkerSize');
-set(0,'DefaultLineMarkerSize',6);
+set(0,'DefaultLineMarkerSize',8);
 FIGTITLE = 'Off';
 
 
@@ -42,6 +42,8 @@ PLOTDMIN = 5;
 PLACOLC = 'm'; PLACOLS = '-'; PLACOMK = 'o';
 PLDCOLC = 'c'; PLDCOLS = '-'; PLDCOMK = 'd';
 PLTXLCS = {'r';'g';'b'}; PLTXLSS = {'--';'-.';':'}; PLTXMKS = {'>';'s';'*'};
+PLNSCMKS = {'x';'h';'^';'+';'v';'*';'<';'p'};
+
 % Figure CCT config
 FIGCCT = figure('Name',sprintf('SPD vs CCT'),'NumberTitle',FIGTITLE);
 FIGCCTPLNR = power(2,floor(log2(LENCCTPL)/2));
@@ -57,6 +59,9 @@ FIGBERYMIN = 0.9*BERTH; FIGBERYMAX = 1;
 FIGBERLGD = {};
 HBERLGD = [];
 
+% Result Variables
+SNRTH=zeros(NTX,LENCCT,LENMODNSC,LENOFDMTYPES); % SNR to achieve BERTH for each configuration
+
 TOTALLOOPS = LENCCT*LENOFDMTYPES*LENMODNSC+3;
 LOOPCOUNT = 0;
 try
@@ -65,7 +70,6 @@ for iT = 1:LENCCT                                                           % LO
         figure(FIGCCT);
         subplot(FIGCCTPLNR,FIGCCTPLNC,iTPL);
         [x,y] = planckXY(RNGCCT(iT)); 
-%         fprintf('x=%0.2f y=%0.2f\n',x,y);
         [S,R,G,B,tr,tg,tb] = RGB.getPSD(x,y);                               % Get PSDs at CCT
         plot(R.npsd.X,(tr/S.npsd.Ymax)*R.npsd.Y,PLTXLCS{1});                % Plot RED SPD
         hold on;
@@ -99,12 +103,14 @@ for iT = 1:LENCCT                                                           % LO
             HBERLGD(1,iNSC,iOf) = plot(nan,nan,[plLC plLS plMK]);  % Semilog AVG BER vs SNR (get line style)
             
             axis([FIGBERXMIN FIGBERXMAX FIGBERYMIN FIGBERYMAX]);
-            for iTx = 1:NTX
+            for iTx = 1:NTX                                                 % LOOP START NTX
                 [Xp,Yp] = getCleanPoints(RNGSNRDB(:,iT,iNSC,iOf),log10(BER(iTx,:,iT,iNSC,iOf)),PLOTDMIN);   % Get points well spaced out
                 semilogy(Xp,power(10,Yp),[PLTXLCS{iTx} PLTXMKS{iTx}]); % Semilog TX BER vs SNR Markers
                 semilogy(RNGSNRDB(:,iT,iNSC,iOf),BER(iTx,:,iT,iNSC,iOf),[PLTXLCS{iTx} PLTXLSS{iTx}]); % Semilog TX BER vs SNR
                 HBERLGD(1+iTx,iNSC,iOf) = plot(nan,nan,[PLTXLCS{iTx} PLTXLSS{iTx} PLTXMKS{iTx}]);  % Semilog TX BER vs SNR Line Style legend
-            end
+                
+                SNRTH(iTx,iT,iNSC,iOf) = RNGSNRDB(find(BER(iTx,:,iT,iNSC,iOf)<BERTH,1,'first'),iT,iNSC,iOf);
+            end % TX                                                        % LOOP STOP NTX
             grid on;
             FIGBERLGD(:,iNSC,iOf) = {plLGD;[plLGD ':Red'];[plLGD ':Green'];[plLGD ':Blue']};
             legend(gca,HBERLGD(:,iNSC,iOf),FIGBERLGD(:,iNSC,iOf));
@@ -119,6 +125,25 @@ for iT = 1:LENCCT                                                           % LO
         end % OFDM                                                          % LOOP STOP OFDM types
     end % NSC                                                               % LOOP STOP NSC
 end % CCT                                                                   % LOOP STOP CCT
+
+if LENCCT > 1
+    % Figure SNR vs CCT
+    FIGSNRCCT = figure('Name',sprintf('SNR vs CCT, Illumination = %dlx',LKILL),'NumberTitle',FIGTITLE);
+    hold on;
+    for iNSC = 1:LENMODNSC                                                      % LOOP START NSC
+        for iOf = 1:LENOFDMTYPES                                                % LOOP START OFDM types
+            for iTx = 1:NTX                                                     % LOOP START NTX
+                PLSTL = [PLTXLCS{iTx} PLTXLSS{iOf} PLNSCMKS{iNSC}];
+                plot(RNGCCT, SNRTH(iTx,:,iNSC,iOf), PLSTL);
+            end % TX
+        end % OFDM
+    end % NSC
+    axis([min(RNGCCT) max(RNGCCT) FIGBERXMIN 5*ceil(max(SNRTH(:))/5)]);
+    grid on;
+    xlabel('Correlated Color Temperature (K)');
+    ylabel('SNR^{tx}_{avg}');
+    title(sprintf('SNR^{tx}_{avg} vs CCT to achieve target BER = %0.0e',BERTH));
+end
 
 % Figure filter responses
 FIGFILT = figure('Name',sprintf('Filter Transmission'),'NumberTitle',FIGTITLE);
@@ -158,7 +183,7 @@ waitbar(PROGRESS,hWB,sprintf('Plotting Results: %0.2f%% done...',PROGRESS*100));
 
 %% Save Figures
 LOOPCOUNT = 0;
-TOTALLOOPS = 4+2*LENCCT;
+TOTALLOOPS = 5+2*LENCCT;
 if fSAVEALL
     % Save Illumination
     f = figure(FIGILL);
@@ -196,6 +221,18 @@ if fSAVEALL
     saveas(f,[fname '.png'],'png');
     saveas(f,[fname '.fig'],'fig');
     saveas(f,[fname '.eps'],'epsc');
+    LOOPCOUNT = LOOPCOUNT+1;
+    PROGRESS = LOOPCOUNT/TOTALLOOPS;
+    waitbar(PROGRESS,hWB,sprintf('Saving Results: %0.2f%% done...',PROGRESS*100));
+    
+    if LENCCT > 1
+        % Save SNR vs CCT
+        f = figure(FIGSNRCCT);
+        fname = [ctDirRes STRPREFIX 'SNRvsCCT' CHARIDXARCHIVE];
+        saveas(f,[fname '.png'],'png');
+        saveas(f,[fname '.fig'],'fig');
+        saveas(f,[fname '.eps'],'epsc');
+    end
     LOOPCOUNT = LOOPCOUNT+1;
     PROGRESS = LOOPCOUNT/TOTALLOOPS;
     waitbar(PROGRESS,hWB,sprintf('Saving Results: %0.2f%% done...',PROGRESS*100));

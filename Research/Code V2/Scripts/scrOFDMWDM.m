@@ -7,13 +7,13 @@ clearvars;
 clc;
 
 % FLAGS
-fSTATION = 4;   % 1.PHO445 2.ENGGRID 3.LAPTOP 4.Optimus
+fSTATION = 1;   % 1.PHO445 2.ENGGRID 3.LAPTOP 4.Optimus
 fSAVEALL = true;
 fARCHIVE = true;
 rng('default');
 
 CHAROVERWRITE = '~';
-STRPREFIX = '3_';
+STRPREFIX = '4_';
 if(fARCHIVE)
     CHARIDXARCHIVE = '';           % ARCHIVE INDEX
 else
@@ -31,9 +31,11 @@ RES = 0.1;                                  % x,y Resolution for xy<->CCT conver
 sSPDTYP = 'Gaussian';                       % LED SPD model
 WBX = 50; WBY = 500; WBW = 275; WBH = 75;   % Wait Box X,,Y,WID,HGT
 WBTITLE = 'Running WDM OFDM Simulation...'; % Wait Box title
+cResp = cResponsivity();                    % Responsivity class instance
+PDRESP = cResp.getResponsivity(lambdas);    % Get responsivities vs wavelength for Si-PIN PD (default)
 
 %% ranges
-RNGCCT = [3000:500:6000];                         LENCCT = numel(RNGCCT);              % CCT 
+RNGCCT = 3000:250:6000;                         LENCCT = numel(RNGCCT);              % CCT 
 RNGCCTPL = RNGCCT;                     LENCCTPL = numel(RNGCCTPL);          % CCTs to plot
 RNGOFDMTYPES = {'dcoofdm';'acoofdm'};  LENOFDMTYPES = numel(RNGOFDMTYPES);  % OFDM types
 RNGOFDMOFST = [3.2 0];                 LENOFDMOFST = size(RNGOFDMOFST,2);   % OFDM offsets
@@ -44,7 +46,7 @@ RNGSNRLOOP = RNGSNRMAX - RNGSNRMIN;                                         % Nu
 BERRATIOS = [1 5 10 50 100 500 1000]; DELTASNR = [0.01 0.05 0.1 2 3 4 5];                % BER ratios to gracefully calculate next SNR
 % DELTASNR = [5 5 5 10 10 10 20];                                                   % SNR increment to gracefully calculate next SNR
 
-TOTALBITS = 5e4;                            % Total bit for transmtter to simulate
+TOTALBITS = 1e5;                            % Total bit for transmtter to simulate
 BERTH = 1e-3;   BERTHMIN = 0.5*BERTH;       % BER thresholds; 
 
 %% config
@@ -132,11 +134,14 @@ Bf = FLT*Bf/max(Bf);
 
 % initialize receivers
 Rrx = cSinglePixelReceiverWhiteReflection(RXX,RXY,RXZ);
-Rrx.sensor.filter = cCurve(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,Rf);
+Rrx.sensor.filter = cCurve(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,Rf);             % Set filter transmission
+Rrx.sensor.responsivity = cCurve(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,PDRESP);   % Set responsivity (Si PIN)
 Grx = cSinglePixelReceiverWhiteReflection(RXX,RXY,RXZ);
-Grx.sensor.filter = cCurve(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,Gf);
+Grx.sensor.filter = cCurve(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,Gf);             % Set filter transmission
+Grx.sensor.responsivity = cCurve(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,PDRESP);   % Set responsivity (Si PIN)
 Brx = cSinglePixelReceiverWhiteReflection(RXX,RXY,RXZ);
-Brx.sensor.filter = cCurve(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,Bf);
+Brx.sensor.filter = cCurve(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,Bf);             % Set filter transmission
+Brx.sensor.responsivity = cCurve(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,PDRESP);   % Set responsivity (Si PIN)
 
 %% logic
 
