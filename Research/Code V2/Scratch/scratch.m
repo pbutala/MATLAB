@@ -1,77 +1,96 @@
-close all
-clearvars
-clc
+close all;
+clearvars;
+clc;
 
 %% FLAGS
-fSTATION = 1;   % 1.PHO445 2.ENGGRID 3.LAPTOP
+fSTATION = 4;   % 1.PHO445 2.ENGGRID 3.LAPTOP 4.Optimus
 
-LAMBDAMIN = 200;
-LAMBDADELTA = 1;
-LAMBDAMAX = 1100;
+LAMBDAMIN = 200; LAMBDADELTA = 1; LAMBDAMAX = 1100;
 lambdas = LAMBDAMIN:LAMBDADELTA:LAMBDAMAX;
 
-s1=18; m1=450; a1=1; s2=60; m2=555; a2=2.15*a1; s3=25; m3=483; a3=-0.2*a1;
-Wpsd = getSOG([m1 m2 m3],[s1 s2 s3],[a1 a2 a3],lambdas);
-Wpsd = Wpsd/(sum(Wpsd)*LAMBDADELTA);
-Wch = cPSD(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,Wpsd);
+RMN = 627; RSD = 10; RSC = 1;               % Mean, SD and scale to generate SPD of Red led
+GMN = 530; GSD = 10; GSC = 1;               % Mean, SD and scale to generate SPD of Green led
+BMN = 470; BSD = 10; BSC = 1;               % Mean, SD and scale to generate SPD of Blue led
+RES = 0.1;                                  % x,y Resolution for xy<->CCT conversion
+sSPDTYP = 'Gaussian';                       % LED SPD model
+
+RNGCCT = [3000:3000:6000];                         LENCCT = numel(RNGCCT);              % CCT 
+RNGCCTPL = RNGCCT;                     LENCCTPL = numel(RNGCCTPL);          % CCTs to plot
+
 obs = cCIE;
-% [x,y] = obs.getCoordinates(Wch.npsd);
-% obs.getCoordinates(Wch.npsd);
-x = 0.3823;
-y = 0.3837;
 %% SETUP
 switch fSTATION
-    case 1
-        ctDirRes = '\\ad\eng\users\p\b\pbutala\My Documents\MatlabResults\BeamSteering\';
-        ctFileCodeSrc = '\\ad\eng\users\p\b\pbutala\My Documents\MATLAB\Research\Code V2\Scripts\scrBeamSteering.m';
-        ctMatDir = '\\ad\eng\users\p\b\pbutala\My Documents\MATLAB\Research\Code V2\Matfiles\';
-    case 2
-        ctDirRes = '/home/pbutala/My Documents/MatlabResults/BeamSteering/';
-        ctFileCodeSrc = '/home/pbutala/My Documents/MATLAB/Research/Code V2/Scripts/scrBeamSteering.m';
-        ctMatDir = '/home/pbutala/My Documents/MATLAB/Research/Code V2/Matfiles/';
-    case 3
-        ctDirRes = 'C:\\Users\\pbutala\\Documents\\MATLAB\\MatlabResults\\BeamSteering\\';
-        ctFileCodeSrc = 'C:\\Users\\pbutala\\Documents\\MATLAB\\Research\\Code V2\\Scripts\\scrBeamSteering.m';
-        ctMatDir = 'C:\\Users\\pbutala\\Documents\\MATLAB\\Research\\Code V2\\Matfiles\\';
+%     case 1
+%         ctDirRes = '\\ad\eng\users\p\b\pbutala\My Documents\MatlabResults\BeamSteering\';
+%         ctFileCodeSrc = '\\ad\eng\users\p\b\pbutala\My Documents\MATLAB\Research\Code V2\Scripts\scrBeamSteering.m';
+%         ctMatDir = '\\ad\eng\users\p\b\pbutala\My Documents\MATLAB\Research\Code V2\Matfiles\';
+%     case 2
+%         ctDirRes = '/home/pbutala/My Documents/MatlabResults/BeamSteering/';
+%         ctFileCodeSrc = '/home/pbutala/My Documents/MATLAB/Research/Code V2/Scripts/scrBeamSteering.m';
+%         ctMatDir = '/home/pbutala/My Documents/MATLAB/Research/Code V2/Matfiles/';
+%     case 3
+%         ctDirRes = 'C:\\Users\\pbutala\\Documents\\MATLAB\\MatlabResults\\BeamSteering\\';
+%         ctFileCodeSrc = 'C:\\Users\\pbutala\\Documents\\MATLAB\\Research\\Code V2\\Scripts\\scrBeamSteering.m';
+%         ctMatDir = 'C:\\Users\\pbutala\\Documents\\MATLAB\\Research\\Code V2\\Matfiles\\';
+    case 4
+        ctDirRes = 'C:\\Users\\Pankil\\Documents\\MatlabResults\\12 WDMOFDM\\';
+        ctFileCodeSrc = 'C:\\Users\\Pankil\\My Documents\\MATLAB\\Research\\Code V2\\Scripts\\scrOFDMWDM.m';
+        ctMatDir = 'C:\\Users\\Pankil\\Documents\\MATLAB\\Research\\Code V2\\Matfiles\\';
     otherwise
         error('Station not defined');
 end
 
-RGBledmat = [ctMatDir 'defLEDrgb01.mat'];
+%% SPDs
+Rpsd = getSOG(RMN,RSD,RSC,lambdas);                 
+Rpsd = Rpsd/(sum(Rpsd)*LAMBDADELTA);
+Rch = cPSD(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,Rpsd);   % Normalized RED SPD
+
+Gpsd = getSOG(GMN,GSD,GSC,lambdas);
+Gpsd = Gpsd/(sum(Gpsd)*LAMBDADELTA);
+Gch = cPSD(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,Gpsd);   % Normalized GREEN SPD
+
+Bpsd = getSOG(BMN,BSD,BSC,lambdas);
+Bpsd = Bpsd/(sum(Bpsd)*LAMBDADELTA);
+Bch = cPSD(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,Bpsd);   % Normalized BLUE SPD
+
+RGBledmat = [ctMatDir 'temp~' '.mat'];
 if exist(RGBledmat,'file')
     load(RGBledmat,'RGB');
 else
-    RES = 0.1;
-    RGB = cLEDrgb(RES);
+    RGB = cLEDrgb(RES,Rch,Gch,Bch);
     RGB.initialize();
+    if ~exist(ctMatDir,'dir')
+        mkdir(ctMatDir);                 % Create directory to store characterization data
+    end
     save(RGBledmat,'RGB');
 end
 
-[S,R,G,B,tr,tg,tb] = RGB.getPSD(x,y);
-scl = Wch.lmFlux/S.lmFlux;
-S.scaleOutputFlux(scl);
-R.scaleOutputFlux(scl);
-G.scaleOutputFlux(scl);
-B.scaleOutputFlux(scl);
-CCT = mccamy(x,y);
-[x1,y1] = planckXY(CCT);
-figure;
-obs.getCoordinates(S.npsd);
-
-figure;
-subplot(2,1,1);
-plot(S.npsd.X,S.npsd.Y);
-axis tight;
-title(sprintf('white psd\nCCT=%0.1fK',CCT));
-subplot(2,3,6);
-plot(R.npsd.X,R.npsd.Y);
-axis tight;
-title('red psd');
-subplot(2,3,5);
-plot(G.npsd.X,G.npsd.Y);
-axis tight;
-title('green psd');
-subplot(2,3,4);
-plot(B.npsd.X,B.npsd.Y);
-axis tight;
-title('blue psd');
+PLACOLC = 'm'; PLACOLS = '-'; PLACOMK = 'o';
+PLDCOLC = 'c'; PLDCOLS = '-'; PLDCOMK = 'd';
+PLTXLCS = {'r';'g';'b'}; PLTXLSS = {'--';'-.';':'}; PLTXMKS = {'>';'s';'*'};
+% Figure CCT config
+FIGCCT = figure('Name',sprintf('SPD vs CCT'),'NumberTitle','OFF');
+FIGCCTPLNR = power(2,floor(log2(LENCCTPL)/2));
+FIGCCTPLNC = power(2,ceil(log2(LENCCTPL)/2));
+FIGLDAMIN = 400; FIGLDAMAX = 800;
+iTPL = 1;
+for iT = 1:LENCCT                                                           % LOOP START CCT
+    if RNGCCT(iT) == RNGCCTPL(iTPL)                                         % If CCT selected for plot
+        figure(FIGCCT);
+        subplot(FIGCCTPLNR,FIGCCTPLNC,iTPL);
+        [x,y] = planckXY(RNGCCT(iT)); 
+%         fprintf('x=%0.2f y=%0.2f\n',x,y);
+        [S,R,G,B,tr,tg,tb] = RGB.getPSD(x,y);                               % Get PSDs at CCT
+        plot(R.npsd.X,(tr/S.npsd.Ymax)*R.npsd.Y,PLTXLCS{1});                % Plot RED SPD
+        hold on;
+        plot(G.npsd.X,(tg/S.npsd.Ymax)*G.npsd.Y,PLTXLCS{2});                % Plot Green SPD
+        plot(B.npsd.X,(tb/S.npsd.Ymax)*B.npsd.Y,PLTXLCS{3});                % Plot Blue SPD
+        axis([FIGLDAMIN FIGLDAMAX 0 1]);
+        xlabel('Wavelength (nm)');
+        ylabel('Normalized SPD');
+        title(sprintf('CCT = %dK, [x,y] = [%0.2f,%0.2f]',RNGCCTPL(iTPL),x,y));
+        iTPL = iTPL + 1;
+        figure;
+        obs.getCoordinates(S.npsd);
+    end    
+end

@@ -1,6 +1,6 @@
 % scrOFDMWDM
-if exist('h','var') && ishandle(h)
-    delete(h);
+if exist('hWB','var') && ishandle(hWB)
+    delete(hWB);
 end
 close all;
 clearvars;
@@ -9,11 +9,11 @@ clc;
 % FLAGS
 fSTATION = 4;   % 1.PHO445 2.ENGGRID 3.LAPTOP 4.Optimus
 fSAVEALL = true;
-fARCHIVE = false;
+fARCHIVE = true;
 rng('default');
 
 CHAROVERWRITE = '~';
-STRPREFIX = '1_';
+STRPREFIX = '3_';
 if(fARCHIVE)
     CHARIDXARCHIVE = '';           % ARCHIVE INDEX
 else
@@ -33,18 +33,18 @@ WBX = 50; WBY = 500; WBW = 275; WBH = 75;   % Wait Box X,,Y,WID,HGT
 WBTITLE = 'Running WDM OFDM Simulation...'; % Wait Box title
 
 %% ranges
-RNGCCT = [4000 5500];                         LENCCT = numel(RNGCCT);              % CCT 
+RNGCCT = [3000:500:6000];                         LENCCT = numel(RNGCCT);              % CCT 
 RNGCCTPL = RNGCCT;                     LENCCTPL = numel(RNGCCTPL);          % CCTs to plot
 RNGOFDMTYPES = {'dcoofdm';'acoofdm'};  LENOFDMTYPES = numel(RNGOFDMTYPES);  % OFDM types
-RNGOFDMOFST = [3.2;0];                 LENOFDMOFST = size(RNGOFDMOFST,2);   % OFDM offsets
-RNGMOD = [8;8^2];                      LENMOD  = size(RNGMOD,2);            % Subcarrier modulation order
-RNGMODNSC = power(2,6:4:10);           LENMODNSC = numel(RNGMODNSC);        % Number of subcarriers
+RNGOFDMOFST = [3.2 0];                 LENOFDMOFST = size(RNGOFDMOFST,2);   % OFDM offsets
+RNGMOD = [8 8^2];                      LENMOD  = size(RNGMOD,2);            % Subcarrier modulation order
+RNGMODNSC = power(2,6);           LENMODNSC = numel(RNGMODNSC);        % Number of subcarriers
 RNGSNRMIN = 140; RNGSNRMAX = 300;                                           % SNR ranges 
 RNGSNRLOOP = RNGSNRMAX - RNGSNRMIN;                                         % Number of SNR in each SNR loop
-BERRATIOS = [5 10 50 100 500]; DELTASNR = [0.05 0.1 2 4 8];                % BER ratios to gracefully calculate next SNR
-% DELTASNR = [2 5 5 10 10];                                                   % SNR increment to gracefully calculate next SNR
+BERRATIOS = [1 5 10 50 100 500 1000]; DELTASNR = [0.01 0.05 0.1 2 3 4 5];                % BER ratios to gracefully calculate next SNR
+% DELTASNR = [5 5 5 10 10 10 20];                                                   % SNR increment to gracefully calculate next SNR
 
-TOTALBITS = 1e5;                            % Total bit for transmtter to simulate
+TOTALBITS = 5e4;                            % Total bit for transmtter to simulate
 BERTH = 1e-3;   BERTHMIN = 0.5*BERTH;       % BER thresholds; 
 
 %% config
@@ -144,12 +144,12 @@ Brx.sensor.filter = cCurve(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,Bf);
 ERR = []; RNGSNRDB = [];
 try
 % Wait Bar to show progress
-h = waitbar(0,'Simulation: 0.00% done','Name',WBTITLE,...
+hWB = waitbar(0,'Simulation: 0.00% done','Name',WBTITLE,...
     'Visible','Off',...
     'CreateCancelBtn',...
     'setappdata(gcbf,''canceling'',1)');
-set(h,'Position',[WBX WBY WBW WBH],'Visible','On');
-setappdata(h,'canceling',0);
+set(hWB,'Position',[WBX WBY WBW WBH],'Visible','On');
+setappdata(hWB,'canceling',0);
 LOOPCOUNT = 0;
 TOTALLOOPS = LENCCT*LENMODNSC*LENOFDMTYPES*RNGSNRLOOP;
 for iT = 1:LENCCT                                                           % LOOP START CCT
@@ -280,6 +280,9 @@ for iT = 1:LENCCT                                                           % LO
                     IBITSTX = IBITSTX + BPS(iNSC,iOf);
                     BITSTART = BITSTOP + 1;
                 end                                                         % LOOP STOP MONTE CARLO
+                if (iT==2) && (iNSC==1) && (iOf==2)
+                    abcd = 1;
+                end
                 BER(:,iSNR,iT,iNSC,iOf) = ERR(:,iSNR,iT,iNSC,iOf)/IBITSTX;
                     
                 % Calcculate change in BER and SNR
@@ -294,22 +297,22 @@ for iT = 1:LENCCT                                                           % LO
                 % Update progress on wait bar
                 LOOPCOUNT = LOOPCOUNT + DSNR(iSNR,iT,iNSC,iOf);
                 PROGRESS = LOOPCOUNT/TOTALLOOPS;
-                waitbar(PROGRESS,h,sprintf('Simulation: %0.2f%% done...',PROGRESS*100));
-                if(getappdata(h,'canceling'))
-                    delete(h);
+                waitbar(PROGRESS,hWB,sprintf('Simulation: %0.2f%% done...',PROGRESS*100));
+                if(getappdata(hWB,'canceling'))
+                    delete(hWB);
                     error('Simulation aborted');
                 end
                 
                 % check and break if BER for ALL channels are below set thresholds
-                if (RNGSNRDB(iSNR,iT,iOf) > RNGSNRMAX) || isequal(sum(BER(:,iSNR,iT,iOf) < BERTHMIN),NTX)
+                if (RNGSNRDB(iSNR,iT,iNSC,iOf) > RNGSNRMAX) || isequal(sum(BER(:,iSNR,iT,iNSC,iOf) < BERTHMIN),NTX)
                     LOOPDONE = true;
                     LOOPCOUNT = (iT-1)*LENMODNSC*LENOFDMTYPES*RNGSNRLOOP +...
                                 (iNSC-1)*LENOFDMTYPES*RNGSNRLOOP +...
                                 (iOf-1)*RNGSNRLOOP + RNGSNRLOOP;
                     PROGRESS = LOOPCOUNT/TOTALLOOPS;
-                    waitbar(PROGRESS,h,sprintf('Simulation: %0.2f%% done...',PROGRESS*100));
-                    if(getappdata(h,'canceling'))
-                        delete(h);
+                    waitbar(PROGRESS,hWB,sprintf('Simulation: %0.2f%% done...',PROGRESS*100));
+                    if(getappdata(hWB,'canceling'))
+                        delete(hWB);
                         error('Simulation aborted');
                     end
                 end
@@ -324,9 +327,9 @@ if fSAVEALL                                                                 % SA
     copyfile(ctFileCodeSrc,ctFileCodeDest); % save script
     save(ctFileVars);                       % save workspace
 end
-delete(h);
+delete(hWB);
 catch ex
-delete(h);
+delete(hWB);
 rethrow(ex);
 end
 

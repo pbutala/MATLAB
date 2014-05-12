@@ -11,10 +11,17 @@ classdef cLEDrgb < handle
     properties(SetAccess = private)
         tn;     % tristimulus values
         xyz;    % SPD XY coordinate on CIE 1978
+        hWB;    % handle waitbar
 %         cct;    % correlated color temperature for each xyz(:,i) combination. using mccamy's formula. More accurate 
     end
     
     methods
+        % destructor
+        function delete(obj)
+            if ishandle(obj.hWB)
+                delete(obj.hWB);
+            end
+        end
         % constructor
         function obj = cLEDrgb(flRes,Rpsd,Gpsd,Bpsd)
              % normalized optical flux resolution (between 0 and 1)
@@ -68,7 +75,7 @@ classdef cLEDrgb < handle
             % Generate CIE 1978 object
             obj.obs = cCIE;
            % initialize variables
-            obj.tn = []; obj.xyz = [];
+            obj.tn = [nan;nan;nan]; obj.xyz = [nan;nan;nan];
         end
         
 %         % initialize the class
@@ -89,15 +96,18 @@ classdef cLEDrgb < handle
 %         end
         % initialize the class
         function initialize(obj)
-            resa = obj.flRes:obj.flRes:1;
+%             resa = obj.flRes:obj.flRes:1;
+            resa = 0:obj.flRes:1;
             resLEN = numel(resa);
-            IDX = 1;
             s = [0;0;0];
             txyz = [0;0;0];
-            h = waitbar(0,'0%','Name','Characterizing LED...',...
+            h = waitbar(0,'0.00%','Name','Characterizing LED...',...
                 'CreateCancelBtn',...
                 'setappdata(gcbf,''canceling'',1)');
+            try
             setappdata(h,'canceling',0);
+            TOTALLOOPS = resLEN^3;
+            LOOPCOUNT = 0;
             for ix = 1:resLEN
                 s(1) = resa(ix);
                 for iy = 1:resLEN
@@ -105,13 +115,15 @@ classdef cLEDrgb < handle
                     for iz = 1:resLEN
                         s(3) = resa(iz);
                         ttn = s/sum(s,1);
-                        S = (ttn(1)*obj.R) + (ttn(2)*obj.G) + (ttn(3)*obj.B);
-                        [txyz(1),txyz(2),txyz(3)] = obj.obs.getCoordinates(S.npsd);
-                        obj.tn(:,end+1) = ttn;
-                        obj.xyz(:,end+1) = txyz;
-                        PROG = IDX/(resLEN^3);
+                        if ~ismember(obj.tn',ttn','rows')
+                            S = (ttn(1)*obj.R) + (ttn(2)*obj.G) + (ttn(3)*obj.B);
+                            [txyz(1),txyz(2),txyz(3)] = obj.obs.getCoordinates(S.npsd);
+                            obj.tn(:,end+1) = ttn;
+                            obj.xyz(:,end+1) = txyz;
+                        end
+                        LOOPCOUNT = LOOPCOUNT + 1;
+                        PROG = LOOPCOUNT/TOTALLOOPS;
                         waitbar(PROG,h,sprintf('%0.2f%% done...',PROG*100));
-                        IDX = IDX + 1;
                         if(getappdata(h,'canceling'))
                             delete(h);
                             error('Characterization aborted');
@@ -120,44 +132,57 @@ classdef cLEDrgb < handle
                 end
             end
             waitbar(1);
-            obj.tn = unique(obj.tn','rows')';
-            obj.xyz = unique(obj.xyz','rows')';
-            delete(h);
-%             NLEN = 8;
-%             NSTART = 1;
-%             h = waitbar(0,'1','Name','Characterizing LED...',...
-%                 'CreateCancelBtn',...
-%                 'setappdata(gcbf,''canceling'',1)');
-%             setappdata(h,'canceling',0);
-%             while NSTART <= resLEN
-%                 waitbar(NSTART/resLEN);
-%                 NSTOP = min(NSTART+NLEN-1,resLEN);
-%                 res = resa(NSTART:NSTOP);
-%                 N = numel(res);
-%                 s1 = repmat(res,N*N,1);
-%                 s2 = repmat(res,N,N);
-%                 s3 = repmat(res,1,N*N);
-%                 s = [s1(:)';s2(:)';s3(:)'];
-%                 sm = repmat(sum(s,1),3,1);
-%                 s = s./sm;
-% %                 ttn = unique(s','rows')';
-%                 ttn = s;
-%                 txyz = zeros(3,size(ttn,2));
-%                 for j=1:size(ttn,2)
-%                     S = (ttn(1,j)*obj.R) + (ttn(2,j)*obj.G) + (ttn(3,j)*obj.B);
-%                     [txyz(1,j),txyz(2,j),txyz(3,j)] = obj.obs.getCoordinates(S.npsd);
-%                 end
-%                 obj.tn(1:size(ttn,1),end+1:end+size(ttn,2)) = ttn;
-%                 obj.xyz(1:size(txyz,1),end+1:end+size(txyz,2))  = txyz;
-%                 clear s1 s2 s3 s sm ttn txyz;
-%                 NSTART = NSTOP + 1;
-%                 
-%             end
-%             waitbar(1);
 %             obj.tn = unique(obj.tn','rows')';
 %             obj.xyz = unique(obj.xyz','rows')';
-%             close(h);
+            catch ex
+            delete(h);
+            rethrow(ex);
+            end
+            delete(h);
         end
+%         % initialize the class
+%         function initialize(obj)
+%             resa = 0:obj.flRes:1;
+%             resLEN = numel(resa);
+%             s = [0;0;0];
+%             txyz = [0;0;0];
+%             obj.hWB = waitbar(0,'0.00%','Name','Characterizing LED...',...
+%                 'CreateCancelBtn',...
+%                 'setappdata(gcbf,''canceling'',1)');
+%             try
+%             setappdata(obj.hWB,'canceling',0);
+%             TOTALLOOPS = (resLEN-1)*resLEN/2;
+%             LOOPCOUNT = 0;
+%             for ix = 1:resLEN
+%                 s(1) = resa(ix);
+%                 for iy = 1:resLEN-ix
+%                     s(2) = resa(iy);
+%                     s(3) = 1-s(1)-s(2);
+%                     ttn = s;
+%                     S = (ttn(1)*obj.R) + (ttn(2)*obj.G) + (ttn(3)*obj.B);
+%                     [txyz(1),txyz(2),txyz(3)] = obj.obs.getCoordinates(S.npsd);
+%                     obj.tn(:,end+1) = ttn;
+%                     obj.xyz(:,end+1) = txyz;
+%                     
+%                     LOOPCOUNT = LOOPCOUNT+1;
+%                     PROG = LOOPCOUNT/TOTALLOOPS;
+%                     waitbar(PROG,obj.hWB,sprintf('%0.2f%% done...',PROG*100));
+%                     
+%                     if(getappdata(obj.hWB,'canceling'))
+%                         delete(obj.hWB);
+%                         error('Characterization aborted');
+%                     end
+%                 end
+%             end
+% %             waitbar(1);
+%             obj.tn = unique(obj.tn','rows')';
+%             obj.xyz = unique(obj.xyz','rows')';
+%             catch ex
+%             delete(obj.hWB);
+%             rethrow(ex);
+%             end
+%             delete(obj.hWB);
+%         end
         
         % get PSD generated by the RGB led closest to x,y CIE point
         function [S,R,G,B,tr,tg,tb] = getPSD(obj,x,y)

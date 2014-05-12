@@ -2,15 +2,17 @@ close all;
 clearvars;
 clc;
 % scrFigNameChange
-fSTATION = 1;   % 1.PHO445 2.ENGGRID 3.LAPTOP
+fSTATION = 4;   % 1.PHO445 2.ENGGRID 3.LAPTOP 4.Optimus
 % STATION
 switch fSTATION
     case 1
-        ctDirRes = '\\ad\eng\users\p\b\pbutala\My Documents\MatlabResults\11. SISOFDM all\';
+        ctDirRes = '\\ad\eng\users\p\b\pbutala\My Documents\MatlabResults\12 WDMOFDM\';
     case 2
-        ctDirRes = '/home/pbutala/My Documents/MatlabResults/11. SISOFDM all/';
+        ctDirRes = '/home/pbutala/My Documents/MatlabResults/12 WDMOFDM/';
     case 3
-        ctDirRes = 'C:\\Users\\pbutala\\Documents\\MatlabResults\\11. SISOFDM all\\';
+        ctDirRes = 'C:\\Users\\pbutala\\Documents\\MatlabResults\\12 WDMOFDM\\';
+    case 4
+        ctDirRes = 'C:\\Users\\Pankil\\Documents\\MatlabResults\\12 WDMOFDM\\';
     otherwise
         error('Station not defined');
 end
