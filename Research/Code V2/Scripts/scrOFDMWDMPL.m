@@ -33,7 +33,7 @@ set(0,'DefaultLineMarkerSize',8);
 FIGTITLE = 'Off';
 
 try
-% Wait Bar to show progress
+% % Wait Bar to show progress
 hWB = waitbar(0,'Plotting Results: 0.00% done','Name',WBTITLE,'Visible','Off');
 set(hWB,'Position',[WBX WBY WBW WBH],'Visible','On');
 

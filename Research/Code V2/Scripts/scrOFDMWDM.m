@@ -13,7 +13,7 @@ fARCHIVE = true;
 rng('default');
 
 CHAROVERWRITE = '~';
-STRPREFIX = '7_Lrtz_';
+STRPREFIX = '8_Lrtz_';
 if(fARCHIVE)
     CHARIDXARCHIVE = '';           % ARCHIVE INDEX
 else
@@ -44,13 +44,13 @@ RNGOFDMOFST = [3.2 0];                  LENOFDMOFST = size(RNGOFDMOFST,2);  % OF
 RNGMOD = [8 8^2];                       LENMOD  = size(RNGMOD,2);           % Subcarrier modulation order
 RNGMODNSC = power(2,6);                 LENMODNSC = numel(RNGMODNSC);       % Number of subcarriers
 RNGLEDSD = 5:5:25;                    LENLEDSD = numel(RNGLEDSD);         % Number of LED width SDs
-RNGFWHM = 10:10:100;                        LENFWHM = numel(RNGFWHM);           % FWHM for filters
+RNGFWHM = 10:10:80;                        LENFWHM = numel(RNGFWHM);           % FWHM for filters
 RNGSNRMIN = 140; RNGSNRMAX = 300;                                           % SNR ranges
 RNGSNRLOOP = RNGSNRMAX - RNGSNRMIN;                                         % Number of SNR in each SNR loop
 BERRATIOS = [1 5 10 50 100 500 1000]; DELTASNR = [0.01 0.05 0.1 2 3 4 5];                % BER ratios to gracefully calculate next SNR
 % DELTASNR = [5 5 5 10 10 10 20];                                                   % SNR increment to gracefully calculate next SNR
 
-TOTALBITS = 1e4;                            % Total bit for transmtter to simulate
+TOTALBITS = 2e4;                            % Total bit for transmtter to simulate
 BERTH = 1e-3;   BERTHMIN = 0.5*BERTH;       % BER thresholds;
 
 %% config
@@ -155,15 +155,15 @@ try
         %% variables
         if exist(RGBledmat,'file')              % If LED characterization table exists
             load(RGBledmat,'RGB');              % Load RGB led
-            RGBLED(iTsd) = RGB;
         else
-            RGBLED(iTsd) = cLEDrgb(RES,Rch,Gch,Bch);     % Create RGB led
-            RGBLED(iTsd).initialize();                   % Initialize led
+            RGB = cLEDrgb(RES,Rch,Gch,Bch);     % Create RGB led
+            RGB.initialize();                   % Initialize led
             if ~exist(sPSDDIR,'dir')
                 mkdir(sPSDDIR);                 % Create directory to store characterization data
             end
             save(RGBledmat,'RGB');              % Save LED characterization
         end
+        RGBLED(iTsd) = RGB;
         
         for iT = 1:LENCCT                                                           % LOOP START CCT
             % initialize transmitter
