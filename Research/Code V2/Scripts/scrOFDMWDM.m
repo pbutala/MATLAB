@@ -7,13 +7,13 @@ clearvars;
 clc;
 
 % FLAGS
-fSTATION = 1;   % 1.PHO445 2.ENGGRID 3.LAPTOP 4.Optimus
+fSTATION = 4;   % 1.PHO445 2.ENGGRID 3.LAPTOP 4.Optimus
 fSAVEALL = true;
-fARCHIVE = true;
+fARCHIVE = false;
 rng('default');
 
 CHAROVERWRITE = '~';
-STRPREFIX = '4_';
+STRPREFIX = '5_Lrtz_';
 if(fARCHIVE)
     CHARIDXARCHIVE = '';           % ARCHIVE INDEX
 else
@@ -33,20 +33,23 @@ WBX = 50; WBY = 500; WBW = 275; WBH = 75;   % Wait Box X,,Y,WID,HGT
 WBTITLE = 'Running WDM OFDM Simulation...'; % Wait Box title
 cResp = cResponsivity();                    % Responsivity class instance
 PDRESP = cResp.getResponsivity(lambdas);    % Get responsivities vs wavelength for Si-PIN PD (default)
+FLTTYPE = FILTERTYPE.LORENTZIAN;            % Filter Model
+% RFWHM = 25; GFWHM = 25; BFWHM = 25;         % Filter FWHM
 
 %% ranges
-RNGCCT = 3000:250:6000;                         LENCCT = numel(RNGCCT);              % CCT 
-RNGCCTPL = RNGCCT;                     LENCCTPL = numel(RNGCCTPL);          % CCTs to plot
-RNGOFDMTYPES = {'dcoofdm';'acoofdm'};  LENOFDMTYPES = numel(RNGOFDMTYPES);  % OFDM types
-RNGOFDMOFST = [3.2 0];                 LENOFDMOFST = size(RNGOFDMOFST,2);   % OFDM offsets
-RNGMOD = [8 8^2];                      LENMOD  = size(RNGMOD,2);            % Subcarrier modulation order
-RNGMODNSC = power(2,6);           LENMODNSC = numel(RNGMODNSC);        % Number of subcarriers
+RNGCCT = 3000:1000:6000;                LENCCT = numel(RNGCCT);             % CCT 
+RNGCCTPL = RNGCCT;                      LENCCTPL = numel(RNGCCTPL);         % CCTs to plot
+RNGOFDMTYPES = {'dcoofdm';'acoofdm'};   LENOFDMTYPES = numel(RNGOFDMTYPES); % OFDM types
+RNGOFDMOFST = [3.2 0];                  LENOFDMOFST = size(RNGOFDMOFST,2);  % OFDM offsets
+RNGMOD = [8 8^2];                       LENMOD  = size(RNGMOD,2);           % Subcarrier modulation order
+RNGMODNSC = power(2,6);                 LENMODNSC = numel(RNGMODNSC);       % Number of subcarriers
+RNGFWHM = 10:10:100;                        LENFWHM = numel(RNGFWHM);           % FWHM for filters                         
 RNGSNRMIN = 140; RNGSNRMAX = 300;                                           % SNR ranges 
 RNGSNRLOOP = RNGSNRMAX - RNGSNRMIN;                                         % Number of SNR in each SNR loop
-BERRATIOS = [1 5 10 50 100 500 1000]; DELTASNR = [0.01 0.05 0.1 2 3 4 5];                % BER ratios to gracefully calculate next SNR
-% DELTASNR = [5 5 5 10 10 10 20];                                                   % SNR increment to gracefully calculate next SNR
+BERRATIOS = [1 5 10 50 100 500 1000]; %DELTASNR = [0.01 0.05 0.1 2 3 4 5];                % BER ratios to gracefully calculate next SNR
+DELTASNR = [5 5 5 10 10 10 20];                                                   % SNR increment to gracefully calculate next SNR
 
-TOTALBITS = 1e5;                            % Total bit for transmtter to simulate
+TOTALBITS = 1e4;                            % Total bit for transmtter to simulate
 BERTH = 1e-3;   BERTHMIN = 0.5*BERTH;       % BER thresholds; 
 
 %% config
@@ -94,24 +97,23 @@ if ~exist(ctDirRes,'dir')   % if data directory does NOT exist
     mkdir(ctDirRes);        % create data dir
 end
 
-%% PSDs
-Rpsd = getSOG(RMN,RSD,RSC,lambdas);                 
-Rpsd = Rpsd/(sum(Rpsd)*LAMBDADELTA);
-Rch = cPSD(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,Rpsd);   % Normalized RED SPD
+%% SPDs
+Rspd = getSOG(RMN,RSD,RSC,lambdas);                 
+Rspd = Rspd/(sum(Rspd)*LAMBDADELTA);
+Rch = cPSD(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,Rspd);   % Normalized RED SPD
 
-Gpsd = getSOG(GMN,GSD,GSC,lambdas);
-Gpsd = Gpsd/(sum(Gpsd)*LAMBDADELTA);
-Gch = cPSD(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,Gpsd);   % Normalized GREEN SPD
+Gspd = getSOG(GMN,GSD,GSC,lambdas);
+Gspd = Gspd/(sum(Gspd)*LAMBDADELTA);
+Gch = cPSD(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,Gspd);   % Normalized GREEN SPD
 
-Bpsd = getSOG(BMN,BSD,BSC,lambdas);
-Bpsd = Bpsd/(sum(Bpsd)*LAMBDADELTA);
-Bch = cPSD(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,Bpsd);   % Normalized BLUE SPD
+Bspd = getSOG(BMN,BSD,BSC,lambdas);
+Bspd = Bspd/(sum(Bspd)*LAMBDADELTA);
+Bch = cPSD(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,Bspd);   % Normalized BLUE SPD
 
 Ambpsd = 5.8*ones(size(lambdas));
 Ambch = cPSD(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,Ambpsd);   % AMBIENT SPD
 
 %% variables
-% TODO: NEED MORE RESOLUTION ON XYZ
 if exist(RGBledmat,'file')              % If LED characterization table exists
     load(RGBledmat,'RGB');              % Load RGB led
 else
@@ -122,26 +124,6 @@ else
     end
     save(RGBledmat,'RGB');              % Save LED characterization
 end
-
-% initialize receiver filter models
-% TODO: May want to use 'Lorentzian' model
-Rf = getSOG(RMN,RSD,RSC,lambdas);       % Red filter
-Rf = FLT*Rf/max(Rf);
-Gf = getSOG(GMN,GSD,GSC,lambdas);       % Green filter
-Gf = FLT*Gf/max(Gf);
-Bf = getSOG(BMN,BSD,BSC,lambdas);       % Blue filter
-Bf = FLT*Bf/max(Bf);
-
-% initialize receivers
-Rrx = cSinglePixelReceiverWhiteReflection(RXX,RXY,RXZ);
-Rrx.sensor.filter = cCurve(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,Rf);             % Set filter transmission
-Rrx.sensor.responsivity = cCurve(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,PDRESP);   % Set responsivity (Si PIN)
-Grx = cSinglePixelReceiverWhiteReflection(RXX,RXY,RXZ);
-Grx.sensor.filter = cCurve(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,Gf);             % Set filter transmission
-Grx.sensor.responsivity = cCurve(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,PDRESP);   % Set responsivity (Si PIN)
-Brx = cSinglePixelReceiverWhiteReflection(RXX,RXY,RXZ);
-Brx.sensor.filter = cCurve(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,Bf);             % Set filter transmission
-Brx.sensor.responsivity = cCurve(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,PDRESP);   % Set responsivity (Si PIN)
 
 %% logic
 
@@ -156,175 +138,204 @@ hWB = waitbar(0,'Simulation: 0.00% done','Name',WBTITLE,...
 set(hWB,'Position',[WBX WBY WBW WBH],'Visible','On');
 setappdata(hWB,'canceling',0);
 LOOPCOUNT = 0;
-TOTALLOOPS = LENCCT*LENMODNSC*LENOFDMTYPES*RNGSNRLOOP;
+TOTALLOOPS = LENCCT*LENFWHM*LENMODNSC*LENOFDMTYPES*RNGSNRLOOP;
 for iT = 1:LENCCT                                                           % LOOP START CCT
     % initialize transmitter
     [x,y] = planckXY(RNGCCT(iT));   % Get x,y from CCT
     [~,R,G,B] = RGB.getPSD(x,y);    % Get transmitter(s) SPD for set x,y
     % R,G,B are the luminaire channels
-    
+
     % set room with new transmitter
     clear room;
-    room = cRoom(RML,RMW,RMH);                                              % create room and set size 
+    room = cRoom(RML,RMW,RMH);                                              % create room and set size
     room.luminaire = cLuminaire([R G B],RML/2,RMW/2,LKTX);                  % Add luminaire to room
     room.luminaire.orientation = cOrientation(pi,0,0);                      % Set luminaire orientation
-    
+
     locCntr = cLocation(RML/2,RMW/2,LKPL);                                  % Select center of room at plane (1m)
     room.setIlluminance(locCntr,LKILL);                                     % set illuminance
-    
+
     % lmFluxClr and rdFluxClr are the individual channel fluxes
     XAVGCH(:,iT) = [R.rdFlux;G.rdFlux;B.rdFlux];                            % AVERAGE FLUX PER COLOR
     XAVG(iT) = sum(XAVGCH(:,iT),1);                                         % TOTAL AVERAGE FLUX
-    
-    % calculate H red
-    tHfs = room.getFreeSpaceGain(Rrx.location,Rrx.orientation,Rrx.rxFOV);   % RED channel gains
-    [HRr,~] = Rrx.getSignal(R./R.rdFlux,tHfs(1),Ambch);
-    [HRg,~] = Rrx.getSignal(G./G.rdFlux,tHfs(2),Ambch);
-    [HRb,~] = Rrx.getSignal(B./B.rdFlux,tHfs(3),Ambch);
-    % calculate H green
-    tHfs = room.getFreeSpaceGain(Grx.location,Grx.orientation,Grx.rxFOV);   % GREEN channel gains
-    [HGr,~] = Grx.getSignal(R./R.rdFlux,tHfs(1),Ambch);
-    [HGg,~] = Grx.getSignal(G./G.rdFlux,tHfs(2),Ambch);
-    [HGb,~] = Grx.getSignal(B./B.rdFlux,tHfs(3),Ambch);
-    % calculate H blue
-    tHfs = room.getFreeSpaceGain(Brx.location,Brx.orientation,Brx.rxFOV);   % BLUE channel gains
-    [HBr,~] = Brx.getSignal(R./R.rdFlux,tHfs(1),Ambch);
-    [HBg,~] = Brx.getSignal(G./G.rdFlux,tHfs(2),Ambch);
-    [HBb,~] = Brx.getSignal(B./B.rdFlux,tHfs(3),Ambch);
-    % construct channel matrix (does not include transmitted power)
-    H = [HRr HRg HRb;...
-        HGr HGg HGb;...
-        HBr HBg HBb];                                                       % Channel matrix
 
-    % Loop through different configurations
-    for iNSC = 1:LENMODNSC                                                  % LOOP START MODNSC
-        MODNSC = RNGMODNSC(iNSC);
-        for iOf = 1:LENOFDMTYPES                                            % LOOP START OFDM types
-            ofdmType = lower(RNGOFDMTYPES{iOf});
-            switch lower(ofdmType)
-                case 'acoofdm'
-                    d = MODNSC/4;
-                    STROFDM = 'ACO';
-                    OffsetDcoStddev = 0;
-                    OffsetAcoStddev = RNGOFDMOFST(iOf);
-                case 'dcoofdm'
-                    d = MODNSC/2-1;
-                    STROFDM = 'DCO';
-                    OffsetDcoStddev = RNGOFDMOFST(iOf);
-                    OffsetAcoStddev = 0;
-            end
-            M = RNGMOD(iOf);
-            SYMS = getQAMsyms(M);                                           % Get QAM symbols
-            BPS(iNSC,iOf) = d*log2(M);                                      % Calculate Bits Per Symbol
-            
-            X = zeros(NTX,MODNSC);
-            Y = zeros(NRX,MODNSC);
-            clear Xs Xhs Xh W;
-            
-            LOOPDONE = false; iSNR = 1;
-            while ~LOOPDONE                                                 % LOOP START SNR (dynamically select next SNR)
-                if iSNR > 1
-                    dber = min(BER(BER(:,iSNR-1,iT,iNSC,iOf) > BERTHMIN,iSNR-1,iT,iNSC,iOf));   % Smallest BER from all those above the BERTH limit
-                    % dynamically select next SNR based on how close the current BER is to threshold
-                    RNGSNRDB(iSNR,iT,iNSC,iOf) = RNGSNRDB(iSNR-1,iT,iNSC,iOf) + getDeltaSNR(BERTHMIN,dber,BERRATIOS,DELTASNR);
-                else
-                    RNGSNRDB(iSNR,iT,iNSC,iOf) = RNGSNRMIN;                 % ITER 1: Smallest SNR from range
+    for iFW = 1:LENFWHM                                                     % LOOP START FWHM
+        % initialize receiver filter models
+        switch FLTTYPE
+            case FILTERTYPE.GAUSSIAN
+                Rf = getSOG(RMN,RNGFWHM(iFW),RSC,lambdas);       % Red filter Gaussian
+                Gf = getSOG(GMN,RNGFWHM(iFW),GSC,lambdas);       % Green filter Gaussian
+                Bf = getSOG(BMN,RNGFWHM(iFW),BSC,lambdas);       % Blue filter Gaussian
+            case FILTERTYPE.LORENTZIAN
+                Rf = getLorentzian(RMN,RNGFWHM(iFW),lambdas);  % Red filter Lorentzian
+                Gf = getLorentzian(GMN,RNGFWHM(iFW),lambdas);  % Green filter Lorentzian
+                Bf = getLorentzian(BMN,RNGFWHM(iFW),lambdas);  % Blue filter Lorentzian
+        end
+        Rf = FLT*Rf/max(Rf);
+        Gf = FLT*Gf/max(Gf);
+        Bf = FLT*Bf/max(Bf);
+
+        % initialize receivers
+        Rrx(iFW) = cSinglePixelReceiverWhiteReflection(RXX,RXY,RXZ);
+        Rrx(iFW).sensor.filter = cCurve(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,Rf);             % Set filter transmission
+        Rrx(iFW).sensor.responsivity = cCurve(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,PDRESP);   % Set responsivity (Si PIN)
+        Grx(iFW) = cSinglePixelReceiverWhiteReflection(RXX,RXY,RXZ);
+        Grx(iFW).sensor.filter = cCurve(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,Gf);             % Set filter transmission
+        Grx(iFW).sensor.responsivity = cCurve(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,PDRESP);   % Set responsivity (Si PIN)
+        Brx(iFW) = cSinglePixelReceiverWhiteReflection(RXX,RXY,RXZ);
+        Brx(iFW).sensor.filter = cCurve(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,Bf);             % Set filter transmission
+        Brx(iFW).sensor.responsivity = cCurve(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,PDRESP);   % Set responsivity (Si PIN)
+
+        % calculate H red
+        tHfs = room.getFreeSpaceGain(Rrx(iFW).location,Rrx(iFW).orientation,Rrx(iFW).rxFOV);   % RED channel gains
+        [HRr,~] = Rrx(iFW).getSignal(R./R.rdFlux,tHfs(1),Ambch);
+        [HRg,~] = Rrx(iFW).getSignal(G./G.rdFlux,tHfs(2),Ambch);
+        [HRb,~] = Rrx(iFW).getSignal(B./B.rdFlux,tHfs(3),Ambch);
+        % calculate H green
+        tHfs = room.getFreeSpaceGain(Grx(iFW).location,Grx(iFW).orientation,Grx(iFW).rxFOV);   % GREEN channel gains
+        [HGr,~] = Grx(iFW).getSignal(R./R.rdFlux,tHfs(1),Ambch);
+        [HGg,~] = Grx(iFW).getSignal(G./G.rdFlux,tHfs(2),Ambch);
+        [HGb,~] = Grx(iFW).getSignal(B./B.rdFlux,tHfs(3),Ambch);
+        % calculate H blue
+        tHfs = room.getFreeSpaceGain(Brx(iFW).location,Brx(iFW).orientation,Brx(iFW).rxFOV);   % BLUE channel gains
+        [HBr,~] = Brx(iFW).getSignal(R./R.rdFlux,tHfs(1),Ambch);
+        [HBg,~] = Brx(iFW).getSignal(G./G.rdFlux,tHfs(2),Ambch);
+        [HBb,~] = Brx(iFW).getSignal(B./B.rdFlux,tHfs(3),Ambch);
+        % construct channel matrix (does not include transmitted power)
+        H = [HRr HRg HRb;...
+            HGr HGg HGb;...
+            HBr HBg HBb];                                                       % Channel matrix
+
+        % Loop through different configurations
+        for iNSC = 1:LENMODNSC                                                  % LOOP START MODNSC
+            MODNSC = RNGMODNSC(iNSC);
+            for iOf = 1:LENOFDMTYPES                                            % LOOP START OFDM types
+                ofdmType = lower(RNGOFDMTYPES{iOf});
+                switch lower(ofdmType)
+                    case 'acoofdm'
+                        d = MODNSC/4;
+                        STROFDM = 'ACO';
+                        OffsetDcoStddev = 0;
+                        OffsetAcoStddev = RNGOFDMOFST(iOf);
+                    case 'dcoofdm'
+                        d = MODNSC/2-1;
+                        STROFDM = 'DCO';
+                        OffsetDcoStddev = RNGOFDMOFST(iOf);
+                        OffsetAcoStddev = 0;
                 end
-                ERR(1:NTX,iSNR,iT,iNSC,iOf) = 0;                            
-                BITSTART = 1; IBITSTX = 0;
-                while(BITSTART <= TOTALBITS-BPS(iNSC,iOf)+1)                % LOOP START MONTE CARLO
-                    BITSTOP = BITSTART + BPS(iNSC,iOf) - 1;
-                    sym_bits = randi([0 1],[NTX,BPS(iNSC,iOf)]);            % Generate random bits
+                M = RNGMOD(iOf);
+                SYMS = getQAMsyms(M);                                           % Get QAM symbols
+                BPS(iNSC,iOf) = d*log2(M);                                      % Calculate Bits Per Symbol
 
-                    % Generate OFDM Frame
-                    for iTx = 1:NTX
-                        sym_dec = bin2decMat(reshape(sym_bits(iTx,:),d,log2(M)))+1;
-                        X(iTx,:) = genOFDMsignal(...                        
-                            'data',sym_dec,...
-                            'OFDMtype',ofdmType,...
-                            'N',MODNSC,...
-                            'Symbols',SYMS,...
-                            'OffsetDcoStddev', OffsetDcoStddev,...
-                            'OffsetAcoStddev', OffsetAcoStddev)';
+                X = zeros(NTX,MODNSC);
+                Y = zeros(NRX,MODNSC);
+                clear Xs Xhs Xh W;
+
+                LOOPDONE = false; iSNR = 1;
+                while ~LOOPDONE                                                 % LOOP START SNR (dynamically select next SNR)
+                    if iSNR > 1
+                        dber = min(BER(BER(:,iSNR-1,iT,iFW,iNSC,iOf) > BERTHMIN,iSNR-1,iT,iFW,iNSC,iOf));   % Smallest BER from all those above the BERTH limit
+                        % dynamically select next SNR based on how close the current BER is to threshold
+                        RNGSNRDB(iSNR,iT,iFW,iNSC,iOf) = RNGSNRDB(iSNR-1,iT,iFW,iNSC,iOf) + getDeltaSNR(BERTHMIN,dber,BERRATIOS,DELTASNR);
+                    else
+                        RNGSNRDB(iSNR,iT,iFW,iNSC,iOf) = RNGSNRMIN;                 % ITER 1: Smallest SNR from range
+                    end
+                    ERR(1:NTX,iSNR,iT,iFW,iNSC,iOf) = 0;
+                    BITSTART = 1; IBITSTX = 0;
+                    while(BITSTART <= TOTALBITS-BPS(iNSC,iOf)+1)                % LOOP START MONTE CARLO
+                        BITSTOP = BITSTART + BPS(iNSC,iOf) - 1;
+                        sym_bits = randi([0 1],[NTX,BPS(iNSC,iOf)]);            % Generate random bits
+
+                        % Generate OFDM Frame
+                        for iTx = 1:NTX
+                            sym_dec = bin2decMat(reshape(sym_bits(iTx,:),d,log2(M)))+1;
+                            X(iTx,:) = genOFDMsignal(...
+                                'data',sym_dec,...
+                                'OFDMtype',ofdmType,...
+                                'N',MODNSC,...
+                                'Symbols',SYMS,...
+                                'OffsetDcoStddev', OffsetDcoStddev,...
+                                'OffsetAcoStddev', OffsetAcoStddev)';
+                        end
+
+                        % Scale X to meet average illumination constraints
+                        Xmn = mean(X,2);
+                        XSCL = XAVGCH(:,iT)./Xmn;
+                        for iTx = 1:NTX
+                            Xs(iTx,:) = X(iTx,:)*XSCL(iTx);
+                        end
+
+                        % Calculate noise
+                        SNR = power(10,RNGSNRDB(iSNR,iT,iFW,iNSC,iOf)/10);
+                        SNRrt = sqrt(SNR);
+                        W = (XAVG(iT)/SNRrt)*randn(NRX,MODNSC);
+
+                        % Compute output
+                        Y = H*Xs + W;
+
+                        % Estimate X
+                        Xhs = H\Y;
+
+                        % Unscale Xh
+                        Xh = Xhs./repmat(XSCL,1,MODNSC);
+
+                        % Recover bit stream(s)
+                        sym_bits_h = -1*ones(size(sym_bits));
+                        for iTx = 1:NTX
+                            sym_dec_h = decodeOFDMsignal(Xh(iTx,:),...
+                                'OFDMtype',ofdmType,...
+                                'N',MODNSC,...
+                                'Symbols',SYMS);
+                            sym_bits_mat_h = dec2binMat(sym_dec_h-1,log2(M));
+                            sym_bits_h(iTx,:) = sym_bits_mat_h(:);
+                            errs = biterr2(sym_bits_h(iTx,:),sym_bits(iTx,:));
+                            ERR(iTx,iSNR,iT,iFW,iNSC,iOf) = ERR(iTx,iSNR,iT,iFW,iNSC,iOf) + errs;
+                        end % Transmitters
+
+                        IBITSTX = IBITSTX + BPS(iNSC,iOf);
+                        BITSTART = BITSTOP + 1;
+                    end                                                         % LOOP STOP MONTE CARLO
+                    if (iT==2) && (iNSC==1) && (iOf==2)
+                        abcd = 1;
+                    end
+                    BER(:,iSNR,iT,iFW,iNSC,iOf) = ERR(:,iSNR,iT,iFW,iNSC,iOf)/IBITSTX;
+
+                    % Calcculate change in BER and SNR
+                    if iSNR>1
+                        DBER(:,iSNR,iT,iFW,iNSC,iOf) = BER(:,iSNR,iT,iFW,iNSC,iOf) - BER(:,iSNR-1,iT,iFW,iNSC,iOf);
+                        DSNR(iSNR,iT,iFW,iNSC,iOf) = RNGSNRDB(iSNR,iT,iFW,iNSC,iOf) - RNGSNRDB(iSNR-1,iT,iFW,iNSC,iOf);
+                    else
+                        DBER(:,iSNR,iT,iFW,iNSC,iOf) = BER(:,iSNR,iT,iFW,iNSC,iOf);
+                        DSNR(iSNR,iT,iFW,iNSC,iOf) = 0;
                     end
 
-                    % Scale X to meet average illumination constraints
-                    Xmn = mean(X,2);
-                    XSCL = XAVGCH(:,iT)./Xmn;
-                    for iTx = 1:NTX                                         
-                        Xs(iTx,:) = X(iTx,:)*XSCL(iTx);
-                    end
-
-                    % Calculate noise
-                    SNR = power(10,RNGSNRDB(iSNR,iT,iNSC,iOf)/10);
-                    SNRrt = sqrt(SNR);
-                    W = (XAVG(iT)/SNRrt)*randn(NRX,MODNSC);
-
-                    % Compute output
-                    Y = H*Xs + W;
-
-                    % Estimate X
-                    Xhs = H\Y;
-
-                    % Unscale Xh
-                    Xh = Xhs./repmat(XSCL,1,MODNSC);
-
-                    % Recover bit stream(s)
-                    sym_bits_h = -1*ones(size(sym_bits));
-                    for iTx = 1:NTX
-                        sym_dec_h = decodeOFDMsignal(Xh(iTx,:),...
-                            'OFDMtype',ofdmType,...
-                            'N',MODNSC,...
-                            'Symbols',SYMS);
-                        sym_bits_mat_h = dec2binMat(sym_dec_h-1,log2(M));
-                        sym_bits_h(iTx,:) = sym_bits_mat_h(:);
-                        errs = biterr2(sym_bits_h(iTx,:),sym_bits(iTx,:));
-                        ERR(iTx,iSNR,iT,iNSC,iOf) = ERR(iTx,iSNR,iT,iNSC,iOf) + errs;
-                    end % Transmitters
-
-                    IBITSTX = IBITSTX + BPS(iNSC,iOf);
-                    BITSTART = BITSTOP + 1;
-                end                                                         % LOOP STOP MONTE CARLO
-                if (iT==2) && (iNSC==1) && (iOf==2)
-                    abcd = 1;
-                end
-                BER(:,iSNR,iT,iNSC,iOf) = ERR(:,iSNR,iT,iNSC,iOf)/IBITSTX;
-                    
-                % Calcculate change in BER and SNR
-                if iSNR>1
-                    DBER(:,iSNR,iT,iNSC,iOf) = BER(:,iSNR,iT,iNSC,iOf) - BER(:,iSNR-1,iT,iNSC,iOf);
-                    DSNR(iSNR,iT,iNSC,iOf) = RNGSNRDB(iSNR,iT,iNSC,iOf) - RNGSNRDB(iSNR-1,iT,iNSC,iOf);
-                else
-                    DBER(:,iSNR,iT,iNSC,iOf) = BER(:,iSNR,iT,iNSC,iOf);
-                    DSNR(iSNR,iT,iNSC,iOf) = 0;
-                end
-                
-                % Update progress on wait bar
-                LOOPCOUNT = LOOPCOUNT + DSNR(iSNR,iT,iNSC,iOf);
-                PROGRESS = LOOPCOUNT/TOTALLOOPS;
-                waitbar(PROGRESS,hWB,sprintf('Simulation: %0.2f%% done...',PROGRESS*100));
-                if(getappdata(hWB,'canceling'))
-                    delete(hWB);
-                    error('Simulation aborted');
-                end
-                
-                % check and break if BER for ALL channels are below set thresholds
-                if (RNGSNRDB(iSNR,iT,iNSC,iOf) > RNGSNRMAX) || isequal(sum(BER(:,iSNR,iT,iNSC,iOf) < BERTHMIN),NTX)
-                    LOOPDONE = true;
-                    LOOPCOUNT = (iT-1)*LENMODNSC*LENOFDMTYPES*RNGSNRLOOP +...
-                                (iNSC-1)*LENOFDMTYPES*RNGSNRLOOP +...
-                                (iOf-1)*RNGSNRLOOP + RNGSNRLOOP;
+                    % Update progress on wait bar
+                    LOOPCOUNT = LOOPCOUNT + DSNR(iSNR,iT,iFW,iNSC,iOf);
                     PROGRESS = LOOPCOUNT/TOTALLOOPS;
                     waitbar(PROGRESS,hWB,sprintf('Simulation: %0.2f%% done...',PROGRESS*100));
                     if(getappdata(hWB,'canceling'))
                         delete(hWB);
                         error('Simulation aborted');
                     end
-                end
-                iSNR = iSNR + 1;
-            end % SNR                                                       % LOOP STOP SNR
-        end % OFDM                                                          % LOOP STOP OFDM
-    end % NSC                                                               % LOOP STOP NSC
+
+                    % check and break if BER for ALL channels are below set thresholds
+                    if (RNGSNRDB(iSNR,iT,iFW,iNSC,iOf) > RNGSNRMAX) || isequal(sum(BER(:,iSNR,iT,iFW,iNSC,iOf) < BERTHMIN),NTX)
+                        LOOPDONE = true;
+                        LOOPCOUNT = (iT-1)*LENFWHM*LENMODNSC*LENOFDMTYPES*RNGSNRLOOP +...
+                            (iFW-1)*LENMODNSC*LENOFDMTYPES*RNGSNRLOOP +...
+                            (iNSC-1)*LENOFDMTYPES*RNGSNRLOOP +...
+                            (iOf-1)*RNGSNRLOOP + RNGSNRLOOP;
+                        PROGRESS = LOOPCOUNT/TOTALLOOPS;
+                        waitbar(PROGRESS,hWB,sprintf('Simulation: %0.2f%% done...',PROGRESS*100));
+                        if(getappdata(hWB,'canceling'))
+                            delete(hWB);
+                            error('Simulation aborted');
+                        end
+                    end
+                    iSNR = iSNR + 1;
+                end % SNR                                                       % LOOP STOP SNR
+            end % OFDM                                                          % LOOP STOP OFDM
+        end % NSC                                                               % LOOP STOP NSC
+    end % FWHM                                                              % LOOP STOP FWHM
 end % CCT                                                                   % LOOP STOP CCT
 
 if fSAVEALL                                                                 % SAVE script and data
@@ -337,8 +348,8 @@ catch ex
 delete(hWB);
 rethrow(ex);
 end
-
-scrOFDMWDMPL(ctFileVars);                                                   % Call Show Results script
+clearvars -except ctFileVars;
+scrOFDMWDMPL;                                                  % Call Show Results script
 
 
 
