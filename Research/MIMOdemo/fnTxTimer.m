@@ -30,6 +30,7 @@ switch(lower(event.Type))
         
         % Generate frame
         frame = [pilot(:);signal(:)];
+%         frame = pilot(:);
         frIP = updnClock(frame,S.dFs,S.dCLKs,true);
         
         % Ensure Pilot is between 0 and 1

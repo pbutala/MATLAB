@@ -46,8 +46,11 @@ classdef cResponsivity < handle
         function Initialize(obj)
             switch obj.Material
                 case PDMTRL.SILICON
-                    obj.QTMEFFnm = [400 800 1100];
-                    obj.QTMEFFval = [0.65 0.90 0];
+                    fl = load('QEFF_SI.csv');
+                    obj.QTMEFFnm = fl(:,1);
+                    obj.QTMEFFval = fl(:,2);
+%                     obj.QTMEFFnm = [400 800 1100];
+%                     obj.QTMEFFval = [0.65 0.90 0];
                 otherwise
                     error('PDMTRL.%s supported. Others will be incorporated in future versions',char(PDMTRL.SILICON));
             end
@@ -62,7 +65,7 @@ classdef cResponsivity < handle
         function R = getResponsivity(obj, lambdas)
             QTMEFF = interp1(obj.QTMEFFnm,obj.QTMEFFval,lambdas,'linear','extrap');
             QTMEFF(QTMEFF < 0) = 0;
-            R = 1e-3*(lambdas.*QTMEFF)/1.24;
+            R = (lambdas.*QTMEFF)/1240;
         end
     end
 end
