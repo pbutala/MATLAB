@@ -1,7 +1,7 @@
 classdef SYSTEM
     properties(SetAccess = private)
         % FRAME
-        frmPILOTCYCLES = 16;            % pilot cycles
+        frmPILOTCYCLES = 1;            % pilot cycles
         frmPILOTf = 1e6;             % pilot sin wave frequency (Hz)
         frmPILOTTYPE = 'BARKER11';      % pilot signal type
         frmPILOTSF = 1;                 % for barker code only. pilot sample scale factor (without this, the pilot is assumed to have been sampled at signal sample rate.)
@@ -9,8 +9,8 @@ classdef SYSTEM
         dFs = 40e6;                     % Signal: sample rate (2CE the signal BW)
         modTYPE = 'DCOOFDM';            % type of OFDM
         modOFST = 3.2;                  % offset applied to time domain signal
-        modN = 0;              % # total subcarriers
-        modM = 0;                       % M-QAM
+        modN = 256;              % # total subcarriers
+        modM = 4;                       % M-QAM
         modCLIPH = 3.2;                   % clip high
         modCLIPL = 0;                   % clip low
         

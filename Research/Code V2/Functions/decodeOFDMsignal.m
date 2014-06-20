@@ -197,11 +197,11 @@ if fShowRcv
     set(gca,'YTick',uIm);       % Set Y tick values to indicate Im coeffs
     grid on;                    % Show the grid
     axis([uRe(1)-dRe uRe(end)+dRe uIm(1)-dIm uIm(end)+dIm]); % Scale axes for pleasant display
-    axis equal;                 % Set axis aspect ratio = 1
+%     axis equal;                 % Set axis aspect ratio = 1
     xlabel('Real');             % X axis shows Re constellation values
     ylabel('Imag');             % Y axis shoes Im constellation values
-    tStr = sprintf('%d-QAM constellation diagram',M);   % Generate title
-    title(tStr);                % Show title
+%     tStr = sprintf('%d-QAM constellation diagram',M);   % Generate title
+%     title(tStr);                % Show title
     hold on;
     scatter(Re,Im,72,'bx');     % Display the constellation on current axes
     hold off;

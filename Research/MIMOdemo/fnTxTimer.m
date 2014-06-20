@@ -1,5 +1,5 @@
 function fnTxTimer(obj,event)
-global S TXCLT TXRUN TXFRAME pilot;
+global S SIF TXCLT TXRUN TXFRAME pilot;
 % global FIGTXDPL FIGTITLE;
 % persistent ITER;
 switch(lower(event.Type))
@@ -12,6 +12,7 @@ switch(lower(event.Type))
         clear TXCLT;
     case{'timerfcn'}
         % Generate Data
+        rng('default');
         data = randi(S.modM,[S.frmDATALEN16 1]);
         
         % Generate OFDM symbol
@@ -30,7 +31,6 @@ switch(lower(event.Type))
         
         % Generate frame
         frame = [pilot(:);signal(:)];
-%         frame = pilot(:);
         frIP = updnClock(frame,S.dFs,S.dCLKs,true);
         
         % Ensure Pilot is between 0 and 1
@@ -42,7 +42,32 @@ switch(lower(event.Type))
         TXFRAME(TXFRAME > S.dSIGMAX) = S.dSIGMAX;
         TXFRAME(TXFRAME < S.dSIGMIN) = S.dSIGMIN;
         
+        % Write data to channel 1
+        fwrite(TXCLT,[SIF.CMD_DATA SIF.CHNL_1 typecast(int16(S.frmLEN8SF),'uint8')]);
         fwrite(TXCLT,typecast(int16(TXFRAME),'uint8'));
+        % fwrite(TXCLT,typecast(int16(ones(size(TXFRAME))),'uint8'));
+        
+        % Write data to channel 2
+        fwrite(TXCLT,[SIF.CMD_DATA SIF.CHNL_2 typecast(int16(S.frmLEN8SF),'uint8')]);
+        fwrite(TXCLT,typecast(int16(TXFRAME),'uint8'));
+        % fwrite(TXCLT,typecast(int16(zeros(size(TXFRAME))),'uint8'));
+        
+        % Write data to channel 3
+        fwrite(TXCLT,[SIF.CMD_DATA SIF.CHNL_3 typecast(int16(S.frmLEN8SF),'uint8')]);
+        fwrite(TXCLT,typecast(int16(TXFRAME),'uint8'));
+        % fwrite(TXCLT,typecast(int16(zeros(size(TXFRAME))),'uint8'));
+
+        % Write data to channel 4
+        fwrite(TXCLT,[SIF.CMD_DATA SIF.CHNL_4 typecast(int16(S.frmLEN8SF),'uint8')]);
+        fwrite(TXCLT,typecast(int16(TXFRAME),'uint8'));
+        % fwrite(TXCLT,typecast(int16(zeros(size(TXFRAME))),'uint8'));
+        
+        % Enable channels
+        fwrite(TXCLT,[SIF.CMD_ENCHNL SIF.CHNL_4 SIF.ZERO_UC SIF.ZERO_UC]);    % All channels are enabled irrespective of CHNL selection
+        
+        % Arm DAC
+        fwrite(TXCLT,[SIF.CMD_ARMDAC SIF.CHNL_ALL SIF.ZERO_UC SIF.ZERO_UC]);
+        
 %         axis tight;
         if ~TXRUN
             stop(obj);

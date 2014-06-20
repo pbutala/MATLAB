@@ -13,16 +13,17 @@ clearvars;
 clc;
 
 % GLOBAL SETUP
-global S TXCLT TXRUN FIGTITLE pilot;
+global S SIF TXCLT TXFRAME TXRUN FIGTITLE pilot;
 
 TXRUN = 1;
 % Initialize system parameters
 S = SYSTEMTX();
+SIF = FMC204_IF();
 FIGTITLE = 'Off';
+
 % Generate Pilot
 pilot = S.getPILOT01();
 
-rng('default');
 % start tcp server on interface
 cmd = sprintf('start C:\\ProgramData\\_4DSP_Training\\FMC204\\Debug\\Fmc204APP.exe 1 ML605 %d %d',S.dETHID,S.dCLKSRC);
 dos(cmd);
@@ -32,7 +33,9 @@ pause(2); % wait till the interface app initializes
 TXCLT=tcpip('localhost', 30001, 'NetworkRole', 'client');
 TXCLT.OutputBufferSize = S.frmLEN8SF;
 fopen(TXCLT);
+
 % set BurstSize for data to transmit
+fwrite(TXCLT,[SIF.CMD_BURSTSIZE SIF.CHNL_ALL SIF.LEN_BS_LSB SIF.LEN_BS_MSB]);
 fwrite(TXCLT,typecast(int16(S.frmLEN16SF),'uint8'));
 
 % Start trasmission routine

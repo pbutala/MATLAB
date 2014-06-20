@@ -72,7 +72,7 @@ classdef cPSD < handle
             else
                 error('Input arguments must be of types numeric and cPSD');
             end
-            [m n] = size(obj);
+            [m,n] = size(obj);
             for i = 1:m
                 for j = 1:n
                     mn = obj(i,j).npsd.Xmin;

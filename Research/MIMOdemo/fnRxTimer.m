@@ -1,14 +1,19 @@
 function fnRxTimer(obj,event)
-global S Stx RXCLT RXRUN RXFRAME RXDATASCL rxDatb;
-persistent FIGSIG FIGTITLE AXSYM;
-persistent ITER;
+global S Stx SIF RXCLT RXRUN RXFRAME RXDATASCL rxDatb;
+persistent FIGSIG FIGCONST FIGTITLE AXSYM;
+persistent ITER CHNLREAD;
 switch(lower(event.Type))
     case{'startfcn'}
-        fwrite(RXCLT,'a');
         ITER = 1;
+        CHNLREAD = SIF.CHNL_1;
+        fwrite(RXCLT,[SIF.CMD_DATA CHNLREAD SIF.ZERO_UC SIF.ZERO_UC]);      % Read data from channel 1
         FIGTITLE = 'Off';
-        figure('Name',sprintf('Received Symbols'),'NumberTitle',FIGTITLE);
-        AXSYM = gca;
+        FIGCONST = figure('Name',sprintf('Received Symbols'),'NumberTitle',FIGTITLE);
+        for iSP=1:4
+            subplot(2,2,iSP);
+            hold on;
+            title(sprintf('Channel %d',iSP));
+        end
     case{'stopfcn'}
         fclose(RXCLT);
         delete(obj);
@@ -16,14 +21,33 @@ switch(lower(event.Type))
         clear RXCLT;
     case{'timerfcn'}
         BYTECOUNT = RXCLT.BytesAvailable;
-%         fprintf('BYTECOUNT = %d\n',BYTECOUNT);
         if (BYTECOUNT >= S.frmLEN16SF)
             % READ DATA FROM RECEIVER
             frameLong = typecast(uint8(fread(RXCLT,BYTECOUNT,'uchar')),'int16');
             frame = frameLong(1:S.frmLEN16SF);
-            frame = double(frame*-1);
-            fwrite(RXCLT,'a'); % Start another acquisition
+            frame = double(frame*-1); 
+            
             %**************************************************************
+            % Start acquiring next channel
+            switch(CHNLREAD)
+                case SIF.CHNL_1 
+                    CHNLREAD = SIF.CHNL_2;
+                    % CHNLREAD = SIF.CHNL_1;
+                    SPIDX = 1;
+                case SIF.CHNL_2 
+                    CHNLREAD = SIF.CHNL_3;
+                    % CHNLREAD = SIF.CHNL_1;
+                    SPIDX = 2;
+                case SIF.CHNL_3 
+                    CHNLREAD = SIF.CHNL_4;
+                    SPIDX = 3;
+                case SIF.CHNL_4 
+                    CHNLREAD = SIF.CHNL_1;
+                    SPIDX = 4;
+            end
+            fwrite(RXCLT,[SIF.CMD_DATA CHNLREAD SIF.ZERO_UC SIF.ZERO_UC]); 
+            %**************************************************************
+            % Upscale and detect pilot
             rxFrUP = updnClock(frame,S.dCLKs,Stx.dCLKs,false);
             RXFRMSHFT = rxFrUP(1:Stx.frmLEN16SF);
             frmcyc = [RXFRMSHFT; RXFRMSHFT(1:floor(Stx.frmPILOTLEN16SF))];
@@ -49,12 +73,17 @@ switch(lower(event.Type))
             RXDATASCL = S.modCLIPL + ((RXDATA-CHNLOFST)*(S.modCLIPH-S.modCLIPL))/(CHNLGAIN*Stx.dSIGMAX);
             
             % DECODE OFDM
+            figure(FIGCONST);
+            subplot(2,2,SPIDX);
+            hold on;
+            AXSYM = gca;
             rxDat = decodeOFDMsignal(RXDATASCL,...
                 'OFDMtype',S.modTYPE,...    
                 'N',S.modN,...
                 'Symbols',getQAMsyms(S.modM,true),...
                 'ShowRcv',true,...
                 'ShowRcvAx',AXSYM);
+            
             rxDatb = dec2binMat(rxDat-1,log2(S.modM));
             rng('default'); % TODO DELETE WHEN DIFFERENT DATA IN DIFF FRAMES
             data = randi(S.modM,[S.frmDATALEN16 1]);            % transmitted data

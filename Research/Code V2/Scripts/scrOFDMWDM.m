@@ -14,7 +14,7 @@ fARCHIVE = true;
 rng('default');
 
 CHAROVERWRITE = '~';
-STRPREFIX = '9_';
+STRPREFIX = '9e_';
 if(fARCHIVE)
     CHARIDXARCHIVE = '';           % ARCHIVE INDEX
 else
@@ -29,27 +29,33 @@ RMN = 627; RSC = 1;               % Mean, SD and scale to generate SPD of Red le
 GMN = 530; GSC = 1;               % Mean, SD and scale to generate SPD of Green led
 BMN = 470; BSC = 1;               % Mean, SD and scale to generate SPD of Blue led
 RES = 0.1;                                  % x,y Resolution for xy<->CCT conversion
-sSPDTYP = 'Lorentzian';                       % LED SPD model
+% sSPDTYP = 'Lorentzian';                       % LED SPD model
+sSPDTYP = 'Gaussian';                       % LED SPD model
 WBX = 50; WBY = 500; WBW = 275; WBH = 75;   % Wait Box X,,Y,WID,HGT
 WBTITLE = 'Running WDM OFDM Simulation...'; % Wait Box title
 cResp = cResponsivity();                    % Responsivity class instance
 PDRESP = cResp.getResponsivity(lambdas);    % Get responsivities vs wavelength for Si-PIN PD (default)
 FLTTYPE = FILTERTYPE.LORENTZIAN;            % Filter Model
+% FLTTYPE = FILTERTYPE.IDEALALL;            % Filter Model
 % RFWHM = 25; GFWHM = 25; BFWHM = 25;         % Filter FWHM
 
 %% ranges
 RNGCCT = 2500:250:7000;                LENCCT = numel(RNGCCT);             % CCT
+% RNGCCT = 4000;                LENCCT = numel(RNGCCT);             % CCT
 RNGCCTPL = RNGCCT;                      LENCCTPL = numel(RNGCCTPL);         % CCTs to plot
 RNGOFDMTYPES = {'dcoofdm';'acoofdm'};   LENOFDMTYPES = numel(RNGOFDMTYPES); % OFDM types
 RNGOFDMOFST = [3.2 0];                  LENOFDMOFST = size(RNGOFDMOFST,2);  % OFDM offsets
 RNGMOD = [8 8^2];                       LENMOD  = size(RNGMOD,2);           % Subcarrier modulation order
 RNGMODNSC = power(2,6);                 LENMODNSC = numel(RNGMODNSC);       % Number of subcarriers
-RNGLEDWID = 5:5:25;                    LENLEDWID = numel(RNGLEDWID);         % Number of LED width SDs
-RNGFWHM = [1 2 5 10:10:150];                        LENFWHM = numel(RNGFWHM);           % FWHM for filters
+% RNGLEDWID = 5:5:25;                    LENLEDWID = numel(RNGLEDWID);         % Number of LED width SDs
+RNGLEDWID = [5:5:20 30:10:50];                    LENLEDWID = numel(RNGLEDWID);         % Number of LED width SDs
+% RNGLEDWID = 25;                         LENLEDWID = numel(RNGLEDWID);         % Number of LED width SDs
+RNGFWHM = [1 2 5 10 20:10:250];                        LENFWHM = numel(RNGFWHM);           % FWHM for filters
+% RNGFWHM = 100:100:1800;                        LENFWHM = numel(RNGFWHM);           % FWHM for filters
 RNGSNRMIN = 145; RNGSNRMAX = 245; SNROFST = 145;                             % SNR ranges
 RNGSNRLOOP = RNGSNRMAX - RNGSNRMIN;                                         % Number of SNR in each SNR loop
 BERRATIOS = [1 5 10 50 100 500 1000]; DELTASNR = [0.01 0.05 0.1 2 3 4 5];                % BER ratios to gracefully calculate next SNR
-% DELTASNR = [5 5 5 10 10 10 20];                                                   % SNR increment to gracefully calculate next SNR
+% DELTASNR = [1 2 5 10 10 10 20];                                                   % SNR increment to gracefully calculate next SNR
 
 TOTALBITS = 2e4;                            % Total bit for transmtter to simulate
 BERTH = 1e-3;   BERTHMIN = 0.75*BERTH;       % BER thresholds;
@@ -103,6 +109,7 @@ try
     setappdata(hWB,'canceling',0);
     LOOPCOUNT = 0;
     TOTALLOOPS = LENLEDWID*LENCCT*LENFWHM*LENMODNSC*LENOFDMTYPES*RNGSNRLOOP;
+    TSTART = tic;
     for iTsd = 1:LENLEDWID                                                       % LOOP START LED SD
         clear Rch Gch Bch;
         % STATION
@@ -192,6 +199,10 @@ try
                         Rf = getLorentzian(RMN,RNGFWHM(iFW),lambdas);  % Red filter Lorentzian
                         Gf = getLorentzian(GMN,RNGFWHM(iFW),lambdas);  % Green filter Lorentzian
                         Bf = getLorentzian(BMN,RNGFWHM(iFW),lambdas);  % Blue filter Lorentzian
+                    case FILTERTYPE.IDEALALL
+                        Rf = ones(size(lambdas));                           % Red filter All
+                        Gf = ones(size(lambdas));                           % Green filter All
+                        Bf = ones(size(lambdas));                           % Blue filter All
                 end
                 Rf = FLT*Rf/max(Rf);
                 Gf = FLT*Gf/max(Gf);
@@ -224,9 +235,9 @@ try
                 [HBg,~] = Brx(iFW).getSignal(G./G.rdFlux,tHfs(2),Ambch);
                 [HBb,~] = Brx(iFW).getSignal(B./B.rdFlux,tHfs(3),Ambch);
                 % construct channel matrix (does not include transmitted power)
-                H = [HRr HRg HRb;...
-                    HGr HGg HGb;...
-                    HBr HBg HBb];                                                       % Channel matrix
+                H(:,:,iTsd,iT,iFW) = [HRr HRg HRb;...
+                                      HGr HGg HGb;...
+                                      HBr HBg HBb];                                                       % Channel matrix
                 
                 % Loop through different configurations
                 for iNSC = 1:LENMODNSC                                                  % LOOP START MODNSC
@@ -293,10 +304,10 @@ try
                                 W = (XAVG(iT)/SNRrt)*randn(NRX,MODNSC);
                                 
                                 % Compute output
-                                Y = H*Xs + W;
+                                Y = H(:,:,iTsd,iT,iFW)*Xs + W;
                                 
                                 % Estimate X
-                                Xhs = H\Y;
+                                Xhs = H(:,:,iTsd,iT,iFW)\Y;
                                 
                                 % Unscale Xh
                                 Xh = Xhs./repmat(XSCL,1,MODNSC);
@@ -334,7 +345,9 @@ try
                             % Update progress on wait bar
                             LOOPCOUNT = LOOPCOUNT + DSNR(iSNR,iTsd,iT,iFW,iNSC,iOf);
                             PROGRESS = LOOPCOUNT/TOTALLOOPS;
-                            waitbar(PROGRESS,hWB,sprintf('Simulation: %0.2f%% done...',PROGRESS*100));
+                            TELAPSED = toc(TSTART);
+                            TREM = (TELAPSED/PROGRESS)-TELAPSED;
+                            waitbar(PROGRESS,hWB,sprintf('Simulation: %0.2f%% done...\nEstimated time remaining: %0.0f min',PROGRESS*100,TREM/60));
                             if(getappdata(hWB,'canceling'))
                                 delete(hWB);
                                 error('Simulation aborted');
@@ -371,8 +384,16 @@ try
     delete(hWB);
 catch ex
     delete(hWB);
+    setpref('Internet','E_mail','pbutala@bu.edu');
+    setpref('Internet','SMTP_Server','smtp.bu.edu');
+    STREMAIL = ['Simulation ' STRPREFIX ' error!'];
+    sendmail('pankil.butala@gmail.com',STREMAIL);
     rethrow(ex);
 end
+setpref('Internet','E_mail','pbutala@bu.edu');
+setpref('Internet','SMTP_Server','smtp.bu.edu');
+STREMAIL = ['Simulation ' STRPREFIX ' done. Starting plots.'];
+sendmail('pankil.butala@gmail.com',STREMAIL);
 clearvars -except ctFileVars;
 scrOFDMWDMPL;                                                  % Call Show Results script
 

@@ -272,7 +272,7 @@ classdef cRoom < handle
         end
         
         function drawSetup(obj,rxLoc,rxOri,rxFOV)
-            % H = drawRoomSetup(rxLoc)
+            % drawSetup(rxLoc,rxOri,rxFOV)
             % draws the room setup on current axis
             txLoc = obj.lmLocation;
             nL = numel(obj.luminaire);
