@@ -25,7 +25,7 @@ classdef cCIE
             obj.ob1 = cCurve(Lmin,dL,Lmax,X);
             obj.ob2 = cCurve(Lmin,dL,Lmax,Y);
             obj.ob3 = cCurve(Lmin,dL,Lmax,Z);
-        end
+        end % end constructor
         
         function [t1,t2,t3] = getTristimulusValues(obj,psd)
             % [t1 t2 t3] = getTristimulusValues(psd)
@@ -45,7 +45,7 @@ classdef cCIE
             else
                 error('''psd'' argument must be of type cCurve');
             end
-        end
+        end % end getTristimulusValues
         
         function [c1,c2,c3] = getCoordinates(obj,psd)
             % [c1 c2 c3] = getCoordinates(psd)
@@ -74,9 +74,63 @@ classdef cCIE
                     set(ah,'position',[x y 10 10]);
                 end
             end
+        end % end getCoordinates
+    end % end methods
+    
+    methods(Static)
+        function varargout = xyz2rgb(varargin)
+            % RGB = xyz2rgb(XYZ)
+            % [R G B] = xyz2rgb([X Y Z])
+            switch nargin
+                case 1
+                    tmp = varargin{1};
+                    XYZ = tmp(:);
+                case 3
+                    XYZ = [varargin{1};varargin{2};varargin{3}];
+                otherwise
+                    error('Incorrect input arguments. Call xyz2rgb(XYZ) OR xyz2rgb(X,Y,Z)');
+            end
+            Trgb2xyz =  (1/0.17697)*[0.49 0.31 0.20; 0.17697 0.81240 0.01063; 0.00 0.01 0.99];
+            RGB = Trgb2xyz\XYZ;
+            switch nargout
+                case 1
+                    varargout{1} = RGB;
+                case 3
+                    varargout{1} = RGB(1);
+                    varargout{2} = RGB(2);
+                    varargout{3} = RGB(3);
+                otherwise
+                    error('Incorrect output arguments.');
+            end
         end
-    end
-end
+        
+        function varargout = rgb2xyz(varargin)
+            % XYZ = rgb2xyz(RGB)
+            % [X Y Z] = rgb2xyz([R G B])
+            switch nargin
+                case 1
+                    tmp = varargin{1};
+                    RGB = tmp(:);
+                case 3
+                    RGB = [varargin{1};varargin{2};varargin{3}];
+                otherwise
+                    error('Incorrect input arguments. Call rgb2xyz(RGB) OR rgb2xyz(R,G,B)');
+            end
+            Trgb2xyz =  (1/0.17697)*[0.49 0.31 0.20; 0.17697 0.81240 0.01063; 0.00 0.01 0.99];
+            XYZ = Trgb2xyz*RGB;
+            switch nargout
+                case 1
+                    varargout{1} = XYZ;
+                case 3
+                    varargout{1} = XYZ(1);
+                    varargout{2} = XYZ(2);
+                    varargout{3} = XYZ(3);
+                otherwise
+                    error('Incorrect output arguments.');
+            end
+        end
+    end % end methods(Static)
+end % end classdef
 
 
 

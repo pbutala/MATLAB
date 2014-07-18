@@ -19,7 +19,7 @@ set(0,'DefaultLineLineWidth',2);
 daxesfontname = get(0,'DefaultAxesFontName');
 set(0,'DefaultAxesFontName','Helvetica');
 daxesfontsize = get(0,'DefaultAxesFontSize');
-set(0,'DefaultAxesFontSize',12);
+set(0,'DefaultAxesFontSize',16);
 dfigvis = get(0,'DefaultFigureVisible');
 set(0,'DefaultFigureVisible','On');
 dfigppm = get(0,'DefaultFigurePaperPositionMode');
@@ -29,9 +29,11 @@ set(0,'DefaultFigurePaperUnits','Inches');
 dfigpp = get(0,'DefaultFigurePaperPosition');
 set(0,'DefaultFigurePaperPosition',[0 0 8 6]);
 dlinems = get(0,'DefaultLineMarkerSize');
-set(0,'DefaultLineMarkerSize',6);
+set(0,'DefaultLineMarkerSize',8);
 FIGTITLE = 'Off';
 
+RNGCCTPL = [2500 4000 5500 7000];
+LENCCTPL = numel(RNGCCTPL);         % CCTs to plot
 try
     % Wait Bar to show progress
     hWB = waitbar(0,'Plotting Results: 0.00% done','Name',WBTITLE,'Visible','Off');
@@ -80,156 +82,165 @@ try
     TOTALLOOPS = LENLEDWID*LENCCT + LENLEDWID + LENLEDWID*LENCCT*LENFWHM*LENMODNSC*LENOFDMTYPES + ...
                   +LENLEDWID*LENFWHM + LENLEDWID*LENCCT + LENFWHM*LENCCT + LENFWHM + 1 + 1 + 1 + 1 + 1;
     
-    % DRAW SETUP
-    FIGSETUP = figure('Name','Setup','NumberTitle',FIGTITLE);
-    room.drawSetup(locCntr,cOrientation(0,0,0),pi/3);
-    rotate3d on;
-    if fSAVEALL
-        f = figure(FIGSETUP);
-        fname = [ctDirRes STRPREFIX 'Setup' CHARIDXARCHIVE];
-        saveas(f,[fname '.png'],'png');
-        saveas(f,[fname '.fig'],'fig');
-        saveas(f,[fname '.eps'],'epsc');
-    end
-    if fCLOSEALL
-        close(f);
-    end
+%     % DRAW SETUP
+%     FIGSETUP = figure('Name','Setup','NumberTitle',FIGTITLE);
+%     room.drawSetup(locCntr,cOrientation(0,0,0),pi/3);
+%     rotate3d on;
+%     if fSAVEALL
+%         f = figure(FIGSETUP);
+%         fname = [ctDirRes STRPREFIX 'Setup' CHARIDXARCHIVE];
+%         saveas(f,[fname '.png'],'png');
+%         saveas(f,[fname '.fig'],'fig');
+%         saveas(f,[fname '.eps'],'epsc');
+%     end
+%     if fCLOSEALL
+%         close(f);
+%     end
     LOOPCOUNT = LOOPCOUNT+1;
     PROGRESS = LOOPCOUNT/TOTALLOOPS;
     waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
     
-    % DRAW EYE SENSITIVITY
-    FIGEYE = figure('Name','Eye Sensitivity','NumberTitle',FIGTITLE);
-    plot(lambdas,getEyeSens(LAMBDAMIN,LAMBDAMAX,LAMBDADELTA,1978));
-    xlabel('Wavelength (nm)');
-    ylabel('Relative sensitivity');
-    title('Human eye sensitivity (1978)');
-    axis([FIGLDAMIN FIGLDAMAX 0 1]);
-    if fSAVEALL
-        f = figure(FIGEYE);
-        fname = [ctDirRes STRPREFIX 'Eye Sensitivity 1978' CHARIDXARCHIVE];
-        saveas(f,[fname '.png'],'png');
-        saveas(f,[fname '.fig'],'fig');
-        saveas(f,[fname '.eps'],'epsc');
-    end
-    if fCLOSEALL
-        close(f);
-    end
+%     % DRAW EYE SENSITIVITY
+%     FIGEYE = figure('Name','Eye Sensitivity','NumberTitle',FIGTITLE);
+%     plot(lambdas,getEyeSens(LAMBDAMIN,LAMBDAMAX,LAMBDADELTA,1978));
+%     xlabel('Wavelength (nm)');
+%     ylabel('Relative sensitivity');
+%     title('Human eye sensitivity (1978)');
+%     axis([FIGLDAMIN FIGLDAMAX 0 1]);
+%     if fSAVEALL
+%         f = figure(FIGEYE);
+%         fname = [ctDirRes STRPREFIX 'Eye Sensitivity 1978' CHARIDXARCHIVE];
+%         saveas(f,[fname '.png'],'png');
+%         saveas(f,[fname '.fig'],'fig');
+%         saveas(f,[fname '.eps'],'epsc');
+%     end
+%     if fCLOSEALL
+%         close(f);
+%     end
     LOOPCOUNT = LOOPCOUNT+1;
     PROGRESS = LOOPCOUNT/TOTALLOOPS;
     waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
 
-    % Draw Standard Observers
-    FIGSTD = figure('Name','Standard Observer','NumberTitle',FIGTITLE);
-    obs = cCIE();
-    plot(obs.ob1.X,obs.ob1.Y,'r',obs.ob2.X,obs.ob2.Y,'g',obs.ob3.X,obs.ob3.Y,'b');
-    xlabel('Wavelength (nm)');
-    title('CIE Standard Observer Color Matching Functions (1978)');
-    axis([obs.ob1.Xmin obs.ob1.Xmax 0 2]);
-    if fSAVEALL
-        f = figure(FIGSTD);
-        fname = [ctDirRes STRPREFIX 'CIE Standard Observer 1978' CHARIDXARCHIVE];
-        saveas(f,[fname '.png'],'png');
-        saveas(f,[fname '.fig'],'fig');
-        saveas(f,[fname '.eps'],'epsc');
-    end
-    if fCLOSEALL
-        close(f);
-    end
-    LOOPCOUNT = LOOPCOUNT+1;
-    PROGRESS = LOOPCOUNT/TOTALLOOPS;
-    waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
+%     % Draw Standard Observers
+%     FIGSTD = figure('Name','Standard Observer','NumberTitle',FIGTITLE);
+%     obs = cCIE();
+%     plot(obs.ob1.X,obs.ob1.Y,'r',obs.ob2.X,obs.ob2.Y,'g',obs.ob3.X,obs.ob3.Y,'b');
+%     xlabel('Wavelength (nm)');
+% %     title('CIE Standard Observer Color Matching Functions');
+%     axis([obs.ob1.Xmin obs.ob1.Xmax 0 2]);
+%     legend('x_c(\lambda)','y_c(\lambda)','z_c(\lambda)');
+%     grid on;
+%     if fSAVEALL
+%         f = figure(FIGSTD);
+%         fname = [ctDirRes STRPREFIX 'CIE Standard Observer 1978' CHARIDXARCHIVE];
+%         saveas(f,[fname '.png'],'png');
+%         saveas(f,[fname '.fig'],'fig');
+%         saveas(f,[fname '.eps'],'epsc');
+%     end
+%     if fCLOSEALL
+%         close(f);
+%     end
+%     LOOPCOUNT = LOOPCOUNT+1;
+%     PROGRESS = LOOPCOUNT/TOTALLOOPS;
+%     waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
     
-    % PLOT AND SAVE SPDs
-    set(0,'DefaultFigurePaperPosition',[0 0 11.5 8]);
-    set(0,'DefaultAxesFontSize',8);
-    if LENCCTPL > 0
-        for iTsd = 1:LENLEDWID                                                       % LOOP START LED SD
-            FIGCCT(iTsd) = figure('Name',sprintf('SPD vs CCT'),'NumberTitle',FIGTITLE);
-            iTPL = 1;
-            for iT = 1:LENCCT                                                           % LOOP START CCT
-                if RNGCCT(iT) == RNGCCTPL(iTPL)                                         % If CCT selected for plot
-                    figure(FIGCCT(iTsd));
-                    subplot(FIGCCTPLNR,FIGCCTPLNC,iTPL);
-                    [x,y] = planckXY(RNGCCT(iT));
-                    [S,R,G,B,tr,tg,tb] = RGBLED(iTsd).getPSD(x,y);                               % Get PSDs at CCT
-                    plot(R.npsd.X,(tr/S.npsd.Ymax)*R.npsd.Y,PLTXLCS{1});                % Plot RED SPD
-                    hold on;
-                    plot(G.npsd.X,(tg/S.npsd.Ymax)*G.npsd.Y,PLTXLCS{2});                % Plot Green SPD
-                    plot(B.npsd.X,(tb/S.npsd.Ymax)*B.npsd.Y,PLTXLCS{3});                % Plot Blue SPD
-                    axis([FIGLDAMIN FIGLDAMAX 0 1]);
-                    xlabel('Wavelength (nm)');
-                    ylabel('Normalized SPD');
-                    title(sprintf('CCT = %dK\n[x,y] = [%0.4f,%0.4f]',RNGCCTPL(iTPL),x,y));
-                    iTPL = iTPL+1;
-                end                                                                     % LOOP STOP CCT
-                LOOPCOUNT = LOOPCOUNT+1;
-                PROGRESS = LOOPCOUNT/TOTALLOOPS;
-                waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
-            end
-        end
-        % Save SPDs
-        for iTsd = 1:LENLEDWID
-            STRSD = sprintf('LED%s%d',STRLEDWID,RNGLEDWID(iTsd));
-            if fSAVEALL
-                f = figure(FIGCCT(iTsd));
-                fname = [ctDirRes STRPREFIX 'SPDs_' STRSD CHARIDXARCHIVE];
-                saveas(f,[fname '.png'],'png');
-                saveas(f,[fname '.fig'],'fig');
-                saveas(f,[fname '.eps'],'epsc');
-            end
-            if fCLOSEALL
-                close(f);
-            end
-            LOOPCOUNT = LOOPCOUNT+1;
-            PROGRESS = LOOPCOUNT/TOTALLOOPS;
-            waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
-        end
-    else
-        LOOPCOUNT = LOOPCOUNT+ LENLEDWID*LENCCT + LENLEDWID;
-        PROGRESS = LOOPCOUNT/TOTALLOOPS;
-        waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
-    end
+%     % PLOT AND SAVE SPDs
+% %     set(0,'DefaultFigurePaperPosition',[0 0 11.5 8]);
+% %     set(0,'DefaultAxesFontSize',8);
+%     if LENCCTPL > 0
+%         for iTsd = 1:LENLEDWID                                                       % LOOP START LED SD
+%             FIGCCT(iTsd) = figure('Name',sprintf('SPD vs CCT'),'NumberTitle',FIGTITLE);
+%             iTPL = 1;
+%             for iT = 1:LENCCT                                                           % LOOP START CCT
+%                 if RNGCCT(iT) == RNGCCTPL(iTPL)                                         % If CCT selected for plot
+%                     figure(FIGCCT(iTsd));
+%                     subplot(FIGCCTPLNR,FIGCCTPLNC,iTPL);
+%                     [x,y] = planckXY(RNGCCT(iT));
+%                     [S,R,G,B,tr,tg,tb] = RGBLED(iTsd).getPSD(x,y);                               % Get PSDs at CCT
+%                     plot(R.npsd.X,(tr/S.npsd.Ymax)*R.npsd.Y,PLTXLCS{1});                % Plot RED SPD
+%                     hold on;
+%                     plot(G.npsd.X,(tg/S.npsd.Ymax)*G.npsd.Y,PLTXLCS{2});                % Plot Green SPD
+%                     plot(B.npsd.X,(tb/S.npsd.Ymax)*B.npsd.Y,PLTXLCS{3});                % Plot Blue SPD
+%                     axis([FIGLDAMIN FIGLDAMAX 0 1]);
+%                     xlabel('Wavelength (nm)');
+%                     ylabel('Normalized SPD');
+%                     title(sprintf('CCT = %dK\n[x,y] = [%0.4f,%0.4f]',RNGCCTPL(iTPL),x,y));
+%                     iTPL = iTPL+1;
+%                 end                                                                     % LOOP STOP CCT
+%                 LOOPCOUNT = LOOPCOUNT+1;
+%                 PROGRESS = LOOPCOUNT/TOTALLOOPS;
+%                 waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
+%             end
+%         end
+%         % Save SPDs
+%         for iTsd = 1:LENLEDWID
+%             STRSD = sprintf('LED%s%d',STRLEDWID,RNGLEDWID(iTsd));
+%             if fSAVEALL
+%                 f = figure(FIGCCT(iTsd));
+%                 fname = [ctDirRes STRPREFIX 'SPDs_' STRSD CHARIDXARCHIVE];
+%                 saveas(f,[fname '.png'],'png');
+%                 saveas(f,[fname '.fig'],'fig');
+%                 saveas(f,[fname '.eps'],'epsc');
+%             end
+%             if fCLOSEALL
+%                 close(f);
+%             end
+%             LOOPCOUNT = LOOPCOUNT+1;
+%             PROGRESS = LOOPCOUNT/TOTALLOOPS;
+%             waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
+%         end
+%     else
+%         LOOPCOUNT = LOOPCOUNT+ LENLEDWID*LENCCT + LENLEDWID;
+%         PROGRESS = LOOPCOUNT/TOTALLOOPS;
+%         waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
+%     end
     
-    set(0,'DefaultFigurePaperPosition',[0 0 8 6]);
-    set(0,'DefaultAxesFontSize',12);
-    % Figure filter responses
-    for iFW = 1:LENFWHM                                                         % LOOP STOP FWHM
-        STRFW = sprintf('FILT%s%d', STRFLTWID, RNGFWHM(iFW));
-        FIGFILT(iFW) = figure('Name',sprintf('Filter Transmission, FILTER %s = %d', STRFLTWID, RNGFWHM(iFW)),'NumberTitle',FIGTITLE);
-        plot(Rrx(iFW).sensor.filter.X,Rrx(iFW).sensor.filter.Y,'r-.');
-        hold on;
-        plot(Grx(iFW).sensor.filter.X,Grx(iFW).sensor.filter.Y,'g-.');
-        plot(Brx(iFW).sensor.filter.X,Brx(iFW).sensor.filter.Y,'b-.');
-        axis([FIGLDAMIN FIGLDAMAX 0 1]);
-        xlabel('Wavelength (nm)');
-        ylabel('Transmission');
-        title(sprintf('Filter Transmission, FILTER %s = %d', STRFLTWID, RNGFWHM(iFW)));
-        if fSAVEALL
-            f = figure(FIGFILT(iFW));
-            fname = [ctDirRes STRPREFIX 'FiltTrans_' STRFW CHARIDXARCHIVE];
-            saveas(f,[fname '.png'],'png');
-            saveas(f,[fname '.fig'],'fig');
-            saveas(f,[fname '.eps'],'epsc');
-        end
-        if fCLOSEALL
-            close(f);
-        end
-        % Update Wait bar
-        LOOPCOUNT = LOOPCOUNT+1;
-        PROGRESS = LOOPCOUNT/TOTALLOOPS;
-        waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
-    end
-    
-    
+%     set(0,'DefaultFigurePaperPosition',[0 0 8 6]);
+%     set(0,'DefaultAxesFontSize',16);
+%     % Figure filter responses
+%     for iFW = 1:LENFWHM                                                         % LOOP STOP FWHM
+%         STRFW = sprintf('FILT%s%d', STRFLTWID, RNGFWHM(iFW));
+%         FIGFILT(iFW) = figure('Name',sprintf('Filter Transmittance, FILTER %s = %d', STRFLTWID, RNGFWHM(iFW)),'NumberTitle',FIGTITLE);
+%         plot(Rrx(iFW).sensor.filter.X,Rrx(iFW).sensor.filter.Y,'r-.');
+%         hold on;
+%         plot(Grx(iFW).sensor.filter.X,Grx(iFW).sensor.filter.Y,'g-.');
+%         plot(Brx(iFW).sensor.filter.X,Brx(iFW).sensor.filter.Y,'b-.');
+%         axis([FIGLDAMIN FIGLDAMAX 0 1]);
+%         xlabel('Wavelength (nm)');
+%         ylabel('Transmittance');
+%         legend('Red Filter', 'Green Filter', 'Blue Filter');
+%         % title(sprintf('Filter Transmission, FILTER %s = %d', STRFLTWID, RNGFWHM(iFW)));
+%         grid on;
+%         if fSAVEALL
+%             f = figure(FIGFILT(iFW));
+%             fname = [ctDirRes STRPREFIX 'FiltTrans_' STRFW CHARIDXARCHIVE];
+%             saveas(f,[fname '.png'],'png');
+%             saveas(f,[fname '.fig'],'fig');
+%             saveas(f,[fname '.eps'],'epsc');
+%         end
+%         if fCLOSEALL
+%             close(f);
+%         end
+%         % Update Wait bar
+%         LOOPCOUNT = LOOPCOUNT+1;
+%         PROGRESS = LOOPCOUNT/TOTALLOOPS;
+%         waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
+%     end
+%     
+%     
     % Figure receiver responsivisities
     FIGRESP = figure('Name',sprintf('Receiver Responsivity'),'NumberTitle',FIGTITLE);
-    plot(Rrx(1).sensor.responsivity.X,Rrx(1).sensor.responsivity.Y,'k--');
-    axis([lambdas(1) lambdas(end) 0 0.1*ceil(Rrx(1).sensor.responsivity.Ymax*10)]);
+%     plot(Rrx(1).sensor.responsivity.X,Rrx(1).sensor.responsivity.Y,'k--');
+    [ax,h1,h2] = plotyy(Rrx(1).sensor.responsivity.X,Rrx(1).sensor.responsivity.Y,...
+                        cResp.QTMEFFnm,cResp.QTMEFFval);
+%     axis(ax,[lambdas(1) lambdas(end) 0 0.1*ceil(Rrx(1).sensor.responsivity.Ymax*10)]);
+    axis(ax,[lambdas(1) lambdas(end) 0 1]);
     grid on;
     xlabel('Wavelength (nm)');
-    ylabel('Responsivity (A.W^{-1})');
-    title('Receiver responsivity');
+    set(get(ax(1),'YLabel'), 'String','Responsivity (A.W^{-1})','FontSize',16);
+    set(get(ax(2),'YLabel'), 'String','Quantum Efficiency','FontSize',16);
+%     title('Receiver responsivity');
+    grid on;
     if fSAVEALL
         f = figure(FIGRESP);
         fname = [ctDirRes STRPREFIX 'RecvResp' CHARIDXARCHIVE];
@@ -238,63 +249,276 @@ try
         saveas(f,[fname '.eps'],'epsc');
     end
     if fCLOSEALL
-        close(f);
+%         close(f);
     end
     LOOPCOUNT = LOOPCOUNT+1;
     PROGRESS = LOOPCOUNT/TOTALLOOPS;
     waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
-    
-    % Plot illuminance
-    room.drawIlluminance;
-    FIGILL = gcf;
-    set(FIGILL,'Name',sprintf('Illuminance'),'NumberTitle',FIGTITLE);
-    if fSAVEALL
-        f = figure(FIGILL);
-        fname = [ctDirRes STRPREFIX 'Illumination' CHARIDXARCHIVE];
-        saveas(f,[fname '.png'],'png');
-        saveas(f,[fname '.fig'],'fig');
-        saveas(f,[fname '.eps'],'epsc');
-    end
-    if fCLOSEALL
-        close(f);
-    end
-    LOOPCOUNT = LOOPCOUNT+1;
-    PROGRESS = LOOPCOUNT/TOTALLOOPS;
-    waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
-    
-    % PLOT AND SAVE BER vs SNR
+%     
+%     % Plot illuminance
+%     room.drawIlluminance;
+%     FIGILL = gcf;
+%     set(FIGILL,'Name',sprintf('Illuminance'),'NumberTitle',FIGTITLE);
+%     if fSAVEALL
+%         f = figure(FIGILL);
+%         fname = [ctDirRes STRPREFIX 'Illumination' CHARIDXARCHIVE];
+%         saveas(f,[fname '.png'],'png');
+%         saveas(f,[fname '.fig'],'fig');
+%         saveas(f,[fname '.eps'],'epsc');
+%     end
+%     if fCLOSEALL
+%         close(f);
+%     end
+%     LOOPCOUNT = LOOPCOUNT+1;
+%     PROGRESS = LOOPCOUNT/TOTALLOOPS;
+%     waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
+%     
+%     % PLOT AND SAVE BER vs SNR
+%     for iTsd = 1:LENLEDWID                                                       % LOOP START LED SD
+%         STRSD = sprintf('LED%s%d',STRLEDWID,RNGLEDWID(iTsd));
+%         for iT = 1:LENCCT
+%             for iFW = 1:LENFWHM                                                     % LOOP START FWHM
+%                 STRFW = sprintf('FILT%s%d_',STRFLTWID, RNGFWHM(iFW));
+%                 for iNSC = 1:LENMODNSC                                                  % LOOP START NSC
+%                     STRCCT = sprintf('%dK_Nsc%d_',RNGCCT(iT),RNGMODNSC(iNSC));
+%                     FIGBER(iTsd,iT,iFW,iNSC) = figure('Name',sprintf('BER vs SNR, CCT = %dK, Nsc = %d, FILTER %s = %d, Illumination = %dlx',RNGCCT(iT),RNGMODNSC(iNSC),STRFLTWID,RNGFWHM(iFW),LKILL),'NumberTitle',FIGTITLE);
+%                     for iOf = 1:LENOFDMTYPES                                            % LOOP START OFDM types
+%                         ofdmType = lower(RNGOFDMTYPES{iOf});
+%                         switch lower(ofdmType)
+%                             case 'acoofdm'
+%                                 STRTITLE = sprintf('ACO-OFDM, CCT = %dK, %d-QAM, N_{sc} = %d, FILTER %s = %d, LED %s = %d, Illumination = %dlx',RNGCCT(iT),RNGMOD(iOf),RNGMODNSC(iNSC),STRFLTWID,RNGFWHM(iFW),STRLEDWID,RNGLEDWID(iTsd),LKILL);
+%                                 plLC = PLACOLC; plLS = PLACOLS; plMK = PLACOMK; plLGD = 'ACO';
+%                             case 'dcoofdm'
+%                                 STRTITLE = sprintf('DCO-OFDM, CCT = %dK, %d-QAM, N_{sc} = %d, FILTER %s = %d, LED %s = %d, Illumination = %dlx',RNGCCT(iT),RNGMOD(iOf),RNGMODNSC(iNSC),STRFLTWID,RNGFWHM(iFW),STRLEDWID,RNGLEDWID(iTsd),LKILL);
+%                                 plLC = PLDCOLC; plLS = PLDCOLS; plMK = PLDCOMK; plLGD = 'DCO';
+%                         end
+%                         figure(FIGBER(iTsd,iT,iFW,iNSC));
+%                         subplot(FIGBERPLNR,FIGBERPLNC,iOf);
+%                         [Xp,Yp] = getCleanPoints(RNGSNROFST(:,iTsd,iT,iFW,iNSC,iOf),log10(sum(BER(:,:,iTsd,iT,iFW,iNSC,iOf),1)/NTX),PLOTDMIN);  % Get points well spaced out
+%                         semilogy(Xp,power(10,Yp),[plLC plMK]);                          % Semilog AVG BER vs SNR Marker
+%                         hold on;
+%                         semilogy(RNGSNROFST(:,iTsd,iT,iFW,iNSC,iOf),sum(BER(:,:,iTsd,iT,iFW,iNSC,iOf),1)/NTX,[plLC plLS]);  % Semilog AVG BER vs SNR
+%                         HBERLGD(1,iTsd,iFW,iNSC,iOf) = plot(nan,nan,[plLC plLS plMK]);  % Semilog AVG BER vs SNR (get line style)
+%                         
+%                         axis([FIGBERXMIN FIGBERXMAX FIGBERYMIN FIGBERYMAX]);
+%                         for iTx = 1:NTX                                                 % LOOP START NTX
+%                             [Xp,Yp] = getCleanPoints(RNGSNROFST(:,iTsd,iT,iFW,iNSC,iOf),log10(BER(iTx,:,iTsd,iT,iFW,iNSC,iOf)),PLOTDMIN);   % Get points well spaced out
+%                             semilogy(Xp,power(10,Yp),[PLTXLCS{iTx} PLTXMKS{iTx}]); % Semilog TX BER vs SNR Markers
+%                             semilogy(RNGSNROFST(:,iTsd,iT,iFW,iNSC,iOf),BER(iTx,:,iTsd,iT,iFW,iNSC,iOf),[PLTXLCS{iTx} PLTXLSS{iTx}]); % Semilog TX BER vs SNR
+%                             HBERLGD(1+iTx,iTsd,iFW,iNSC,iOf) = plot(nan,nan,[PLTXLCS{iTx} PLTXLSS{iTx} PLTXMKS{iTx}]);  % Semilog TX BER vs SNR Line Style legend
+%                             snrth = RNGSNROFST(find(BER(iTx,:,iTsd,iT,iFW,iNSC,iOf)<BERTH,1,'first'),iTsd,iT,iFW,iNSC,iOf);
+%                             if ~isempty(snrth)
+%                                 SNRTH(iTx,iTsd,iT,iFW,iNSC,iOf) = snrth;
+%                             else
+%                                 SNRTH(iTx,iTsd,iT,iFW,iNSC,iOf) = nan;
+%                             end
+%                         end % TX                                                        % LOOP STOP NTX
+%                         grid on;
+%                         FIGBERLGD(:,iTsd,iFW,iNSC,iOf) = {plLGD;[plLGD ':Red'];[plLGD ':Green'];[plLGD ':Blue']};
+%                         legend(gca,HBERLGD(:,iTsd,iFW,iNSC,iOf),FIGBERLGD(:,iTsd,iFW,iNSC,iOf));
+%                         xlabel(sprintf('SNR^{tx}_{avg}-%d (dB)',SNROFST));
+%                         ylabel('BER');
+%                         title(STRTITLE);
+%                         % Update Wait bar
+%                         LOOPCOUNT = LOOPCOUNT+1;
+%                         PROGRESS = LOOPCOUNT/TOTALLOOPS;
+%                         waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
+%                     end % OFDM                                                          % LOOP STOP OFDM types
+%                     if fSAVEALL
+%                         fname = [ctDirRes STRPREFIX 'BERvsSNR_' STRCCT STRFW STRSD CHARIDXARCHIVE];
+%                         f = figure(FIGBER(iTsd,iT,iFW,iNSC));
+%                         saveas(f,[fname '.png'],'png');
+%                         saveas(f,[fname '.fig'],'fig');
+%                         saveas(f,[fname '.eps'],'epsc');
+%                     end
+%                     if fCLOSEALL
+%                         close(f);
+%                     end
+%                 end % NSC                                                               % LOOP STOP NSC
+%             end % FWHM                                                               % LOOP STOP FWHM
+%         end % CCT                                                                   % LOOP STOP CCT
+%     end % LED SD                                                                % LOOP STOP LED SD
+%     
+%     MAXSNRTH = 5*ceil(max(SNRTH(:))/5);
+%     if (MAXSNRTH-max(SNRTH(:))) < 2
+%         MAXSNRTH = MAXSNRTH + 5;
+%     end
+%     % PLOT AND SAVE SNR vs CCT
+%     if LENCCT > 1
+%         for iTsd = 1:LENLEDWID                                                       % LOOP START LED SD
+%             STRSD = sprintf('LED%s%d',STRLEDWID,RNGLEDWID(iTsd));
+%             % Figure SNR vs CCT
+%             FIGSNRCCTLGD = {};
+%             for iFW = 1:LENFWHM                                                         % LOOP STOP FWHM
+%                 STRFW = sprintf('FILT%s%d_',STRFLTWID,RNGFWHM(iFW));
+%                 LGDIDXSTART = 1;
+%                 FIGSNRCCT(iTsd,iFW) = figure('Name',sprintf('SNR vs CCT, Illumination = %dlx, FILTER %s = %d',LKILL,STRFLTWID,RNGFWHM(iFW)),'NumberTitle',FIGTITLE);
+%                 hold on;
+%                 for iNSC = 1:LENMODNSC                                                      % LOOP START NSC
+%                     for iOf = 1:LENOFDMTYPES                                                % LOOP START OFDM types
+%                         ofdmType = lower(RNGOFDMTYPES{iOf});
+%                         switch lower(ofdmType)
+%                             case 'acoofdm'
+%                                 plLGD = sprintf('ACO');
+%                             case 'dcoofdm'
+%                                 plLGD = sprintf('DCO');
+%                         end
+%                         for iTx = 1:NTX                                                     % LOOP START NTX
+%                             PLSTL = [PLTXLCS{iTx} PLTXLSS{iOf} PLNSCMKS{iNSC}];
+%                             plot(RNGCCT, squeeze(SNRTH(iTx,iTsd,:,iFW,iNSC,iOf)), PLSTL);
+%                         end % TX
+%                         LGDIDXSTOP = LGDIDXSTART + NTX - 1;
+%                         FIGSNRCCTLGD(LGDIDXSTART:LGDIDXSTOP,iTsd,iFW) = {[plLGD ':Red'];[plLGD ':Green'];[plLGD ':Blue']};
+%                         LGDIDXSTART = LGDIDXSTOP + 1;
+%                     end % OFDM
+%                 end % NSC
+%                 axis([min(RNGCCT) max(RNGCCT) FIGBERXMIN MAXSNRTH]);
+%                 legend(FIGSNRCCTLGD(:,iTsd,iFW),'Location','SouthEast');
+%                 grid on;
+%                 xlabel('Correlated Color Temperature (K)');
+%                 ylabel(sprintf('SNR^{tx}_{avg}-%d (dB)',SNROFST));
+%                 title(sprintf('SNR^{tx}_{avg} vs CCT to achieve target BER = %0.0e\nFILTER %s = %d, LED %s = %d, N_{sc} = %d, ',BERTH,STRFLTWID,RNGFWHM(iFW),STRLEDWID,RNGLEDWID(iTsd),RNGMODNSC(iNSC)));
+%                 if fSAVEALL
+%                     fname = [ctDirRes STRPREFIX 'SNRvsCCT_' STRFW STRSD CHARIDXARCHIVE];
+%                     f = figure(FIGSNRCCT(iTsd,iFW));
+%                     saveas(f,[fname '.png'],'png');
+%                     saveas(f,[fname '.fig'],'fig');
+%                     saveas(f,[fname '.eps'],'epsc');
+%                 end
+%                 if fCLOSEALL
+%                     close(f);
+%                 end
+%                 % Update Wait bar
+%                 LOOPCOUNT = LOOPCOUNT+1;
+%                 PROGRESS = LOOPCOUNT/TOTALLOOPS;
+%                 waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
+%             end
+%         end % LED SD                                                                % LOOP STOP LED SD
+%     else
+%         % Update Wait bar
+%         LOOPCOUNT = LOOPCOUNT+LENLEDWID*LENFWHM;
+%         PROGRESS = LOOPCOUNT/TOTALLOOPS;
+%         waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
+%     end
+%     
+%     % PLOT AND SAVE SNR vs FLTWID
+%     if LENFWHM > 1
+%         for iTsd = 1:LENLEDWID                                                       % LOOP START LED SD
+%             STRSD = sprintf('LED%s%d',STRLEDWID,RNGLEDWID(iTsd));
+%             % Figure SNR vs FLTWID
+%             FIGSNRFWHMLGD = {};
+%             for iT = 1:LENCCT                                                         % LOOP STOP FWHM
+%                 STRCCT = sprintf('%dK_',RNGCCT(iT));
+%                 LGDIDXSTART = 1;
+%                 FIGSNRFWHM(iTsd,iT) = figure('Name',sprintf('SNR vs FLTWID, Illumination = %dlx, CCT = %d',LKILL,RNGCCT(iT)),'NumberTitle',FIGTITLE);
+%                 hold on;
+%                 for iNSC = 1:LENMODNSC                                                      % LOOP START NSC
+%                     for iOf = 1:LENOFDMTYPES                                                % LOOP START OFDM types
+%                         ofdmType = lower(RNGOFDMTYPES{iOf});
+%                         switch lower(ofdmType)
+%                             case 'acoofdm'
+%                                 plLGD = sprintf('ACO');
+%                             case 'dcoofdm'
+%                                 plLGD = sprintf('DCO');
+%                         end
+%                         for iTx = 1:NTX                                                     % LOOP START NTX
+%                             PLSTL = [PLTXLCS{iTx} PLTXLSS{iOf} PLNSCMKS{iNSC}];
+%                             plot(RNGFWHM, squeeze(SNRTH(iTx,iTsd,iT,:,iNSC,iOf)), PLSTL);
+%                         end % TX
+%                         LGDIDXSTOP = LGDIDXSTART + NTX - 1;
+%                         FIGSNRFWHMLGD(LGDIDXSTART:LGDIDXSTOP,iTsd,iT) = {[plLGD ':Red'];[plLGD ':Green'];[plLGD ':Blue']};
+%                         LGDIDXSTART = LGDIDXSTOP + 1;
+%                     end % OFDM
+%                 end % NSC
+%                 axis([min(RNGFWHM) max(RNGFWHM) FIGBERXMIN MAXSNRTH]);
+%                 legend(FIGSNRFWHMLGD(:,iTsd,iT),'Location','SouthEast');
+%                 grid on;
+%                 xlabel(STRFLTWID);
+%                 ylabel(sprintf('SNR^{tx}_{avg}-%d (dB)',SNROFST));
+%                 title(sprintf('SNR^{tx}_{avg} vs FILTER %s to achieve target BER = %0.0e\nCCT = %dK, LED %s = %d, N_{sc} = %d, ',STRFLTWID, BERTH,RNGCCT(iT),STRLEDWID,RNGLEDWID(iTsd),RNGMODNSC(iNSC)));
+%                 if fSAVEALL
+%                     f = figure(FIGSNRFWHM(iTsd,iT));
+%                     fname = [ctDirRes STRPREFIX 'SNRvsFLTWID_' STRCCT STRSD CHARIDXARCHIVE];
+%                     saveas(f,[fname '.png'],'png');
+%                     saveas(f,[fname '.fig'],'fig');
+%                     saveas(f,[fname '.eps'],'epsc');
+%                 end
+%                 if fCLOSEALL
+%                     close(f);
+%                 end
+%                 % Update Wait bar
+%                 LOOPCOUNT = LOOPCOUNT+1;
+%                 PROGRESS = LOOPCOUNT/TOTALLOOPS;
+%                 waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
+%             end
+%         end
+%     else
+%         % Update Wait bar
+%         LOOPCOUNT = LOOPCOUNT+LENLEDWID*LENCCT;
+%         PROGRESS = LOOPCOUNT/TOTALLOOPS;
+%         waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
+%     end % LED SD                                                                % LOOP STOP LED SD
+%     
+%     if LENLEDWID > 1
+%         FIGSNRTSDLGD = {};
+%         for iFW = 1:LENFWHM
+%             STRFW = sprintf('FILT%s%d',STRFLTWID,RNGFWHM(iFW));
+%             for iT = 1:LENCCT
+%                 STRCCT = sprintf('%dK_Nsc%d_',RNGCCT(iT),RNGMODNSC(iNSC));
+%                 LGDIDXSTART = 1;
+%                 FIGSNRTSD(iFW,iT) = figure('Name',sprintf('SNR vs LED %s, Illumination = %dlx, CCT = %dK, FILTER %s = %d',STRLEDWID,LKILL,RNGCCT(iT),STRFLTWID,RNGFWHM(iFW)),'NumberTitle',FIGTITLE);
+%                 hold on;
+%                 for iOf = 1:LENOFDMTYPES                                                % LOOP START OFDM types
+%                     ofdmType = lower(RNGOFDMTYPES{iOf});
+%                     switch lower(ofdmType)
+%                         case 'acoofdm'
+%                             plLGD = sprintf('ACO');
+%                         case 'dcoofdm'
+%                             plLGD = sprintf('DCO');
+%                     end
+%                     for iTx = 1:NTX                                                     % LOOP START NTX
+%                         PLSTL = [PLTXLCS{iTx} PLTXLSS{iOf} PLNSCMKS{iNSC}];
+%                         plot(RNGLEDWID, squeeze(SNRTH(iTx,:,iT,iFW,iNSC,iOf)), PLSTL);
+%                     end % TX
+%                     LGDIDXSTOP = LGDIDXSTART + NTX - 1;
+%                     FIGSNRTSDLGD(LGDIDXSTART:LGDIDXSTOP,iFW,iT) = {[plLGD ':Red'];[plLGD ':Green'];[plLGD ':Blue']};
+%                     LGDIDXSTART = LGDIDXSTOP + 1;
+%                 end % OFDM
+%                 axis([min(RNGLEDWID) max(RNGLEDWID) FIGBERXMIN MAXSNRTH]);
+%                 legend(FIGSNRTSDLGD(:,iFW,iT),'Location','SouthEast');
+%                 grid on;
+%                 xlabel(sprintf('LED emission %s',STRLEDWID));
+%                 ylabel(sprintf('SNR^{tx}_{avg}-%d (dB)',SNROFST));
+%                 title(sprintf('SNR^{tx}_{avg} vs LED %s to achieve target BER = %0.0e\nCCT = %dK, FILTER %s = %d, N_{sc} = %d',STRLEDWID,BERTH,RNGCCT(iT),STRFLTWID,RNGFWHM(iFW),RNGMODNSC(iNSC)));
+%                 if fSAVEALL
+%                     f = figure(FIGSNRTSD(iFW,iT));
+%                     fname = [ctDirRes STRPREFIX 'SNRvsLED' STRLEDWID '_' STRCCT STRFW CHARIDXARCHIVE];
+%                     saveas(f,[fname '.png'],'png');
+%                     saveas(f,[fname '.fig'],'fig');
+%                     saveas(f,[fname '.eps'],'epsc');
+%                 end
+%                 if fCLOSEALL
+%                     close(f);
+%                 end
+%                 % Update Wait bar
+%                 LOOPCOUNT = LOOPCOUNT+1;
+%                 PROGRESS = LOOPCOUNT/TOTALLOOPS;
+%                 waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
+%             end
+%         end
+%     else
+%         % Update Wait bar
+%         LOOPCOUNT = LOOPCOUNT+LENFWHM*LENCCT;
+%         PROGRESS = LOOPCOUNT/TOTALLOOPS;
+%         waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
+%     end
+% find the most power efficient point
     for iTsd = 1:LENLEDWID                                                       % LOOP START LED SD
-        STRSD = sprintf('LED%s%d',STRLEDWID,RNGLEDWID(iTsd));
         for iT = 1:LENCCT
             for iFW = 1:LENFWHM                                                     % LOOP START FWHM
-                STRFW = sprintf('FILT%s%d_',STRFLTWID, RNGFWHM(iFW));
                 for iNSC = 1:LENMODNSC                                                  % LOOP START NSC
-                    STRCCT = sprintf('%dK_Nsc%d_',RNGCCT(iT),RNGMODNSC(iNSC));
-                    FIGBER(iTsd,iT,iFW,iNSC) = figure('Name',sprintf('BER vs SNR, CCT = %dK, Nsc = %d, FILTER %s = %d, Illumination = %dlx',RNGCCT(iT),RNGMODNSC(iNSC),STRFLTWID,RNGFWHM(iFW),LKILL),'NumberTitle',FIGTITLE);
                     for iOf = 1:LENOFDMTYPES                                            % LOOP START OFDM types
-                        ofdmType = lower(RNGOFDMTYPES{iOf});
-                        switch lower(ofdmType)
-                            case 'acoofdm'
-                                STRTITLE = sprintf('ACO-OFDM, CCT = %dK, %d-QAM, N_{sc} = %d, FILTER %s = %d, LED %s = %d, Illumination = %dlx',RNGCCT(iT),RNGMOD(iOf),RNGMODNSC(iNSC),STRFLTWID,RNGFWHM(iFW),STRLEDWID,RNGLEDWID(iTsd),LKILL);
-                                plLC = PLACOLC; plLS = PLACOLS; plMK = PLACOMK; plLGD = 'ACO';
-                            case 'dcoofdm'
-                                STRTITLE = sprintf('DCO-OFDM, CCT = %dK, %d-QAM, N_{sc} = %d, FILTER %s = %d, LED %s = %d, Illumination = %dlx',RNGCCT(iT),RNGMOD(iOf),RNGMODNSC(iNSC),STRFLTWID,RNGFWHM(iFW),STRLEDWID,RNGLEDWID(iTsd),LKILL);
-                                plLC = PLDCOLC; plLS = PLDCOLS; plMK = PLDCOMK; plLGD = 'DCO';
-                        end
-                        figure(FIGBER(iTsd,iT,iFW,iNSC));
-                        subplot(FIGBERPLNR,FIGBERPLNC,iOf);
-                        [Xp,Yp] = getCleanPoints(RNGSNROFST(:,iTsd,iT,iFW,iNSC,iOf),log10(sum(BER(:,:,iTsd,iT,iFW,iNSC,iOf),1)/NTX),PLOTDMIN);  % Get points well spaced out
-                        semilogy(Xp,power(10,Yp),[plLC plMK]);                          % Semilog AVG BER vs SNR Marker
-                        hold on;
-                        semilogy(RNGSNROFST(:,iTsd,iT,iFW,iNSC,iOf),sum(BER(:,:,iTsd,iT,iFW,iNSC,iOf),1)/NTX,[plLC plLS]);  % Semilog AVG BER vs SNR
-                        HBERLGD(1,iTsd,iFW,iNSC,iOf) = plot(nan,nan,[plLC plLS plMK]);  % Semilog AVG BER vs SNR (get line style)
-                        
-                        axis([FIGBERXMIN FIGBERXMAX FIGBERYMIN FIGBERYMAX]);
                         for iTx = 1:NTX                                                 % LOOP START NTX
-                            [Xp,Yp] = getCleanPoints(RNGSNROFST(:,iTsd,iT,iFW,iNSC,iOf),log10(BER(iTx,:,iTsd,iT,iFW,iNSC,iOf)),PLOTDMIN);   % Get points well spaced out
-                            semilogy(Xp,power(10,Yp),[PLTXLCS{iTx} PLTXMKS{iTx}]); % Semilog TX BER vs SNR Markers
-                            semilogy(RNGSNROFST(:,iTsd,iT,iFW,iNSC,iOf),BER(iTx,:,iTsd,iT,iFW,iNSC,iOf),[PLTXLCS{iTx} PLTXLSS{iTx}]); % Semilog TX BER vs SNR
-                            HBERLGD(1+iTx,iTsd,iFW,iNSC,iOf) = plot(nan,nan,[PLTXLCS{iTx} PLTXLSS{iTx} PLTXMKS{iTx}]);  % Semilog TX BER vs SNR Line Style legend
                             snrth = RNGSNROFST(find(BER(iTx,:,iTsd,iT,iFW,iNSC,iOf)<BERTH,1,'first'),iTsd,iT,iFW,iNSC,iOf);
                             if ~isempty(snrth)
                                 SNRTH(iTx,iTsd,iT,iFW,iNSC,iOf) = snrth;
@@ -302,206 +526,17 @@ try
                                 SNRTH(iTx,iTsd,iT,iFW,iNSC,iOf) = nan;
                             end
                         end % TX                                                        % LOOP STOP NTX
-                        grid on;
-                        FIGBERLGD(:,iTsd,iFW,iNSC,iOf) = {plLGD;[plLGD ':Red'];[plLGD ':Green'];[plLGD ':Blue']};
-                        legend(gca,HBERLGD(:,iTsd,iFW,iNSC,iOf),FIGBERLGD(:,iTsd,iFW,iNSC,iOf));
-                        xlabel(sprintf('SNR^{tx}_{avg}-%d (dB)',SNROFST));
-                        ylabel('BER');
-                        title(STRTITLE);
-                        % Update Wait bar
-                        LOOPCOUNT = LOOPCOUNT+1;
-                        PROGRESS = LOOPCOUNT/TOTALLOOPS;
-                        waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
+                        SNRTHBADTX(iTsd,iT,iFW,iNSC,iOf) = max(SNRTH(:,iTsd,iT,iFW,iNSC,iOf));
                     end % OFDM                                                          % LOOP STOP OFDM types
-                    if fSAVEALL
-                        fname = [ctDirRes STRPREFIX 'BERvsSNR_' STRCCT STRFW STRSD CHARIDXARCHIVE];
-                        f = figure(FIGBER(iTsd,iT,iFW,iNSC));
-                        saveas(f,[fname '.png'],'png');
-                        saveas(f,[fname '.fig'],'fig');
-                        saveas(f,[fname '.eps'],'epsc');
-                    end
-                    if fCLOSEALL
-                        close(f);
-                    end
                 end % NSC                                                               % LOOP STOP NSC
             end % FWHM                                                               % LOOP STOP FWHM
         end % CCT                                                                   % LOOP STOP CCT
     end % LED SD                                                                % LOOP STOP LED SD
-    
-    MAXSNRTH = 5*ceil(max(SNRTH(:))/5);
-    if (MAXSNRTH-max(SNRTH(:))) < 2
-        MAXSNRTH = MAXSNRTH + 5;
-    end
-    % PLOT AND SAVE SNR vs CCT
-    if LENCCT > 1
-        for iTsd = 1:LENLEDWID                                                       % LOOP START LED SD
-            STRSD = sprintf('LED%s%d',STRLEDWID,RNGLEDWID(iTsd));
-            % Figure SNR vs CCT
-            FIGSNRCCTLGD = {};
-            for iFW = 1:LENFWHM                                                         % LOOP STOP FWHM
-                STRFW = sprintf('FILT%s%d_',STRFLTWID,RNGFWHM(iFW));
-                LGDIDXSTART = 1;
-                FIGSNRCCT(iTsd,iFW) = figure('Name',sprintf('SNR vs CCT, Illumination = %dlx, FILTER %s = %d',LKILL,STRFLTWID,RNGFWHM(iFW)),'NumberTitle',FIGTITLE);
-                hold on;
-                for iNSC = 1:LENMODNSC                                                      % LOOP START NSC
-                    for iOf = 1:LENOFDMTYPES                                                % LOOP START OFDM types
-                        ofdmType = lower(RNGOFDMTYPES{iOf});
-                        switch lower(ofdmType)
-                            case 'acoofdm'
-                                plLGD = sprintf('ACO');
-                            case 'dcoofdm'
-                                plLGD = sprintf('DCO');
-                        end
-                        for iTx = 1:NTX                                                     % LOOP START NTX
-                            PLSTL = [PLTXLCS{iTx} PLTXLSS{iOf} PLNSCMKS{iNSC}];
-                            plot(RNGCCT, squeeze(SNRTH(iTx,iTsd,:,iFW,iNSC,iOf)), PLSTL);
-                        end % TX
-                        LGDIDXSTOP = LGDIDXSTART + NTX - 1;
-                        FIGSNRCCTLGD(LGDIDXSTART:LGDIDXSTOP,iTsd,iFW) = {[plLGD ':Red'];[plLGD ':Green'];[plLGD ':Blue']};
-                        LGDIDXSTART = LGDIDXSTOP + 1;
-                    end % OFDM
-                end % NSC
-                axis([min(RNGCCT) max(RNGCCT) FIGBERXMIN MAXSNRTH]);
-                legend(FIGSNRCCTLGD(:,iTsd,iFW),'Location','SouthEast');
-                grid on;
-                xlabel('Correlated Color Temperature (K)');
-                ylabel(sprintf('SNR^{tx}_{avg}-%d (dB)',SNROFST));
-                title(sprintf('SNR^{tx}_{avg} vs CCT to achieve target BER = %0.0e\nFILTER %s = %d, LED %s = %d, N_{sc} = %d, ',BERTH,STRFLTWID,RNGFWHM(iFW),STRLEDWID,RNGLEDWID(iTsd),RNGMODNSC(iNSC)));
-                if fSAVEALL
-                    fname = [ctDirRes STRPREFIX 'SNRvsCCT_' STRFW STRSD CHARIDXARCHIVE];
-                    f = figure(FIGSNRCCT(iTsd,iFW));
-                    saveas(f,[fname '.png'],'png');
-                    saveas(f,[fname '.fig'],'fig');
-                    saveas(f,[fname '.eps'],'epsc');
-                end
-                if fCLOSEALL
-                    close(f);
-                end
-                % Update Wait bar
-                LOOPCOUNT = LOOPCOUNT+1;
-                PROGRESS = LOOPCOUNT/TOTALLOOPS;
-                waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
-            end
-        end % LED SD                                                                % LOOP STOP LED SD
-    else
-        % Update Wait bar
-        LOOPCOUNT = LOOPCOUNT+LENLEDWID*LENFWHM;
-        PROGRESS = LOOPCOUNT/TOTALLOOPS;
-        waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
-    end
-    
-    % PLOT AND SAVE SNR vs FLTWID
-    if LENFWHM > 1
-        for iTsd = 1:LENLEDWID                                                       % LOOP START LED SD
-            STRSD = sprintf('LED%s%d',STRLEDWID,RNGLEDWID(iTsd));
-            % Figure SNR vs FLTWID
-            FIGSNRFWHMLGD = {};
-            for iT = 1:LENCCT                                                         % LOOP STOP FWHM
-                STRCCT = sprintf('%dK_',RNGCCT(iT));
-                LGDIDXSTART = 1;
-                FIGSNRFWHM(iTsd,iT) = figure('Name',sprintf('SNR vs FLTWID, Illumination = %dlx, CCT = %d',LKILL,RNGCCT(iT)),'NumberTitle',FIGTITLE);
-                hold on;
-                for iNSC = 1:LENMODNSC                                                      % LOOP START NSC
-                    for iOf = 1:LENOFDMTYPES                                                % LOOP START OFDM types
-                        ofdmType = lower(RNGOFDMTYPES{iOf});
-                        switch lower(ofdmType)
-                            case 'acoofdm'
-                                plLGD = sprintf('ACO');
-                            case 'dcoofdm'
-                                plLGD = sprintf('DCO');
-                        end
-                        for iTx = 1:NTX                                                     % LOOP START NTX
-                            PLSTL = [PLTXLCS{iTx} PLTXLSS{iOf} PLNSCMKS{iNSC}];
-                            plot(RNGFWHM, squeeze(SNRTH(iTx,iTsd,iT,:,iNSC,iOf)), PLSTL);
-                        end % TX
-                        LGDIDXSTOP = LGDIDXSTART + NTX - 1;
-                        FIGSNRFWHMLGD(LGDIDXSTART:LGDIDXSTOP,iTsd,iT) = {[plLGD ':Red'];[plLGD ':Green'];[plLGD ':Blue']};
-                        LGDIDXSTART = LGDIDXSTOP + 1;
-                    end % OFDM
-                end % NSC
-                axis([min(RNGFWHM) max(RNGFWHM) FIGBERXMIN MAXSNRTH]);
-                legend(FIGSNRFWHMLGD(:,iTsd,iT),'Location','SouthEast');
-                grid on;
-                xlabel(STRFLTWID);
-                ylabel(sprintf('SNR^{tx}_{avg}-%d (dB)',SNROFST));
-                title(sprintf('SNR^{tx}_{avg} vs FILTER %s to achieve target BER = %0.0e\nCCT = %dK, LED %s = %d, N_{sc} = %d, ',STRFLTWID, BERTH,RNGCCT(iT),STRLEDWID,RNGLEDWID(iTsd),RNGMODNSC(iNSC)));
-                if fSAVEALL
-                    f = figure(FIGSNRFWHM(iTsd,iT));
-                    fname = [ctDirRes STRPREFIX 'SNRvsFLTWID_' STRCCT STRSD CHARIDXARCHIVE];
-                    saveas(f,[fname '.png'],'png');
-                    saveas(f,[fname '.fig'],'fig');
-                    saveas(f,[fname '.eps'],'epsc');
-                end
-                if fCLOSEALL
-                    close(f);
-                end
-                % Update Wait bar
-                LOOPCOUNT = LOOPCOUNT+1;
-                PROGRESS = LOOPCOUNT/TOTALLOOPS;
-                waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
-            end
-        end
-    else
-        % Update Wait bar
-        LOOPCOUNT = LOOPCOUNT+LENLEDWID*LENCCT;
-        PROGRESS = LOOPCOUNT/TOTALLOOPS;
-        waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
-    end % LED SD                                                                % LOOP STOP LED SD
-    
-    if LENLEDWID > 1
-        FIGSNRTSDLGD = {};
-        for iFW = 1:LENFWHM
-            STRFW = sprintf('FILT%s%d',STRFLTWID,RNGFWHM(iFW));
-            for iT = 1:LENCCT
-                STRCCT = sprintf('%dK_Nsc%d_',RNGCCT(iT),RNGMODNSC(iNSC));
-                LGDIDXSTART = 1;
-                FIGSNRTSD(iFW,iT) = figure('Name',sprintf('SNR vs LED %s, Illumination = %dlx, CCT = %dK, FILTER %s = %d',STRLEDWID,LKILL,RNGCCT(iT),STRFLTWID,RNGFWHM(iFW)),'NumberTitle',FIGTITLE);
-                hold on;
-                for iOf = 1:LENOFDMTYPES                                                % LOOP START OFDM types
-                    ofdmType = lower(RNGOFDMTYPES{iOf});
-                    switch lower(ofdmType)
-                        case 'acoofdm'
-                            plLGD = sprintf('ACO');
-                        case 'dcoofdm'
-                            plLGD = sprintf('DCO');
-                    end
-                    for iTx = 1:NTX                                                     % LOOP START NTX
-                        PLSTL = [PLTXLCS{iTx} PLTXLSS{iOf} PLNSCMKS{iNSC}];
-                        plot(RNGLEDWID, squeeze(SNRTH(iTx,:,iT,iFW,iNSC,iOf)), PLSTL);
-                    end % TX
-                    LGDIDXSTOP = LGDIDXSTART + NTX - 1;
-                    FIGSNRTSDLGD(LGDIDXSTART:LGDIDXSTOP,iFW,iT) = {[plLGD ':Red'];[plLGD ':Green'];[plLGD ':Blue']};
-                    LGDIDXSTART = LGDIDXSTOP + 1;
-                end % OFDM
-                axis([min(RNGLEDWID) max(RNGLEDWID) FIGBERXMIN MAXSNRTH]);
-                legend(FIGSNRTSDLGD(:,iFW,iT),'Location','SouthEast');
-                grid on;
-                xlabel(sprintf('LED emission %s',STRLEDWID));
-                ylabel(sprintf('SNR^{tx}_{avg}-%d (dB)',SNROFST));
-                title(sprintf('SNR^{tx}_{avg} vs LED %s to achieve target BER = %0.0e\nCCT = %dK, FILTER %s = %d, N_{sc} = %d',STRLEDWID,BERTH,RNGCCT(iT),STRFLTWID,RNGFWHM(iFW),RNGMODNSC(iNSC)));
-                if fSAVEALL
-                    f = figure(FIGSNRTSD(iFW,iT));
-                    fname = [ctDirRes STRPREFIX 'SNRvsLED' STRLEDWID '_' STRCCT STRFW CHARIDXARCHIVE];
-                    saveas(f,[fname '.png'],'png');
-                    saveas(f,[fname '.fig'],'fig');
-                    saveas(f,[fname '.eps'],'epsc');
-                end
-                if fCLOSEALL
-                    close(f);
-                end
-                % Update Wait bar
-                LOOPCOUNT = LOOPCOUNT+1;
-                PROGRESS = LOOPCOUNT/TOTALLOOPS;
-                waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
-            end
-        end
-    else
-        % Update Wait bar
-        LOOPCOUNT = LOOPCOUNT+LENFWHM*LENCCT;
-        PROGRESS = LOOPCOUNT/TOTALLOOPS;
-        waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
-    end
-    
+
+    [V, I] = min(SNRTHBADTX(:));
+    [TSD,T,FW,NSC,OF] = ind2sub(size(SNRTHBADTX),I);
+    fprintf('Most Power Efficient Point\nSNR: %f dB\nCCT: %d K\nTXWID: %d nm\nFILTFWHM: %d nm\n%s\n',...
+        V,RNGCCT(T),RNGLEDWID(TSD),RNGFWHM(FW),RNGOFDMTYPES{OF});
     pause(1);
     delete(hWB);
 catch ex
@@ -515,10 +550,10 @@ catch ex
     set(0,'DefaultFigurePaperPosition',dfigpp);
     set(0,'DefaultFigurePaperUnits',dfigpu);
     set(0,'DefaultFigurePaperPositionMode',dfigppm);
-    setpref('Internet','E_mail','pbutala@bu.edu');
-    setpref('Internet','SMTP_Server','smtp.bu.edu');
-    STREMAIL = ['Simulation ' STRPREFIX ' done with errors.'];
-    sendmail('pankil.butala@gmail.com',STREMAIL);
+%     setpref('Internet','E_mail','pbutala@bu.edu');
+%     setpref('Internet','SMTP_Server','smtp.bu.edu');
+%     STREMAIL = ['Simulation ' STRPREFIX ' done with errors.'];
+%     sendmail('pankil.butala@gmail.com',STREMAIL);
     rethrow(ex);
 end
 %% restore defaults
@@ -530,8 +565,8 @@ set(0,'DefaultFigureVisible',dfigvis);
 set(0,'DefaultFigurePaperPosition',dfigpp);
 set(0,'DefaultFigurePaperUnits',dfigpu);
 set(0,'DefaultFigurePaperPositionMode',dfigppm);
-setpref('Internet','E_mail','pbutala@bu.edu');
-setpref('Internet','SMTP_Server','smtp.bu.edu');
-STREMAIL = ['Simulation ' STRPREFIX ' done.'];
-sendmail('pankil.butala@gmail.com',STREMAIL);
+% setpref('Internet','E_mail','pbutala@bu.edu');
+% setpref('Internet','SMTP_Server','smtp.bu.edu');
+% STREMAIL = ['Simulation ' STRPREFIX ' done.'];
+% sendmail('pankil.butala@gmail.com',STREMAIL);
 % end
