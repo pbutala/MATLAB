@@ -10,5 +10,11 @@ if(~isequal(size(mean),size(mean),size(mean)))
 end
 SOG = 0;
 for idx = 1:numel(mean)
-    SOG = SOG + (scl(idx)/(sqrt(2*pi)*sd(idx)))*exp(-((X-mean(idx)).^2)/(2*sd(idx)*sd(idx)));
+    if isequal(sd(idx),0)
+        y = zeros(size(X));
+        y(X == mean(idx)) = 1;
+        SOG = SOG + scl(idx)*y;
+    else
+        SOG = SOG + (scl(idx)/(sqrt(2*pi)*sd(idx)))*exp(-((X-mean(idx)).^2)/(2*sd(idx)*sd(idx)));
+    end
 end

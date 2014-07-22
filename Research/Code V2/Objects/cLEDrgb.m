@@ -23,10 +23,10 @@ classdef cLEDrgb < handle
             end
         end
         % constructor
-        function obj = cLEDrgb(flRes,Rpsd,Gpsd,Bpsd)
+        function obj = cLEDrgb(flRes,Rpsd,Gpsd,Bpsd,flCIE)
              % normalized optical flux resolution (between 0 and 1)
             if ~exist('flRes','var')
-                flRes = 0.2;
+                flRes = 0.1;
             end
             if (flRes>0) && (flRes<=1)
                 obj.flRes = flRes;
@@ -73,7 +73,10 @@ classdef cLEDrgb < handle
                 obj.B = cPSD(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,Bpsd);
             end
             % Generate CIE 1978 object
-            obj.obs = cCIE;
+            if ~exist('flCIE','var')
+                flCIE = 'CIE1978.csv';
+            end
+            obj.obs = cCIE(flCIE);
            % initialize variables
             obj.tn = [nan;nan;nan]; obj.xyz = [nan;nan;nan];
         end
