@@ -4,6 +4,8 @@ classdef cLEDrgb < handle
         R;      % Red PSD
         G;      % Green PSD
         B;      % Blue PSD
+        Txyz;   % RGB2XYZ transformation matrix
+        Trgb;   % XYZ2RGB transformation matrix
         obs;    % Standard observer (CIE XYZ 1978)
         flRes;  % color flux normalized increment resolution
     end
@@ -22,6 +24,7 @@ classdef cLEDrgb < handle
                 delete(obj.hWB);
             end
         end
+        
         % constructor
         function obj = cLEDrgb(flRes,Rpsd,Gpsd,Bpsd,flCIE)
              % normalized optical flux resolution (between 0 and 1)
@@ -79,27 +82,14 @@ classdef cLEDrgb < handle
             obj.obs = cCIE(flCIE);
            % initialize variables
             obj.tn = [nan;nan;nan]; obj.xyz = [nan;nan;nan];
+           % initialize Txyz
+           obj.Txyz = obj.getRGB2XYZ();
+           % initialize Trgb
+           obj.Trgb = obj.getXYZ2RGB();
         end
         
-%         % initialize the class
-%         function initialize(obj)
-%             res = obj.flRes:obj.flRes:1;
-%             N = numel(res);
-%             s1 = repmat(res,N*N,1);
-%             s2 = repmat(res,N,N);
-%             s3 = repmat(res,1,N*N);
-%             s = [s1(:)';s2(:)';s3(:)'];
-%             sm = repmat(sum(s,1),3,1);
-%             s = s./sm;
-%             obj.tn = unique(s','rows')';
-%             for j=1:size(obj.tn,2)
-%                 S = (obj.tn(1,j)*obj.R) + (obj.tn(2,j)*obj.G) + (obj.tn(3,j)*obj.B);
-%                 [obj.xyz(1,j),obj.xyz(2,j),obj.xyz(3,j)] = obj.obs.getCoordinates(S.npsd);
-%             end
-%         end
         % initialize the class
         function initialize(obj)
-%             resa = obj.flRes:obj.flRes:1;
             resa = 0:obj.flRes:1;
             resLEN = numel(resa);
             s = [0;0;0];
@@ -119,10 +109,11 @@ classdef cLEDrgb < handle
                         s(3) = resa(iz);
                         ttn = s/sum(s,1);
                         if ~ismember(obj.tn',ttn','rows')
-                            S = (ttn(1)*obj.R) + (ttn(2)*obj.G) + (ttn(3)*obj.B);
-                            [txyz(1),txyz(2),txyz(3)] = obj.obs.getCoordinates(S.npsd);
+%                             S = (ttn(1)*obj.R) + (ttn(2)*obj.G) + (ttn(3)*obj.B);
+%                             [txyz(1),txyz(2),txyz(3)] = obj.obs.getCoordinates(S.npsd);
+                            XYZ = obj.Txyz*ttn;
                             obj.tn(:,end+1) = ttn;
-                            obj.xyz(:,end+1) = txyz;
+                            obj.xyz(:,end+1) = XYZ/sum(XYZ,1);
                         end
                         LOOPCOUNT = LOOPCOUNT + 1;
                         PROG = LOOPCOUNT/TOTALLOOPS;
@@ -135,56 +126,54 @@ classdef cLEDrgb < handle
                 end
             end
             waitbar(1);
-%             obj.tn = unique(obj.tn','rows')';
-%             obj.xyz = unique(obj.xyz','rows')';
             catch ex
             delete(h);
             rethrow(ex);
             end
             delete(h);
         end
-%         % initialize the class
 %         function initialize(obj)
+% %             resa = obj.flRes:obj.flRes:1;
 %             resa = 0:obj.flRes:1;
 %             resLEN = numel(resa);
 %             s = [0;0;0];
 %             txyz = [0;0;0];
-%             obj.hWB = waitbar(0,'0.00%','Name','Characterizing LED...',...
+%             h = waitbar(0,'0.00%','Name','Characterizing LED...',...
 %                 'CreateCancelBtn',...
 %                 'setappdata(gcbf,''canceling'',1)');
 %             try
-%             setappdata(obj.hWB,'canceling',0);
-%             TOTALLOOPS = (resLEN-1)*resLEN/2;
+%             setappdata(h,'canceling',0);
+%             TOTALLOOPS = resLEN^3;
 %             LOOPCOUNT = 0;
 %             for ix = 1:resLEN
 %                 s(1) = resa(ix);
-%                 for iy = 1:resLEN-ix
+%                 for iy = 1:resLEN
 %                     s(2) = resa(iy);
-%                     s(3) = 1-s(1)-s(2);
-%                     ttn = s;
-%                     S = (ttn(1)*obj.R) + (ttn(2)*obj.G) + (ttn(3)*obj.B);
-%                     [txyz(1),txyz(2),txyz(3)] = obj.obs.getCoordinates(S.npsd);
-%                     obj.tn(:,end+1) = ttn;
-%                     obj.xyz(:,end+1) = txyz;
-%                     
-%                     LOOPCOUNT = LOOPCOUNT+1;
-%                     PROG = LOOPCOUNT/TOTALLOOPS;
-%                     waitbar(PROG,obj.hWB,sprintf('%0.2f%% done...',PROG*100));
-%                     
-%                     if(getappdata(obj.hWB,'canceling'))
-%                         delete(obj.hWB);
-%                         error('Characterization aborted');
+%                     for iz = 1:resLEN
+%                         s(3) = resa(iz);
+%                         ttn = s/sum(s,1);
+%                         if ~ismember(obj.tn',ttn','rows')
+%                             S = (ttn(1)*obj.R) + (ttn(2)*obj.G) + (ttn(3)*obj.B);
+%                             [txyz(1),txyz(2),txyz(3)] = obj.obs.getCoordinates(S.npsd);
+%                             obj.tn(:,end+1) = ttn;
+%                             obj.xyz(:,end+1) = txyz;
+%                         end
+%                         LOOPCOUNT = LOOPCOUNT + 1;
+%                         PROG = LOOPCOUNT/TOTALLOOPS;
+%                         waitbar(PROG,h,sprintf('%0.2f%% done...',PROG*100));
+%                         if(getappdata(h,'canceling'))
+%                             delete(h);
+%                             error('Characterization aborted');
+%                         end
 %                     end
 %                 end
 %             end
-% %             waitbar(1);
-%             obj.tn = unique(obj.tn','rows')';
-%             obj.xyz = unique(obj.xyz','rows')';
+%             waitbar(1);
 %             catch ex
-%             delete(obj.hWB);
+%             delete(h);
 %             rethrow(ex);
 %             end
-%             delete(obj.hWB);
+%             delete(h);
 %         end
         
         % get PSD generated by the RGB led closest to x,y CIE point
@@ -197,7 +186,46 @@ classdef cLEDrgb < handle
             R = tr*obj.R;G = tg*obj.G;B = tb*obj.B;
             S = R+G+B;
         end
+        
     end % methods
+    
+    methods(Access = private)
+        % compute RGB2XYZ transformation matrix
+        function T = getRGB2XYZ(obj)
+            [Xs,Ys,Zs] = obj.obs.getTristimulusValues([obj.R.npsd,obj.G.npsd,obj.B.npsd]);
+            T = [Xs;Ys;Zs];
+        end % getRGB2XYZ
+        
+        % compute RGB2XYZ transformation matrix
+        function T = getXYZ2RGB(obj)
+            T = zeros(3,3);
+            ob1 = cCurve(obj.R.npsd.Xmin,obj.R.npsd.dX,obj.R.npsd.Xmax,obj.R.npsd.Y);
+            ob2 = cCurve(obj.G.npsd.Xmin,obj.G.npsd.dX,obj.G.npsd.Xmax,obj.G.npsd.Y);
+            ob3 = cCurve(obj.B.npsd.Xmin,obj.B.npsd.dX,obj.B.npsd.Xmax,obj.B.npsd.Y);
+            
+            v = (obj.obs.ob1).*ob1;
+            T(1,1) = v.getIntegral(380,780);
+            v = (obj.obs.ob1).*ob2;
+            T(2,1) = v.getIntegral(380,780);
+            v = (obj.obs.ob1).*ob3;
+            T(3,1) = v.getIntegral(380,780);
+            
+            v = (obj.obs.ob2).*ob1;
+            T(1,2) = v.getIntegral(380,780);
+            v = (obj.obs.ob2).*ob2;
+            T(2,2) = v.getIntegral(380,780);
+            v = (obj.obs.ob2).*ob3;
+            T(3,2) = v.getIntegral(380,780);
+            
+            v = (obj.obs.ob3).*ob1;
+            T(1,3) = v.getIntegral(380,780);
+            v = (obj.obs.ob3).*ob2;
+            T(2,3) = v.getIntegral(380,780);
+            v = (obj.obs.ob3).*ob3;
+            T(3,3) = v.getIntegral(380,780);
+        end % getRGB2XYZ
+        
+    end % methods(Access = private)
 end % classdef
 
 
