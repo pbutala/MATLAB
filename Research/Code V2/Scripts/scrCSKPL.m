@@ -47,8 +47,29 @@ try
     FIGBERYMIN = 0.9*BERTH; FIGBERYMAX = 1;
     
     LOOPCOUNT = 0;
-    TOTALLOOPS = 1;
-    % PLOT AND SAVE BER vs SNR
+    TOTALLOOPS = 2;
+    
+    % ********************** PLOT AND SAVE COLOR GAMUT*********************
+    FIGGMT = figure('Name','RGB LED xy gamut','NumberTitle',FIGTITLE);
+    RGB.obs.showGamut();
+    hold on;
+    scatter(RGB.xyz(1,:),RGB.xyz(2,:),'.','b');
+    title(sprintf('RGB LED xy gamut\nR:%dnm G:%dnm B:%dnm Res:%0.2f',RMN,GMN,BMN,RES));
+    if fSAVEALL
+        fname = [ctDirRes STRPREFIX 'Gamut' CHARIDXARCHIVE];
+%         saveas(FIGGMT,[fname '.png'],'png');
+        saveas(FIGGMT,[fname '.fig'],'fig');
+%         saveas(FIGGMT,[fname '.eps'],'epsc');
+    end
+    if fCLOSEALL
+        close(FIGGMT);
+    end
+    % Update Wait bar
+    LOOPCOUNT = LOOPCOUNT+1;
+    PROGRESS = LOOPCOUNT/TOTALLOOPS;
+    waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
+    
+    % ********************** PLOT AND SAVE BER vs SNR *********************
     FIGBER = figure;
     [Xp,Yp] = getCleanPoints(RNGSNROFST,log10(BER),PLOTDMIN);  % Get points well spaced out
     semilogy(Xp,power(10,Yp),'bo');                          % Semilog AVG BER vs SNR Marker
@@ -60,19 +81,19 @@ try
     ylabel('BER');
     if fSAVEALL
         fname = [ctDirRes STRPREFIX 'BERvsSNR' CHARIDXARCHIVE];
-        f = figure(FIGBER);
-        saveas(f,[fname '.png'],'png');
-        saveas(f,[fname '.fig'],'fig');
-        saveas(f,[fname '.eps'],'epsc');
+        saveas(FIGBER,[fname '.png'],'png');
+        saveas(FIGBER,[fname '.fig'],'fig');
+        saveas(FIGBER,[fname '.eps'],'epsc');
     end
     if fCLOSEALL
-        close(f);
+        close(FIGBER);
     end
     % Update Wait bar
     LOOPCOUNT = LOOPCOUNT+1;
     PROGRESS = LOOPCOUNT/TOTALLOOPS;
     waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
     
+    % ********************** ************************ *********************
     delete(hWB);
 catch ex
     delete(hWB);

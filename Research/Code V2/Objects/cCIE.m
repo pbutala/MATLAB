@@ -1,4 +1,4 @@
-classdef cCIE
+classdef cCIE < handle
     % class to handle CIE colorimetric data
     % specify the three observer functions. Default CIE XYZ 1978
     % calculates tristimulus and color space coordinates
@@ -6,6 +6,35 @@ classdef cCIE
         ob1;    % standard observer 1
         ob2;    % standard observer 2
         ob3;    % standard observer 3
+    end
+    
+    properties (SetAccess = private)
+        gmtX;
+        gmtY;
+        gmtL;
+    end
+    
+    methods
+        function x = get.gmtX(obj)
+            if isempty(obj.gmtX)
+                [obj.gmtX,obj.gmtY] = obj.getGamut();
+            end
+            x = obj.gmtX;
+        end
+        
+        function y = get.gmtY(obj)
+            if isempty(obj.gmtY)
+                [obj.gmtX,obj.gmtY] = obj.getGamut();
+            end
+            y = obj.gmtY;
+        end
+        
+        function l = get.gmtL(obj)
+            if isempty(obj.gmtL)
+                [obj.gmtX,obj.gmtY,obj.gmtL] = obj.getGamut();
+            end
+            l = obj.gmtL;
+        end
     end
     
     methods
@@ -25,6 +54,8 @@ classdef cCIE
             obj.ob1 = cCurve(Lmin,dL,Lmax,X);
             obj.ob2 = cCurve(Lmin,dL,Lmax,Y);
             obj.ob3 = cCurve(Lmin,dL,Lmax,Z);
+            obj.gmtX = [];
+            obj.gmtY = [];
         end % end constructor
         
         function [t1,t2,t3] = getTristimulusValues(obj,psd)
@@ -75,6 +106,59 @@ classdef cCIE
                 end
             end
         end % end getCoordinates
+        
+        function [x,y,l] = getGamut(obj,dL,LMIN,LMAX)
+            % function getGamut()
+            % shows color gamut on plot
+            if ~exist('dL','var')
+                dL = 5;
+            end
+            if ~exist('LMIN','var')
+                LMIN = 380;
+            end
+            if ~exist('LMAX','var')
+                LMAX = 780;
+            end
+            
+            l = LMIN:dL:LMAX;
+            lenL = length(l);
+            x = zeros(1,lenL);
+            y = zeros(1,lenL);
+            
+            for il = 1:lenL
+                Ys = zeros(1,lenL);
+                Ys(il) = 1;
+                psd = cCurve(LMIN,dL,LMAX,Ys);
+                [x(il),y(il),~] = obj.getCoordinates(psd);
+            end
+        end
+        
+        function hax = showGamut(obj)
+            hax = gca;
+            plot(gca,[obj.gmtX obj.gmtX(1)],[obj.gmtY obj.gmtY(1)],'k','LineWidth',2);
+            axis([0 0.8 0 0.9]);
+            axis square;
+            grid on;
+            LDATXT = [380;470;490;500;510;520;540;560;580;600;780];
+            for iL = 1:length(obj.gmtL)
+                if ~isempty(find(LDATXT == obj.gmtL(iL),1))
+                    str = sprintf('  %d',obj.gmtL(iL));
+                    text(obj.gmtX(iL),obj.gmtY(iL),str);
+                end
+            end
+            xlabel('x'); ylabel('y');
+        end
+        
+        function hax = showGamutPlanckian(obj,CCT)
+            hax = obj.showGamut();
+            hold on;
+            if ~exist('CCT','var')
+                CCT = [1667 1750:250:25000];
+            end
+            [x,y] = planckXY(CCT);   % Get x,y from CCT
+            plot(hax,x,y,'k','LineWidth',2);
+        end
+        
     end % end methods
     
     methods(Static)

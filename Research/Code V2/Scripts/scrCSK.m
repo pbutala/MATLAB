@@ -7,9 +7,9 @@ clearvars;
 clc;
 
 % FLAGS
-fSTATION = 1;   % 1.PHO445 2.ENGGRID 3.LAPTOP 4.Optimus
+fSTATION = 4;   % 1.PHO445 2.ENGGRID 3.LAPTOP 4.Optimus
 fSAVEALL = true;
-fCLOSEALL = true;
+fCLOSEALL = false;
 fARCHIVE = true;
 rng('default');
 
@@ -25,10 +25,15 @@ end
 LAMBDAMIN = 200; LAMBDADELTA = 1; LAMBDAMAX = 1100;
 lambdas = LAMBDAMIN:LAMBDADELTA:LAMBDAMAX;
 
+% CIE1931 RGB monochromatic wavelengths
+% RMN = 700; RSC = 1; RSD = 0;              % Mean, SD and scale to generate SPD of Red led
+% GMN = 546; GSC = 1; GSD = 0;               % Mean, SD and scale to generate SPD of Green led
+% BMN = 436; BSC = 1; BSD = 0;               % Mean, SD and scale to generate SPD of Blue led
+
 RMN = 703; RSC = 1; RSD = 0;              % Mean, SD and scale to generate SPD of Red led
 GMN = 564; GSC = 1; GSD = 0;               % Mean, SD and scale to generate SPD of Green led
-% BMN = 429; BSC = 1; BSD = 0;               % Mean, SD and scale to generate SPD of Blue led
-BMN = 509; BSC = 1; BSD = 0;               % Mean, SD and scale to generate SPD of Blue led
+BMN = 429; BSC = 1; BSD = 0;               % Mean, SD and scale to generate SPD of Blue led
+% BMN = 509; BSC = 1; BSD = 0;               % Mean, SD and scale to generate SPD of Blue led
 cieFile = 'CIE1931_JV_1978_2deg';                 % CIE XYZ CMF curves file
 flCIE = [cieFile '.csv'];
 RES = 0.1;                                  % x,y Resolution for xy<->CCT conversion
@@ -40,7 +45,7 @@ BResp = cResp.getResponsivity(BMN);    % Get responsivities vs wavelength for Si
 
 NTX = 3; NRX = 3;
 
-TOTALBITS = 1e2;                            % Total bit for transmtter to simulate
+TOTALBITS = 2e3;                            % Total bit for transmtter to simulate
 
 WBX = 50; WBY = 500; WBW = 275; WBH = 75;   % Wait Box X,,Y,WID,HGT
 WBTITLE = 'Running CSK Simulation...'; % Wait Box title
@@ -53,18 +58,16 @@ MKCLR = {[0 1 0],[1 0.5 0],[0 0 1],[1 0 0]};
 M = 4;
 %      00,    01,    10,    11     (g w b r)
 % CBC 1
-% x = [0.402; 0.435; 0.169; 0.734];
-% y = [0.597; 0.290; 0.007; 0.265];
+x = [0.402; 0.435; 0.169; 0.734];
+y = [0.597; 0.290; 0.007; 0.265];
 % CBC 2: this is as specified in standard. varies slightly from actual
 % calculation. !!                                                           **********IMP**********
-x = [0.402; 0.382; 0.011; 0.734];
-y = [0.597; 0.532; 0.733; 0.265];
+% x = [0.402; 0.382; 0.011; 0.734];
+% y = [0.597; 0.532; 0.733; 0.265];
 Yc = 1;
-% x = [0.4027; 0.3816; 0.0120; 0.7301];
-% y = [0.5954; 0.5342; 0.7372; 0.2699];
 
 %% ranges
-RNGSNRMIN = 50; RNGSNRMAX = 50; SNROFST = 0;
+RNGSNRMIN = 0; RNGSNRMAX = 100; SNROFST = 0;
 RNGSNRLOOP = RNGSNRMAX - RNGSNRMIN + 1;                                         % Number of SNR in each SNR loop
 BERRATIOS = [1 5 10 50 100 500 1000]; %DELTASNR = [0.01 0.05 0.1 2 3 4 5];                % BER ratios to gracefully calculate next SNR
 DELTASNR = [1 2 5 10 10 10 20];                                                   % SNR increment to gracefully calculate next SNR
@@ -172,8 +175,8 @@ try
             mkdir(sPSDDIR);                 % Create directory to store characterization data
         end
         save(RGBledmat,'RGB');              % Save LED characterization
-    end
-    RGBLED = RGB;
+    end    
+    
     BITERR = 0;
     RNGSNRDB = [];
     
@@ -182,23 +185,15 @@ try
     PTXAVG = 0;
     for iSym = 1:M
         xc = x(iSym); yc = y(iSym);
-%         [~,~,~,~,tr,tg,tb] = RGBLED.getPSD(xc,yc);       % Get transmitter(s) SPD for set x,y
-        Xc = Yc*xc/yc;
-        Zc = Yc*(1-xc-yc)/yc;
-        trgb = RGBLED.Trgb*[Xc;Yc;Zc];
-        trgb = trgb/sum(trgb,1);
-        SYMS(1,iSym) = trgb(1);
-        SYMS(2,iSym) = trgb(2);
-        SYMS(3,iSym) = trgb(3);
-%         SYMS(1,iSym) = tr;
-%         SYMS(2,iSym) = tg;
-%         SYMS(3,iSym) = tb;
+        [~,~,~,~,tr,tg,tb] = RGB.getPSD(xc,yc);       % Get transmitter(s) SPD for set x,y
+        SYMS(1,iSym) = tr;
+        SYMS(2,iSym) = tg;
+        SYMS(3,iSym) = tb;
         PTXAVG = PTXAVG + sum(SYMS(:,iSym),1)/4;
     end
     
     %% Compute channel matrix
     H = [RResp 0 0;0 GResp 0; 0 0 BResp];
-%     H = [1 0 0;0 1 0; 0 0 1];
     
     %% Compute SYMS at Receiver
     SYMSRX = zeros(NRX,M);
@@ -222,28 +217,27 @@ try
         SNR = power(10,RNGSNRDB(iSNR)/10);
         SNRrt = sqrt(SNR);
         BITERR = 0; BITCOUNT = 0;
-        figure('Name','Constellation','NumberTitle',FIGTITLE);
+%         figure('Name','Constellation','NumberTitle',FIGTITLE);
+%         RGB.obs.showGamut();
+%         hold on;
         title(sprintf('Signal constellation for SNR_{avg}^{tx} = %0.2f(dB)',RNGSNRDB(iSNR)));
-        axis([0 1 0 1]);
-        hold on;
-        
+
         while(BITCOUNT < TOTALBITS - BITSSYM + 1)
             BITS = randi([0 1],[1 BITSSYM]);            % Generate random bits
-%             BITS = [0 0];
             SYMIDX = bin2decMat(BITS)+1;
             
             X = SYMS(:,SYMIDX);
             
             % Compute noise
             W = (PTXAVG/SNRrt)*randn(NRX,1);
-            Y = H*X;
-%             Y = H*X + W;
+%             Y = H*X;
+            Y = H*X + W;
             
             %% Estimate transmitted vector
             Xh = H\Y;
-            XYZh = RGBLED.Txyz*Xh;
+            XYZh = RGB.Txyz*Xh;
             xyzh = XYZh/sum(XYZh,1);
-            scatter(xyzh(1),xyzh(2),MKTYP{SYMIDX},'MarkerEdgeColor',MKCLR{SYMIDX},'linewidth',2);
+%             scatter(xyzh(1),xyzh(2),MKTYP{SYMIDX},'MarkerEdgeColor',MKCLR{SYMIDX},'linewidth',2);
            
             % MAP estimate (on RGB data)
 %             for iSym = 1:M
@@ -267,8 +261,8 @@ try
             BITERR = BITERR + biterr2(BITS, BITSh);
             BITCOUNT = BITCOUNT + BITSSYM;
         end
-        scatter(x,y,80,'k','x','linewidth',2);
-        grid on;
+%         scatter(x,y,80,'k','x','linewidth',2);
+%         grid on;
         
         BER(iSNR) = BITERR/BITCOUNT;
         % Calcculate change in BER and SNR
@@ -321,7 +315,7 @@ end
 % STREMAIL = ['Simulation ' STRPREFIX ' done. Starting plots.'];
 % sendmail('pankil.butala@gmail.com',STREMAIL);
 fprintf('--scrCSK Done--\n');
-% scrCSKPL;                                                  % Call Show Results script
+scrCSKPL;                                                  % Call Show Results script
 
 
 
