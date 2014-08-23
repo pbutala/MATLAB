@@ -9,12 +9,12 @@ clc;
 % FLAGS
 fSTATION = 4;   % 1.PHO445 2.ENGGRID 3.LAPTOP 4.Optimus
 fSAVEALL = true;
-fCLOSEALL = false;
+fCLOSEALL = true;
 fARCHIVE = true;
 rng('default');
 
 CHAROVERWRITE = '~';
-STRPREFIX = '3_';
+STRPREFIX = '3.2_';
 if(fARCHIVE)
     CHARIDXARCHIVE = '';           % ARCHIVE INDEX
 else
@@ -169,7 +169,7 @@ try
     if exist(RGBledmat,'file')              % If LED characterization table exists
         load(RGBledmat,'RGB');              % Load RGB led
     else
-        RGB = cLEDrgb(RES,Rch,Gch,Bch,flCIE);     % Create RGB led
+        RGB = cLEDs(RES,Rch,Gch,Bch,flCIE);
         RGB.initialize();                   % Initialize led
         if ~exist(sPSDDIR,'dir')
             mkdir(sPSDDIR);                 % Create directory to store characterization data
@@ -185,11 +185,9 @@ try
     PTXAVG = 0;
     for iSym = 1:M
         xc = x(iSym); yc = y(iSym);
-        [~,~,~,~,tr,tg,tb] = RGB.getPSD(xc,yc);       % Get transmitter(s) SPD for set x,y
-        SYMS(1,iSym) = tr;
-        SYMS(2,iSym) = tg;
-        SYMS(3,iSym) = tb;
-        PTXAVG = PTXAVG + sum(SYMS(:,iSym),1)/4;
+        [S,~,Ts] = RGB.getPSD(xc,yc);       % Get transmitter(s) SPD for set x,y
+        SYMS(:,iSym) = Ts;
+        PTXAVG = PTXAVG + S.rdFlux/M;
     end
     
     %% Compute channel matrix

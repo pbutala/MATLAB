@@ -92,6 +92,21 @@ classdef cCurve < handle
             res = cCurve(xmin,dx,xmax,Ys);
         end
         
+        % Overload '*' operator
+        function res = mtimes(obj1,obj2)
+            if (isa(obj1,'cCurve') && isnumeric(obj2))
+                crv = obj1;
+                scl = obj2;
+            elseif (isa(obj2,'cCurve') && isnumeric(obj1))
+                crv = obj2;
+                scl = obj1;
+            else
+                error('Input arguments must be of types numeric and cCurve');
+            end
+            
+            res = cCurve(crv.Xmin,crv.dX,crv.Xmax,crv.Y*scl);
+        end
+        
         % initialize Curve
         function initCurve(obj,Xmin,dX,Xmax,Y)
             if (Xmax-Xmin)/dX+1 ~= numel(Y)

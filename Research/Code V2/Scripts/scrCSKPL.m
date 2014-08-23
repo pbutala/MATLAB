@@ -57,9 +57,9 @@ try
     title(sprintf('RGB LED xy gamut\nR:%dnm G:%dnm B:%dnm Res:%0.2f',RMN,GMN,BMN,RES));
     if fSAVEALL
         fname = [ctDirRes STRPREFIX 'Gamut' CHARIDXARCHIVE];
-%         saveas(FIGGMT,[fname '.png'],'png');
+        saveas(FIGGMT,[fname '.png'],'png');
         saveas(FIGGMT,[fname '.fig'],'fig');
-%         saveas(FIGGMT,[fname '.eps'],'epsc');
+        saveas(FIGGMT,[fname '.eps'],'epsc');
     end
     if fCLOSEALL
         close(FIGGMT);

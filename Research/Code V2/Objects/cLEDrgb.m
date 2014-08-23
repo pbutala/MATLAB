@@ -77,15 +77,26 @@ classdef cLEDrgb < handle
             end
             % Generate CIE 1978 object
             if ~exist('flCIE','var')
-                flCIE = 'CIE1978.csv';
+%                 flCIE = 'CIE1978.csv';
+                flCIE = 'CIE1931_JV_1978_2deg.csv';
             end
             obj.obs = cCIE(flCIE);
-           % initialize variables
+            % initialize variables
             obj.tn = [nan;nan;nan]; obj.xyz = [nan;nan;nan];
-           % initialize Txyz
-           obj.Txyz = obj.getRGB2XYZ();
-           % initialize Trgb
-%            obj.Trgb = obj.getXYZ2RGB();
+            % initialize Txyz
+            obj.Txyz = obj.getRGB2XYZ();
+%             % scale RGB fluxes to get 1;1;1; as diag of Txyz
+%             obj.R.scaleOutputFlux(1/obj.Txyz(1,1));
+%             obj.G.scaleOutputFlux(1/obj.Txyz(2,2));
+%             obj.B.scaleOutputFlux(1/obj.Txyz(3,3));
+            [xm,ym] = obj.getMedianXY();
+            Ti = obj.Txyz\[xm;ym;1-xm-ym];
+            obj.R.scaleOutputFlux(Ti(1)*3);
+            obj.G.scaleOutputFlux(Ti(2)*3);
+            obj.B.scaleOutputFlux(Ti(3)*3);
+            % re-compute Txyz
+            obj.Txyz = obj.getRGB2XYZ();
+            
         end
         
 %         % initialize the class
@@ -135,13 +146,18 @@ classdef cLEDrgb < handle
 
         % initialize the class
         function initialize(obj)
-            resa = 0:obj.flRes:obj.Txyz(3,3)/obj.Txyz(1,1);            
+%             resa = 0:obj.flRes:1;
+            Z0 = 1/3; A0 = 0; D0 = (Z0-A0)*obj.flRes*2;
+            Z1 = 1; D1 = (Z1-Z0)*obj.flRes*2; A1 = Z0+D1; 
+            resa = [A0:D0:Z0 A1:D1:Z1];
             resLENa = numel(resa);
             
-            resb = 0:obj.flRes:obj.Txyz(3,3)/obj.Txyz(2,2);            
+%             resb = 0:obj.flRes:1;      
+            resb = [A0:D0:Z0 A1:D1:Z1];
             resLENb = numel(resb);
             
-            resc = 0:obj.flRes:obj.Txyz(3,3)/obj.Txyz(3,3);            
+%             resc = 0:obj.flRes:1;            
+            resc = [A0:D0:Z0 A1:D1:Z1];
             resLENc = numel(resc);
             
             s = [0;0;0];
@@ -204,38 +220,24 @@ classdef cLEDrgb < handle
     methods(Access = private)
         % compute RGB2XYZ transformation matrix
         function T = getRGB2XYZ(obj)
-            [Xs,Ys,Zs] = obj.obs.getTristimulusValues([obj.R.npsd,obj.G.npsd,obj.B.npsd]);
+            [Xs,Ys,Zs] = obj.obs.getTristimulusValues([obj.R.npsd*obj.R.rdFlux,...
+                                                       obj.G.npsd*obj.G.rdFlux,...
+                                                       obj.B.npsd*obj.B.rdFlux]);
             T = [Xs;Ys;Zs];
         end % getRGB2XYZ
         
-%         % compute RGB2XYZ transformation matrix
-%         function T = getXYZ2RGB(obj)
-%             T = zeros(3,3);
-%             ob1 = cCurve(obj.R.npsd.Xmin,obj.R.npsd.dX,obj.R.npsd.Xmax,obj.R.npsd.Y);
-%             ob2 = cCurve(obj.G.npsd.Xmin,obj.G.npsd.dX,obj.G.npsd.Xmax,obj.G.npsd.Y);
-%             ob3 = cCurve(obj.B.npsd.Xmin,obj.B.npsd.dX,obj.B.npsd.Xmax,obj.B.npsd.Y);
-%             
-%             v = (obj.obs.ob1).*ob1;
-%             T(1,1) = v.getIntegral(380,780);
-%             v = (obj.obs.ob1).*ob2;
-%             T(2,1) = v.getIntegral(380,780);
-%             v = (obj.obs.ob1).*ob3;
-%             T(3,1) = v.getIntegral(380,780);
-%             
-%             v = (obj.obs.ob2).*ob1;
-%             T(1,2) = v.getIntegral(380,780);
-%             v = (obj.obs.ob2).*ob2;
-%             T(2,2) = v.getIntegral(380,780);
-%             v = (obj.obs.ob2).*ob3;
-%             T(3,2) = v.getIntegral(380,780);
-%             
-%             v = (obj.obs.ob3).*ob1;
-%             T(1,3) = v.getIntegral(380,780);
-%             v = (obj.obs.ob3).*ob2;
-%             T(2,3) = v.getIntegral(380,780);
-%             v = (obj.obs.ob3).*ob3;
-%             T(3,3) = v.getIntegral(380,780);
-%         end % getRGB2XYZ
+        % compute median [x,y] 
+        function [xm,ym] = getMedianXY(obj)
+            T = obj.getRGB2XYZ();
+            xm=0;ym=0;
+            for i=1:3
+                X = T(1,i);Y = T(2,i);Z = T(3,i);
+                SM = X+Y+Z;
+                x=X/SM;y=Y/SM;
+                xm=xm+x;ym=ym+y;
+            end
+            xm=xm/3;ym=ym/3;
+        end % getMedianXY
         
     end % methods(Access = private)
 end % classdef
