@@ -82,28 +82,31 @@ classdef cCIE < handle
             % [c1 c2 c3] = getCoordinates(psd)
             % computes and returns the CIE xyz valuescolor space coordinates
             % for the psd
-            if isa(psd,'cCurve')
+            if isa(psd,'cPSD')
+                [X,Y,Z] = obj.getTristimulusValues(psd.npsd);
+            elseif isa(psd,'cCurve')
                 [X,Y,Z] = obj.getTristimulusValues(psd);
-                sm = X+Y+Z;
-                c1 = X./sm;
-                c2 = Y./sm;
-                c3 = Z./sm;
             else
                 error('''psd'' argument must be of type cCurve');
             end
-            
+            sm = X+Y+Z;
+            c1 = X./sm;
+            c2 = Y./sm;
+            c3 = Z./sm;
+                
             if nargout == 0
-                imshow('figCIEXYZ.png');
-                axis tight;
-                for iP = 1:numel(psd)
-%                     x = 0.195 + c1(iP)*(0.835-0.195)/0.8;
-%                     y = 0.165 + c2(iP)*(0.915-0.165)/0.9;
-                    x = 32 + c1(iP)*(407-32)/0.8;
-                    y = 435 + c2(iP)*(12-435)/0.9;
-                    ah = annotation('ellipse','EdgeColor','k','LineWidth',2);
-                    set(ah,'parent',gca);
-                    set(ah,'position',[x y 10 10]);
-                end
+                error('no output arguments specified');
+%                 imshow('figCIEXYZ.png');
+%                 axis tight;
+%                 for iP = 1:numel(psd)
+% %                     x = 0.195 + c1(iP)*(0.835-0.195)/0.8;
+% %                     y = 0.165 + c2(iP)*(0.915-0.165)/0.9;
+%                     x = 32 + c1(iP)*(407-32)/0.8;
+%                     y = 435 + c2(iP)*(12-435)/0.9;
+%                     ah = annotation('ellipse','EdgeColor','k','LineWidth',2);
+%                     set(ah,'parent',gca);
+%                     set(ah,'position',[x y 10 10]);
+%                 end
             end
         end % end getCoordinates
         

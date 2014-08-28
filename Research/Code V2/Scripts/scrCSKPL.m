@@ -43,20 +43,66 @@ try
     PLDCOLC = 'c'; PLDCOLS = '-'; PLDCOMK = 'd';
     PLTXLCS = {'r';'g';'b'}; PLTXLSS = {'--';'-.';':'}; PLTXMKS = {'>';'s';'*'};
     PLNSCMKS = {'x';'h';'^';'+';'v';'*';'<';'p'};
+    MKTYP = {'o','+','^','s'}; 
+    MKCLR = {'g','y','b','r'};
+    % MKCLR = {[0 1 0],[1 0.5 0],[0 0 1],[1 0 0]};
     % Figure BER vs SNR config
     FIGBERYMIN = 0.9*BERTH; FIGBERYMAX = 1;
     
     LOOPCOUNT = 0;
-    TOTALLOOPS = 2;
+    TOTALLOOPS = 3 + IDXCHST;
+    % ********************** PLOT AND SAVE SPDs responsivities *********************
+    FIGSPD = figure('Name','Spectral Spreads','NumberTitle',FIGTITLE);
+    hold on;
+    sLGD = {}; hLGD = [];
+    for i=1:RGB.NCLR
+        p = RGB.PSDs{i};
+        LSTL = [PLTXLCS{i} PLTXLSS{i}]; MSTL = [PLTXLCS{i} PLTXMKS{i}]; PSTL = [PLTXLCS{i} PLTXLSS{i} PLTXMKS{i}];
+        Yp = p.npsd.Ymax; Xp = p.npsd.X(p.npsd.Y == Yp);
+        plot(p.npsd.X, p.npsd.Y, LSTL);
+        plot(Xp, Yp, MSTL);
+        hLGD(end+1) = plot(nan,nan,PSTL);
+        sLGD{end+1} = ['SPD: ' p.name];
+    end
+    V = getEyeSens(LAMBDAMIN,LAMBDAMAX,LAMBDADELTA,1978);
+    [Xp,Yp] = getCleanPoints(lambdas,V/max(V), 50);
+    plot(lambdas, V/max(V), 'k-');
+    plot(Xp, Yp, ['k' PLNSCMKS{1}]);
+    hLGD(end+1) = plot(nan,nan,['k-' PLNSCMKS{1}]);
+    sLGD{end+1} = 'Eye Sensitivity';
+    
+    legend(gca,hLGD,sLGD);
+    grid on;
+    
+    if fSAVEALL
+        fname = [ctDirData STRPREFIX 'SpectralSpreads' CHARIDXARCHIVE];
+        saveas(FIGSPD,[fname '.png'],'png');
+        saveas(FIGSPD,[fname '.fig'],'fig');
+        saveas(FIGSPD,[fname '.eps'],'epsc');
+    end
+    if fCLOSEALL
+        close(FIGSPD);
+    end
+    % Update Wait bar
+    LOOPCOUNT = LOOPCOUNT+1;
+    PROGRESS = LOOPCOUNT/TOTALLOOPS;
+    waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
     
     % ********************** PLOT AND SAVE COLOR GAMUT*********************
     FIGGMT = figure('Name','RGB LED xy gamut','NumberTitle',FIGTITLE);
     RGB.obs.showGamut();
     hold on;
-    scatter(RGB.xyz(1,:),RGB.xyz(2,:),'.','b');
+    scatter(RGB.xyz(1,:),RGB.xyz(2,:),8,'.','y');
+    [x,y,~] = RGB.obs.getCoordinates(RGB.PSDs{1});
+    scatter(x,y,80,'x','r','LineWidth',2);
+    [x,y,~] = RGB.obs.getCoordinates(RGB.PSDs{2});
+    scatter(x,y,80,'x','g','LineWidth',2);
+    [x,y,~] = RGB.obs.getCoordinates(RGB.PSDs{3});
+    scatter(x,y,80,'x','b','LineWidth',2);
+    
     title(sprintf('RGB LED xy gamut\nR:%dnm G:%dnm B:%dnm Res:%0.2f',RMN,GMN,BMN,RES));
     if fSAVEALL
-        fname = [ctDirRes STRPREFIX 'Gamut' CHARIDXARCHIVE];
+        fname = [ctDirData STRPREFIX 'Gamut' CHARIDXARCHIVE];
         saveas(FIGGMT,[fname '.png'],'png');
         saveas(FIGGMT,[fname '.fig'],'fig');
         saveas(FIGGMT,[fname '.eps'],'epsc');
@@ -69,6 +115,39 @@ try
     PROGRESS = LOOPCOUNT/TOTALLOOPS;
     waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
     
+    % ********************** PLOT AND SAVE SYMBOLS*********************
+    for i=1:IDXCHST
+        FileChnlSt = [ctFileChnlStPRE sprintf('%d',i) CHARIDXARCHIVE '.mat'];
+        load(FileChnlSt);
+        FIGCHST = figure('Name','Constellation','NumberTitle',FIGTITLE);
+        RGB.obs.showGamut();
+        hold on;
+        for j=1:size(CHST.SYMS,2)
+            I = find(CHST.TxIdx == j);
+            if ~isempty(I)
+                scatter(CHST.RxSymEst(1,I),CHST.RxSymEst(2,I),MKTYP{j},'MarkerEdgeColor',MKCLR{j},'linewidth',1);
+            end
+        end
+        scatter(CHST.SYMS(1,:),CHST.SYMS(2,:),80,'k','x','linewidth',2);
+        
+        grid on;
+        
+        title(sprintf('Signal constellation for SNR_{avg}^{tx} = %0.2f(dB), BER = %0.1e',CHST.SNRdB,CHST.BER));
+        if fSAVEALL
+            fname = [ctDirData STRPREFIX 'Constellation' sprintf('%d',i) CHARIDXARCHIVE];
+            saveas(FIGCHST,[fname '.png'],'png');
+            saveas(FIGCHST,[fname '.fig'],'fig');
+            saveas(FIGCHST,[fname '.eps'],'epsc');
+        end
+        if fCLOSEALL
+            close(FIGCHST);
+        end
+        % Update Wait bar
+        LOOPCOUNT = LOOPCOUNT+1;
+        PROGRESS = LOOPCOUNT/TOTALLOOPS;
+        waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
+    end
+    
     % ********************** PLOT AND SAVE BER vs SNR *********************
     FIGBER = figure;
     [Xp,Yp] = getCleanPoints(RNGSNROFST,log10(BER),PLOTDMIN);  % Get points well spaced out
@@ -80,7 +159,7 @@ try
     xlabel(sprintf('SNR^{tx}_{avg}(dB)'));
     ylabel('BER');
     if fSAVEALL
-        fname = [ctDirRes STRPREFIX 'BERvsSNR' CHARIDXARCHIVE];
+        fname = [ctDirData STRPREFIX 'BERvsSNR' CHARIDXARCHIVE];
         saveas(FIGBER,[fname '.png'],'png');
         saveas(FIGBER,[fname '.fig'],'fig');
         saveas(FIGBER,[fname '.eps'],'epsc');

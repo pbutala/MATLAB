@@ -11,24 +11,32 @@ classdef cPSD < handle
         rdFlux;
     end
     
+    properties
+        name;
+    end
+    
     methods
         % Constructor
-        function obj = cPSD(xmin,delta,xmax,psd)
+        function obj = cPSD(xmin,delta,xmax,spd,name)
             if nargin ~= 0
-                if min(psd)<0
-                    error('Power Spectral Density cannot have negative values');
+                if min(spd)<0
+                    error('Spectral Power Distribution cannot have negative values');
                 end
-                obj.rdFlux = sum(psd)*delta;
+                obj.rdFlux = sum(spd)*delta;
                 if obj.rdFlux == 0
-                    obj.npsd = cCurve(xmin,delta,xmax,psd);
+                    obj.npsd = cCurve(xmin,delta,xmax,spd);
                 else
-                    obj.npsd = cCurve(xmin,delta,xmax,psd/obj.rdFlux);
+                    obj.npsd = cCurve(xmin,delta,xmax,spd/obj.rdFlux);
                 end
                 obj.npsd.Ylow = 0;
                 obj.npsd.Yhigh = 0;
                 V = getEyeSens(xmin,xmax,delta,1978);
-                obj.lmFlux = 683*sum(psd.*V)*delta;
+                obj.lmFlux = 683*sum(spd.*V)*delta;
             end
+            if ~exist('name','var')
+                name = '';
+            end
+            obj.name = name;
         end
         
         function scaleOutputFlux(obj,scale)
