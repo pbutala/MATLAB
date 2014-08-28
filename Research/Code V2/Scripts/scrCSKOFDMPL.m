@@ -1,4 +1,4 @@
-% scrCSKPL
+% scrCSKOFDMPL
 if ~exist('ctFileVars','var')
     error('Data file not specified');
 end

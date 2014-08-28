@@ -11,10 +11,12 @@ fSTATION = 4;   % 1.PHO445 2.ENGGRID 3.LAPTOP 4.Optimus
 fSAVEALL = true;
 fCLOSEALL = false;
 fARCHIVE = true;
+f0XYZ1RGB = true;
 rng('default');
 
 CHAROVERWRITE = '~';
-STRPREFIX = '1_CBC2_';
+STRPREFIX = '2_CBC2_RGB_';
+% STRPREFIX = '1_';
 if(fARCHIVE)
     CHARIDXARCHIVE = '';           % ARCHIVE INDEX
 else
@@ -58,12 +60,12 @@ MKCLR = {[0 1 0],[1 0.5 0],[0 0 1],[1 0 0]};
 M = 4;
 %      00,    01,    10,    11     (g w b r)
 % CBC 1
-% x = [0.402; 0.435; 0.169; 0.734];
-% y = [0.597; 0.290; 0.007; 0.265];
+x = [0.402; 0.435; 0.169; 0.734];
+y = [0.597; 0.290; 0.007; 0.265];
 % CBC 2: this is as specified in standard. varies slightly from actual
 % calculation. !!                                                           **********IMP**********
-x = [0.402; 0.382; 0.011; 0.734];
-y = [0.597; 0.532; 0.733; 0.265];
+% x = [0.402; 0.382; 0.011; 0.734];
+% y = [0.597; 0.532; 0.733; 0.265];
 Yc = 1;
 
 %% ranges
@@ -224,8 +226,13 @@ try
         SNRrt = sqrt(SNR);
         BITERR = 0; BITCOUNT = 0;
         ARLEN = floor(TOTALBITS/BITSSYM);
-        SZRXSYMS = [2 ARLEN];
-        CHST = cChnlState(ARLEN,SZRXSYMS,[x,y]',H);
+        SZRXSYMS = [3 ARLEN];
+        if f0XYZ1RGB
+            SYMSEST = SYMS;
+        else
+            SYMSEST = [x,y,1-x-y]';
+        end
+        CHST = cChnlState(ARLEN,SZRXSYMS,SYMSEST,H);
         CHST.SNRdB = RNGSNRDB(iSNR);
         MCIDX = 0;
         while(BITCOUNT < TOTALBITS - BITSSYM + 1)
@@ -244,23 +251,25 @@ try
             Xh = H\Y;
             XYZh = RGB.Txyz*Xh;
             xyzh = XYZh/sum(XYZh,1);
-            CHST.RxSymEst(:,MCIDX) = xyzh(1:2);
-           
-            % MAP estimate (on RGB data)
-%             for iSym = 1:M
-%                 vYSym = Y-SYMSRX(:,iSym);
-%                 dYSym(iSym) = sum((vYSym.*vYSym),1);
-%             end
-%             SYMIDXh = find(dYSym == min(dYSym),1,'first');
-%             BITSh = dec2binMat(SYMIDXh-1,log2(M));
             
-            %% MAP estimate (on xyz data)
-            vYSym = zeros(3,1);
-            for iSym = 1:M
-                vYSym(1) = xyzh(1)-x(iSym);
-                vYSym(2) = xyzh(2)-y(iSym);
-                dYSym(iSym) = sum((vYSym.*vYSym),1);
+            if f0XYZ1RGB
+                % MAP estimate (on RGB data)
+                for iSym = 1:M
+                    vYSym = Y-SYMSRX(:,iSym);
+                    dYSym(iSym) = sum((vYSym.*vYSym),1);
+                end
+                CHST.RxSymEst(:,MCIDX) = Xh;
+            else
+                %% MAP estimate (on xyz data)
+                vYSym = zeros(3,1);
+                for iSym = 1:M
+                    vYSym(1) = xyzh(1)-x(iSym);
+                    vYSym(2) = xyzh(2)-y(iSym);
+                    dYSym(iSym) = sum((vYSym.*vYSym),1);
+                end
+                CHST.RxSymEst(:,MCIDX) = xyzh;
             end
+            
             SYMIDXh = find(dYSym == min(dYSym),1,'first');
             CHST.RxIdx(MCIDX) = SYMIDXh;
             
