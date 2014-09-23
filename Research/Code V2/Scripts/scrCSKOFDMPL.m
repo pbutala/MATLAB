@@ -137,14 +137,14 @@ try
                     switch lower(ofdmType)
                         case 'acoofdm'
                             STROFDM = 'ACO';
-                            STRMOD = sprintf(' A M-%d',RNGMODACO(iM));
+                            STRMODACO = sprintf(' A M-%d',RNGMODACO(iM));
                         case 'dcoofdm'
                             STROFDM = 'DCO';
-                            STRMOD = sprintf(' D M-%d',RNGMODDCO(iM));
+                            STRMODDCO = sprintf(' D M-%d',RNGMODDCO(iM));
                     end
                     [Xp,Yp] = getCleanPoints(RNGSNROFST(:,iM,iNSC,iDC,iOf),log10(BER(:,iM,iNSC,iDC,iOf)),PLOTDMIN);  % Get points well spaced out
-                    semilogy(Xp,power(10,Yp),[O_LC{iOf} O_LS{iOf}]);                          % Semilog AVG BER vs SNR Marker
-                    semilogy(RNGSNROFST(:,iM,iNSC,iDC,iOf),BER(:,iM,iNSC,iDC,iOf),[O_LC{iOf} O_MK{iOf}]);  % Semilog AVG BER vs SNR
+                    semilogy(Xp,power(10,Yp),[O_LC{iOf} O_MK{iOf}]);                          % Semilog AVG BER vs SNR Marker
+                    semilogy(RNGSNROFST(:,iM,iNSC,iDC,iOf),BER(:,iM,iNSC,iDC,iOf),[O_LC{iOf} O_LS{iOf}]);  % Semilog AVG BER vs SNR
                     hLGD(end+1) = semilogy(nan,nan,[O_LC{iOf} O_LS{iOf} O_MK{iOf}]);
                     sLGD{end+1} = ['CSK-' STROFDM];
                     
@@ -170,7 +170,7 @@ try
                 
                 f = gcf;
                 if fSAVEALL
-                    fname = [ctDirData STRPREFIX 'BERvsSNR' STRMOD STRNSC STRDCOOFST STRACOOFST CHARIDXARCHIVE];
+                    fname = [ctDirData STRPREFIX 'BERvsSNR' STRMODDCO STRMODACO STRNSC STRDCOOFST STRACOOFST CHARIDXARCHIVE];
                     saveas(f,[fname '.png'],'png');
                     saveas(f,[fname '.fig'],'fig');
                     saveas(f,[fname '.eps'],'epsc');
@@ -204,20 +204,20 @@ try
                     switch lower(ofdmType)
                         case 'acoofdm'
                             STROFDM = 'ACO';
-                            STRMOD = sprintf(' A M-%d',RNGMODACO(iM));
+                            STRMODACO = sprintf(' A M-%d',RNGMODACO(iM));
                         case 'dcoofdm'
                             STROFDM = 'DCO';
-                            STRMOD = sprintf(' D M-%d',RNGMODDCO(iM));
+                            STRMODCO = sprintf(' D M-%d',RNGMODDCO(iM));
                     end
                     [Xp,Yp] = getCleanPoints(RNGSNROFST(:,iM,iNSC,iDC,iOf),log10(C_BER(:,iM,iNSC,iDC,iOf)),PLOTDMIN);  % Get points well spaced out
-                    semilogy(Xp,power(10,Yp),[O_LC{iOf} O_LS{iOf}]);                          % Semilog AVG BER vs SNR Marker
-                    semilogy(RNGSNROFST(:,iM,iNSC,iDC,iOf),C_BER(:,iM,iNSC,iDC,iOf),[O_LC{iOf} O_MKsp_C{iOf}]);  % Semilog AVG BER vs SNR
+                    semilogy(Xp,power(10,Yp),[O_LC{iOf} O_MKsp_C{iOf}]);                          % Semilog AVG BER vs SNR Marker
+                    semilogy(RNGSNROFST(:,iM,iNSC,iDC,iOf),C_BER(:,iM,iNSC,iDC,iOf),[O_LC{iOf} O_LS{iOf}]);  % Semilog AVG BER vs SNR
                     hLGD(end+1) = semilogy(nan,nan,[O_LC{iOf} O_LS{iOf} O_MKsp_C{iOf}]);
                     sLGD{end+1} = ['CSK (' STROFDM ')'];
                     
                     [Xp,Yp] = getCleanPoints(RNGSNROFST(:,iM,iNSC,iDC,iOf),log10(O_BER(:,iM,iNSC,iDC,iOf)),PLOTDMIN);  % Get points well spaced out
-                    semilogy(Xp,power(10,Yp),[O_LC{iOf} O_LS{iOf}]);                          % Semilog AVG BER vs SNR Marker
-                    semilogy(RNGSNROFST(:,iM,iNSC,iDC,iOf),O_BER(:,iM,iNSC,iDC,iOf),[O_LC{iOf} O_MKsp_O{iOf}]);  % Semilog AVG BER vs SNR
+                    semilogy(Xp,power(10,Yp),[O_LC{iOf} O_MKsp_O{iOf}]);                          % Semilog AVG BER vs SNR Marker
+                    semilogy(RNGSNROFST(:,iM,iNSC,iDC,iOf),O_BER(:,iM,iNSC,iDC,iOf),[O_LC{iOf} O_LS{iOf}]);  % Semilog AVG BER vs SNR
                     hLGD(end+1) = semilogy(nan,nan,[O_LC{iOf} O_LS{iOf} O_MKsp_O{iOf}]);
                     sLGD{end+1} = ['OFDM (' STROFDM ')'];
                 end
@@ -236,7 +236,7 @@ try
                 
                 f = gcf;
                 if fSAVEALL
-                    fname = [ctDirData STRPREFIX 'BER_SplitvsSNR' STRMOD STRNSC STRDCOOFST STRACOOFST CHARIDXARCHIVE];
+                    fname = [ctDirData STRPREFIX 'BER_SplitvsSNR' STRMODDCO STRMODACO STRNSC STRDCOOFST STRACOOFST CHARIDXARCHIVE];
                     saveas(f,[fname '.png'],'png');
                     saveas(f,[fname '.fig'],'fig');
                     saveas(f,[fname '.eps'],'epsc');
@@ -253,62 +253,69 @@ try
     end
     
     % ********************** PLOT AND SAVE SNR vs DC OFSTs *********************
-    for iM = 1:LENMOD
-        for iNSC = 1:LENMODNSC                                                  % LOOP START MODNSC
-            MODNSC = RNGMODNSC(iNSC);
-            STRNSC = sprintf(' Nsc %d', MODNSC);
-            
-            FIGSNRvsDC(iNSC,iDC) = figure;
-            hold on;
-            sLGD = {}; hLGD = [];
-            for iOf = 1:LENOFDMTYPES                                            % LOOP START OFDM types
-                ofdmType = lower(RNGOFDMTYPES{iOf});
-                switch lower(ofdmType)
-                    case 'acoofdm'
-                        STROFDM = 'ACO';
-                        RNGDC = RNGOFDMOFSTACO;
-                        STRMOD = sprintf(' A M-%d',RNGMODACO(iM));
-                    case 'dcoofdm'
-                        STROFDM = 'DCO';
-                        RNGDC = RNGOFDMOFSTDCO;
-                        STRMOD = sprintf(' D M-%d',RNGMODDCO(iM));
+    if LENOFDMOFST > 1
+        for iM = 1:LENMOD
+            for iNSC = 1:LENMODNSC                                                  % LOOP START MODNSC
+                MODNSC = RNGMODNSC(iNSC);
+                STRNSC = sprintf(' Nsc %d', MODNSC);
+                
+                FIGSNRvsDC(iNSC,iDC) = figure;
+                hold on;
+                sLGD = {}; hLGD = [];
+                for iOf = 1:LENOFDMTYPES                                            % LOOP START OFDM types
+                    ofdmType = lower(RNGOFDMTYPES{iOf});
+                    switch lower(ofdmType)
+                        case 'acoofdm'
+                            STROFDM = 'ACO';
+                            RNGDC = RNGOFDMOFSTACO;
+                            STRMODACO = sprintf(' A M-%d',RNGMODACO(iM));
+                        case 'dcoofdm'
+                            STROFDM = 'DCO';
+                            RNGDC = RNGOFDMOFSTDCO;
+                            STRMODDCO = sprintf(' D M-%d',RNGMODDCO(iM));
+                    end
+                    if min(RNGDC(:)) ~= max(RNGDC(:));
+                        [Xp,Yp] = getCleanPoints(RNGDC,SNRatTBER(iM,iNSC,:,iOf),PLOTDMIN);  % Get points well spaced out
+                        plot(Xp,Yp,[O_LC{iOf} O_LS{iOf}]);                          % Semilog AVG BER vs SNR Marker
+                        plot(RNGDC,squeeze(SNRatTBER(iM,iNSC,:,iOf)),[O_LC{iOf} O_MK{iOf}]);  % Semilog AVG BER vs SNR
+                        hLGD(end+1) = plot(nan,nan,[O_LC{iOf} O_LS{iOf} O_MK{iOf}]);
+                        sLGD{end+1} = ['CSK-' STROFDM];
+                    end
                 end
-                if min(RNGDC(:)) ~= max(RNGDC(:));
-                    [Xp,Yp] = getCleanPoints(RNGDC,SNRatTBER(iM,iNSC,:,iOf),PLOTDMIN);  % Get points well spaced out
-                    plot(Xp,Yp,[O_LC{iOf} O_LS{iOf}]);                          % Semilog AVG BER vs SNR Marker
-                    plot(RNGDC,squeeze(SNRatTBER(iM,iNSC,:,iOf)),[O_LC{iOf} O_MK{iOf}]);  % Semilog AVG BER vs SNR
-                    hLGD(end+1) = plot(nan,nan,[O_LC{iOf} O_LS{iOf} O_MK{iOf}]);
-                    sLGD{end+1} = ['CSK-' STROFDM];
-                end
-            end
-            axis([min(RNGDC) max(RNGDC) FIGBERXMIN FIGBERXMAX]);
-            grid on;
-            xlabel(sprintf('DC Offset (SD)'));
-            ylabel('SNR^{tx}_{avg}(dB)');
-            strTitle = sprintf(['DCO: %3d BPS | %3d-QAM | '...
-                                    'ACO: %3d BPS | %3d-QAM\n'...
-                                    '%2d-CSK: %3d BPS | %3d N_{sc}'],...
-                                    O_BPS(iM,iNSC,1), RNGMODDCO(iM),...
-                                    O_BPS(iM,iNSC,2), RNGMODACO(iM),...
-                                    C_M, C_BPS(iNSC),MODNSC);
+                axis([min(RNGDC) max(RNGDC) FIGBERXMIN FIGBERXMAX]);
+                grid on;
+                xlabel(sprintf('DC Offset (SD)'));
+                ylabel('SNR^{tx}_{avg}(dB)');
+                strTitle = sprintf(['DCO: %3d BPS | %3d-QAM | '...
+                    'ACO: %3d BPS | %3d-QAM\n'...
+                    '%2d-CSK: %3d BPS | %3d N_{sc}'],...
+                    O_BPS(iM,iNSC,1), RNGMODDCO(iM),...
+                    O_BPS(iM,iNSC,2), RNGMODACO(iM),...
+                    C_M, C_BPS(iNSC),MODNSC);
                 title(strTitle);
-            legend(gca,hLGD,sLGD);
-            
-            f = gcf;
-            if fSAVEALL
-                fname = [ctDirData STRPREFIX 'SNRvsDCOFST' STRMOD STRNSC CHARIDXARCHIVE];
-                saveas(f,[fname '.png'],'png');
-                saveas(f,[fname '.fig'],'fig');
-                saveas(f,[fname '.eps'],'epsc');
+                legend(gca,hLGD,sLGD);
+                
+                f = gcf;
+                if fSAVEALL
+                    fname = [ctDirData STRPREFIX 'SNRvsDCOFST' STRMODDCO STRMODACO STRNSC CHARIDXARCHIVE];
+                    saveas(f,[fname '.png'],'png');
+                    saveas(f,[fname '.fig'],'fig');
+                    saveas(f,[fname '.eps'],'epsc');
+                end
+                if fCLOSEALL
+                    close(f);
+                end
+                % Update Wait bar
+                LOOPCOUNT = LOOPCOUNT+1;
+                PROGRESS = LOOPCOUNT/TOTALLOOPS;
+                waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
             end
-            if fCLOSEALL
-                close(f);
-            end
-            % Update Wait bar
-            LOOPCOUNT = LOOPCOUNT+1;
-            PROGRESS = LOOPCOUNT/TOTALLOOPS;
-            waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
         end
+    else
+        % Update Wait bar
+        LOOPCOUNT = LOOPCOUNT+LENMOD*LENMODNSC;
+        PROGRESS = LOOPCOUNT/TOTALLOOPS;
+        waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
     end
     % ********************** ************************ *********************
     delete(hWB);

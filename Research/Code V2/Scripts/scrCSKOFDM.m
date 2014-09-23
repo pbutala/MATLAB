@@ -7,11 +7,11 @@ clearvars;
 clc;
 
 % FLAGS
-fSTATION = 4;   % 1.PHO445 2.ENGGRID 3.LAPTOP 4.Optimus
+fSTATION = 1;   % 1.PHO445 2.ENGGRID 3.LAPTOP 4.Optimus
 fSAVEALL = true;
-fCLOSEALL = true;
+fCLOSEALL = false;
 fARCHIVE = true;
-f0XYZ1RGB = false;
+fDECODER = 3; % 1.XYZ 2.RGB 3.TRIs
 rng('default');
 
 CHAROVERWRITE = '~';
@@ -70,18 +70,21 @@ Yc = 1;
 %% ranges
 RNGSNRMIN = 0; RNGSNRMAX = 150; SNROFST = 0;
 RNGSNRLOOP = RNGSNRMAX - RNGSNRMIN + 1;                                         % Number of SNR in each SNR loop
-BERRATIOS = [1 5 10 50 100 500 1000]; DELTASNR = [0.01 0.05 0.1 2 3 4 5];                % BER ratios to gracefully calculate next SNR
+BERRATIOS = [1 5 10 50 100 500 1000]; 
+DELTASNR = [0.01 0.05 0.1 2 3 4 5];                % BER ratios to gracefully calculate next SNR
 % DELTASNR = [1 2 5 10 10 10 20];                                                   % SNR increment to gracefully calculate next SNR
 BERTH = 1e-3;   BERTHMIN = 0.75*BERTH;       % BER thresholds;
 
 % OFDM RANGES
 RNGOFDMTYPES = {'dcoofdm';'acoofdm'};   LENOFDMTYPES = numel(RNGOFDMTYPES); % OFDM types
 % RNGOFDMOFST = [3.2 3.2];                  LENOFDMOFST = size(RNGOFDMOFST,2);  % OFDM offsets
-RNGMODDCO = power(2,1:1:4);               LENMOD  = numel(RNGMODDCO);           % Subcarrier modulation order
+RNGMODDCO = power(2,2);               LENMOD  = numel(RNGMODDCO);           % Subcarrier modulation order
 RNGMODACO = RNGMODDCO.^2;
 RNGMODNSC = power(2,6);                 LENMODNSC = numel(RNGMODNSC);       % Number of subcarriers
-RNGOFDMOFSTACO = [0:0.25:4];
-RNGOFDMOFSTDCO = [0:0.25:4];         LENOFDMOFST = numel(RNGOFDMOFSTDCO);  % OFDM offsets
+RNGOFDMOFSTACO = [0:0.5:4];
+RNGOFDMOFSTDCO = [0:0.5:4];         LENOFDMOFST = numel(RNGOFDMOFSTDCO);  % OFDM offsets
+% RNGOFDMOFSTACO = 0.2;
+% RNGOFDMOFSTDCO = 3.2;         LENOFDMOFST = numel(RNGOFDMOFSTDCO);  % OFDM offsets
 
 % O_RES = 1e-3; O_PERS = power(2,10); O_MAXMC = 1e9;
 WBX = 50; WBY = 500; WBW = 275; WBH = 75;   % Wait Box X,,Y,WID,HGT
@@ -198,11 +201,16 @@ try
     
     %% Generate CSK Symbols
     C_SYMS = zeros(NTX,C_M);
-    PTXAVG = 0;
+    C_TRIS = zeros(NTX,C_M);
+    PTXAVG = 0; PTXAVGh = 0;
     for iSym = 1:C_M
         xc = x(iSym); yc = y(iSym);
         [S,Ds,Ts] = RGB.getPSD(xc,yc);       % Get transmitter(s) SPD for set x,y
-        C_SYMS(:,iSym) = Ts;
+%         C_SYMS(:,iSym) = Ts;
+        for iTx = 1:NTX
+            C_TRIS(iTx,iSym) = Ts(iTx);
+            C_SYMS(iTx,iSym) = Ds{iTx}.rdFlux;
+        end
         PTXAVG = PTXAVG + S.rdFlux/C_M;
     end
     
@@ -258,7 +266,9 @@ try
                         BITERR = 0; C_BITERR = 0; O_BITERR = 0;
                         BITCOUNT = 0; C_BITCOUNT = 0; O_BITCOUNT = 0;
                         
-                        MCIDX = 0;
+                        MCIDX = 0; 
+                        PTXAVGh(iSNR,iM,iNSC,iDC,iOf) = 0;
+                        O_tSig_AVGh(iSNR,iM,iNSC,iDC,iOf) = 0;
                         while(BITCOUNT < TOTALBITS - C_BPS(iNSC) - O_BPS(iM,iNSC,iOf) + 1)
                             MCIDX  = MCIDX + 1;                                     % increment monte-carlo index
                             
@@ -276,40 +286,67 @@ try
                                 'OffsetDcoStddev', OffsetDcoStddev,...
                                 'OffsetAcoStddev', OffsetAcoStddev)';
                             tSigMat = repmat(tSig,NTX,1);
+                            O_tSig_AVGh(iSNR,iM,iNSC,iDC,iOf) = (O_tSig_AVGh(iSNR,iM,iNSC,iDC,iOf)*(MCIDX-1) + mean(tSig))/MCIDX;
                             
                             X = C_SYMS(:,C_SYMIDX).*tSigMat;
                             X = X/O_tSig_AVG(iM,iNSC,iDC,iOf);                         % Normalize signal to unit Mean (average) signal.
                             
+                            PTXAVGh(iSNR,iM,iNSC,iDC,iOf) = (PTXAVGh(iSNR,iM,iNSC,iDC,iOf)*(MCIDX-1) + sum(X(:))/MODNSC)/MCIDX;
                             % Compute noise
                             W = (PTXAVG/SNRrt)*randn(NRX,MODNSC);
                             Y = H*X + W;
-                            %                     Y = H*X;
+                            % Y = H*X;
                             
                             %% Estimate transmitted vector
                             Xh = H\Y;
                             
-                            %% Estimate CSK frame
-                            XYZh = RGB.Txyz*Xh;
-                            xyzh = XYZh./repmat(sum(XYZh,1),3,1);
+%                             %% calibrate for primary powers
+%                             Xh(1,:) = Xh(1,:)/RGB.PSDs{1}.rdFlux;
+%                             Xh(2,:) = Xh(2,:)/RGB.PSDs{2}.rdFlux;
+%                             Xh(3,:) = Xh(3,:)/RGB.PSDs{3}.rdFlux;
+%                             
+%                             %% Estimate CSK frame
+%                             XYZh = RGB.Txyz*Xh;
+%                             xyzh = XYZh./repmat(sum(XYZh,1),3,1);
                             
-                            if f0XYZ1RGB
-                                % MAP estimate (on RGB data) TODO: Has Errors. Need to Fix
-                                for iSym = 1:C_M
-                                    vYSym = Y-C_SYMSRX(:,iSym);
-                                    dYSym(iSym) = sum((vYSym.*vYSym),1);
-                                end
-                            else
-                                %% MAP estimate (on xyz data)
-                                vYSym = zeros(2,MODNSC);
-                                for iSym = 1:C_M
-                                    vYSym(1,:) = xyzh(1,:)-x(iSym);
-                                    vYSym(2,:) = xyzh(2,:)-y(iSym);
-                                    dYSym(iSym,:) = sum((vYSym.*vYSym),1);
-                                end
+                            switch fDECODER
+                                case 1
+                                    % MAP estimate (on RGB data) TODO: Has Errors. Need to Fix
+                                    for iSym = 1:C_M
+                                        vYSym = Y-C_SYMSRX(:,iSym);
+                                        dYSym(iSym) = sum((vYSym.*vYSym),1);
+                                    end
+                                case 2
+                                    %% MAP estimate (on xyz data) TODO: Has Errors. Need to Fix
+                                    vYSym = zeros(2,MODNSC);
+                                    for iSym = 1:C_M
+                                        vYSym(1,:) = xyzh(1,:)-x(iSym);
+                                        vYSym(2,:) = xyzh(2,:)-y(iSym);
+                                        dYSym(iSym,:) = sum((vYSym.*vYSym),1);
+                                    end
+                                case 3
+                                    %% MAP estimate (on tristimulus values)
+                                    % calibrate for primary powers
+                                    th(1,:) = Xh(1,:)/RGB.PSDs{1}.rdFlux;
+                                    th(2,:) = Xh(2,:)/RGB.PSDs{2}.rdFlux;
+                                    th(3,:) = Xh(3,:)/RGB.PSDs{3}.rdFlux;
+                                    th = th./repmat(sum(th,1),3,1);
+                                    
+                                    vYSym = zeros(3,MODNSC);
+                                    for iSym = 1:C_M
+                                        vYSym(1,:) = th(1,:)-C_TRIS(1,iSym);
+                                        vYSym(2,:) = th(2,:)-C_TRIS(2,iSym);
+                                        vYSym(3,:) = th(3,:)-C_TRIS(3,iSym);
+                                        dYSym(iSym,:) = sum((vYSym.*vYSym),1);
+                                    end
+                                otherwise
+                                    error('Decoder not defined');
+                                    
                             end
                             [~,C_SYMIDXh] = min(dYSym,[],1);
                             C_BITSh = dec2binMat(C_SYMIDXh-1,log2(C_M));
-                            C_BITERR = C_BITERR + biterr2(C_BITS, C_BITSh);
+                            C_BITERRd = biterr2(C_BITS, C_BITSh);
+                            C_BITERR = C_BITERR + C_BITERRd;
                             C_BITCOUNT = C_BITCOUNT + C_BPS(iNSC);
                             
                             %% Estimate OFDM frame
@@ -317,16 +354,26 @@ try
                             for iSPL = 1:MODNSC
                                 tSigh(iSPL) = C_SYMS(:,C_SYMIDXh(iSPL))\Xh(:,iSPL);
                             end
+                            
+                            %% Scale tSigh based on average signal value
+                            tSigh = tSigh*O_tSig_AVG(iM,iNSC,iDC,iOf); 
+                            
                             O_SYMIDXh = decodeOFDMsignal(tSigh,...
                                 'OFDMtype',ofdmType,...
                                 'N',MODNSC,...
                                 'Symbols',O_SYMS);
+                            
                             O_BITSh = dec2binMat(O_SYMIDXh-1,log2(O_M));
-                            O_BITERR = O_BITERR + biterr2(O_BITS, O_BITSh);
+                            O_BITERRd = biterr2(O_BITS, O_BITSh);
+                            O_BITERR = O_BITERR + O_BITERRd;
                             O_BITCOUNT = O_BITCOUNT + O_BPS(iM,iNSC,iOf);
                             
                             BITERR = C_BITERR + O_BITERR;
                             BITCOUNT = C_BITCOUNT + O_BITCOUNT;
+                            
+%                             if (C_BITERRd > 0) || (O_BITERRd > 0)
+%                                 fprintf('Error in %s frame\n',ofdmType);
+%                             end
                         end
                         
                         C_BER(iSNR,iM,iNSC,iDC,iOf) = C_BITERR/C_BITCOUNT;
@@ -344,7 +391,7 @@ try
                         PROGRESS = LOOPCOUNT/TOTALLOOPS;
                         TELAPSED = toc(TSTART);
                         TREM = (TELAPSED/PROGRESS)-TELAPSED;
-                        waitbar(PROGRESS,hWB,sprintf('Simulation: %0.2f%% done...\nEstimated time remaining: %0.0f min',PROGRESS*100,TREM/60));
+                        waitbar(PROGRESS,hWB,sprintf('Simulation: %0.2f%% done...\nEstimated time remaining: %s',PROGRESS*100,getTimeString(TREM)));
                         if(getappdata(hWB,'canceling'))
                             delete(hWB);
                             error('Simulation aborted');
@@ -357,7 +404,7 @@ try
                             PROGRESS = LOOPCOUNT/TOTALLOOPS;
                             TELAPSED = toc(TSTART);
                             TREM = (TELAPSED/PROGRESS)-TELAPSED;
-                            waitbar(PROGRESS,hWB,sprintf('Simulation: %0.2f%% done...\nEstimated time remaining: %0.0f min',PROGRESS*100,TREM/60));
+                            waitbar(PROGRESS,hWB,sprintf('Simulation: %0.2f%% done...\nEstimated time remaining: %s',PROGRESS*100,getTimeString(TREM)));
                             if(getappdata(hWB,'canceling'))
                                 delete(hWB);
                                 error('Simulation aborted');
