@@ -275,9 +275,9 @@ try
                             STRMODDCO = sprintf(' D M-%d',RNGMODDCO(iM));
                     end
                     if min(RNGDC(:)) ~= max(RNGDC(:));
-                        [Xp,Yp] = getCleanPoints(RNGDC,SNRatTBER(iM,iNSC,:,iOf),PLOTDMIN);  % Get points well spaced out
-                        plot(Xp,Yp,[O_LC{iOf} O_LS{iOf}]);                          % Semilog AVG BER vs SNR Marker
-                        plot(RNGDC,squeeze(SNRatTBER(iM,iNSC,:,iOf)),[O_LC{iOf} O_MK{iOf}]);  % Semilog AVG BER vs SNR
+                        [Xp,Yp] = getCleanPoints(RNGDC(1:end-LENOFSTIGNR),SNRatTBER(iM,iNSC,1:end-LENOFSTIGNR,iOf),DOFST);  % Get points well spaced out
+                        plot(Xp,Yp,[O_LC{iOf} O_MK{iOf}]);                          % Semilog AVG BER vs SNR Marker
+                        plot(RNGDC(1:end-LENOFSTIGNR),squeeze(SNRatTBER(iM,iNSC,1:end-LENOFSTIGNR,iOf)),[O_LC{iOf} O_LS{iOf}]);  % Semilog AVG BER vs SNR
                         hLGD(end+1) = plot(nan,nan,[O_LC{iOf} O_LS{iOf} O_MK{iOf}]);
                         sLGD{end+1} = ['CSK-' STROFDM];
                     end
@@ -330,10 +330,10 @@ catch ex
     set(0,'DefaultFigurePaperPosition',dfigpp);
     set(0,'DefaultFigurePaperUnits',dfigpu);
     set(0,'DefaultFigurePaperPositionMode',dfigppm);
-    %     setpref('Internet','E_mail','pbutala@bu.edu');
-    %     setpref('Internet','SMTP_Server','smtp.bu.edu');
-    %     STREMAIL = ['Simulation ' STRPREFIX ' done with errors.'];
-    %     sendmail('pankil.butala@gmail.com',STREMAIL);
+    setpref('Internet','E_mail','pbutala@bu.edu');
+    setpref('Internet','SMTP_Server','smtp.bu.edu');
+    STREMAIL = ['Simulation ' STRPREFIX ' done with errors.'];
+    sendmail('pankil.butala@gmail.com',STREMAIL);
     rethrow(ex);
 end
 %% restore defaults
@@ -345,8 +345,8 @@ set(0,'DefaultFigureVisible',dfigvis);
 set(0,'DefaultFigurePaperPosition',dfigpp);
 set(0,'DefaultFigurePaperUnits',dfigpu);
 set(0,'DefaultFigurePaperPositionMode',dfigppm);
-% setpref('Internet','E_mail','pbutala@bu.edu');
-% setpref('Internet','SMTP_Server','smtp.bu.edu');
-% STREMAIL = ['Simulation ' STRPREFIX ' done.'];
-% sendmail('pankil.butala@gmail.com',STREMAIL);
+setpref('Internet','E_mail','pbutala@bu.edu');
+setpref('Internet','SMTP_Server','smtp.bu.edu');
+STREMAIL = ['Simulation ' STRPREFIX ' done.'];
+sendmail('pankil.butala@gmail.com',STREMAIL);
 % end

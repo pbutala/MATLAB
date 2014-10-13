@@ -9,13 +9,13 @@ clc;
 % FLAGS
 fSTATION = 1;   % 1.PHO445 2.ENGGRID 3.LAPTOP 4.Optimus
 fSAVEALL = true;
-fCLOSEALL = false;
+fCLOSEALL = true;
 fARCHIVE = true;
 fDECODER = 3; % 1.XYZ 2.RGB 3.TRIs
 rng('default');
 
 CHAROVERWRITE = '~';
-STRPREFIX = '1_CBC1_';
+STRPREFIX = '1_CBC2_';
 % STRPREFIX = 'Scratch_';
 if(fARCHIVE)
     CHARIDXARCHIVE = '';           % ARCHIVE INDEX
@@ -34,8 +34,8 @@ lambdas = LAMBDAMIN:LAMBDADELTA:LAMBDAMAX;
 
 RMN = 703; RSC = 1; RSD = 0;              % Mean, SD and scale to generate SPD of Red led
 GMN = 564; GSC = 1; GSD = 0;               % Mean, SD and scale to generate SPD of Green led
-BMN = 429; BSC = 1; BSD = 0;               % Mean, SD and scale to generate SPD of Blue led
-% BMN = 509; BSC = 1; BSD = 0;               % Mean, SD and scale to generate SPD of Blue led
+% BMN = 429; BSC = 1; BSD = 0;               % Mean, SD and scale to generate SPD of Blue led
+BMN = 509; BSC = 1; BSD = 0;               % Mean, SD and scale to generate SPD of Blue led
 cieFile = 'CIE1931_JV_1978_2deg';                 % CIE XYZ CMF curves file
 flCIE = [cieFile '.csv'];
 RES = 0.1;                                  % x,y Resolution for xy<->CCT conversion
@@ -59,12 +59,12 @@ MKCLR = {[0 1 0],[1 0.5 0],[0 0 1],[1 0 0]};
 C_M = 4;
 %      00,    01,    10,    11     (g w b r)
 % CBC 1
-x = [0.402; 0.435; 0.169; 0.734];
-y = [0.597; 0.290; 0.007; 0.265];
+% x = [0.402; 0.435; 0.169; 0.734];
+% y = [0.597; 0.290; 0.007; 0.265];
 % CBC 2: this is as specified in standard. varies slightly from actual
 % calculation. !!                                                           **********IMP**********
-% x = [0.402; 0.382; 0.011; 0.734];
-% y = [0.597; 0.532; 0.733; 0.265];
+x = [0.402; 0.382; 0.011; 0.734];
+y = [0.597; 0.532; 0.733; 0.265];
 Yc = 1;
 
 %% ranges
@@ -73,7 +73,7 @@ RNGSNRLOOP = RNGSNRMAX - RNGSNRMIN + 1;                                         
 BERRATIOS = [1 5 10 50 100 500 1000]; 
 DELTASNR = [0.01 0.05 0.1 2 3 4 5];                % BER ratios to gracefully calculate next SNR
 % DELTASNR = [1 2 5 10 10 10 20];                                                   % SNR increment to gracefully calculate next SNR
-BERTH = 1e-3;   BERTHMIN = 0.75*BERTH;       % BER thresholds;
+BERTH = 1e-3;   BERTHMIN = 0.5*BERTH;       % BER thresholds;
 
 % OFDM RANGES
 RNGOFDMTYPES = {'dcoofdm';'acoofdm'};   LENOFDMTYPES = numel(RNGOFDMTYPES); % OFDM types
@@ -81,8 +81,13 @@ RNGOFDMTYPES = {'dcoofdm';'acoofdm'};   LENOFDMTYPES = numel(RNGOFDMTYPES); % OF
 RNGMODDCO = power(2,2);               LENMOD  = numel(RNGMODDCO);           % Subcarrier modulation order
 RNGMODACO = RNGMODDCO.^2;
 RNGMODNSC = power(2,6);                 LENMODNSC = numel(RNGMODNSC);       % Number of subcarriers
-RNGOFDMOFSTACO = [0:0.5:4];
-RNGOFDMOFSTDCO = [0:0.5:4];         LENOFDMOFST = numel(RNGOFDMOFSTDCO);  % OFDM offsets
+
+DOFST = 0.25;
+RNGOFDMOFSTACOXTR = 0.2;
+RNGOFDMOFSTDCOXTR = 3.2;                              LENOFSTIGNR = numel(RNGOFDMOFSTDCOXTR);   % OFDM extra offsets  
+RNGOFDMOFSTACO = [0:DOFST:4 RNGOFDMOFSTACOXTR];       
+RNGOFDMOFSTDCO = [0:DOFST:4 RNGOFDMOFSTDCOXTR];       LENOFDMOFST = numel(RNGOFDMOFSTDCO);      % OFDM offsets
+
 % RNGOFDMOFSTACO = 0.2;
 % RNGOFDMOFSTDCO = 3.2;         LENOFDMOFST = numel(RNGOFDMOFSTDCO);  % OFDM offsets
 
@@ -224,6 +229,7 @@ try
     end
     
     TSTART = tic;
+    LOOPIDX = 0;
     % Loop through different configurations
     for iM = 1:LENMOD
         for iNSC = 1:LENMODNSC                                                  % LOOP START MODNSC
@@ -231,6 +237,7 @@ try
             C_BPS(iNSC) = MODNSC*log2(C_M);
             for iDC = 1:LENOFDMOFST
                 for iOf = 1:LENOFDMTYPES                                            % LOOP START OFDM types
+                    LOOPIDX = LOOPIDX + 1;
                     ofdmType = lower(RNGOFDMTYPES{iOf});
                     switch lower(ofdmType)
                         case 'acoofdm'
@@ -400,7 +407,8 @@ try
                         % check and break if BER for ALL channels are below set thresholds
                         if (RNGSNRDB(iSNR,iM,iNSC,iDC,iOf) >= RNGSNRMAX) || (BER(iSNR,iM,iNSC,iDC,iOf) < BERTHMIN)
                             LOOPDONE = true;
-                            LOOPCOUNT = RNGSNRLOOP*iM*iNSC*iDC*iOf;
+                            % LOOPCOUNT = RNGSNRLOOP*iM*iNSC*iDC*iOf;
+                            LOOPCOUNT = RNGSNRLOOP*LOOPIDX;
                             PROGRESS = LOOPCOUNT/TOTALLOOPS;
                             TELAPSED = toc(TSTART);
                             TREM = (TELAPSED/PROGRESS)-TELAPSED;
@@ -416,12 +424,17 @@ try
             end                                                                 % LOOP STOP OFFSET
         end                                                                     % LOOP STOP MODNSC
     end
-    
+    fprintf('Loops done\n');
+    save(ctFileVars);                       % save workspace
+    fprintf('Saved workspace (init)\n');
     I = find(RNGSNRDB == 0);
-    [D1,D2,D3] = ind2sub(size(RNGSNRDB),I);
-    RNGSNRDB(D1(D1~=1),D2(D1~=1),D3(D1~=1)) = nan;
-    BER(D1(D1~=1),D2(D1~=1),D3(D1~=1)) = nan;
+%     [D1,D2,D3,D4,D5] = ind2sub(size(RNGSNRDB),I);
+%     RNGSNRDB(D1(D1~=1),D2(D1~=1),D3(D1~=1),D4(D1~=1),D5(D1~=1)) = nan;
+%     BER(D1(D1~=1),D2(D1~=1),D3(D1~=1),D4(D1~=1),D5(D1~=1)) = nan;
+    RNGSNRDB(I) = nan;
+    BER(I) = nan;
     %% prep stop
+    fprintf('Saving script and workspace\n');
     if fSAVEALL                                                                 % SAVE script and data
         copyfile(ctFileCodeSrc,ctFileCodeDest); % save script
         save(ctFileVars);                       % save workspace
@@ -429,16 +442,16 @@ try
     delete(hWB);
 catch ex
     delete(hWB);
-    %     setpref('Internet','E_mail','pbutala@bu.edu');
-    %     setpref('Internet','SMTP_Server','smtp.bu.edu');
-    %     STREMAIL = ['Simulation ' STRPREFIX ' error!'];
-    %     sendmail('pankil.butala@gmail.com',STREMAIL);
+        setpref('Internet','E_mail','pbutala@bu.edu');
+        setpref('Internet','SMTP_Server','smtp.bu.edu');
+        STREMAIL = ['Simulation ' STRPREFIX ' error!'];
+        sendmail('pankil.butala@gmail.com',STREMAIL);
     rethrow(ex);
 end
-% setpref('Internet','E_mail','pbutala@bu.edu');
-% setpref('Internet','SMTP_Server','smtp.bu.edu');
-% STREMAIL = ['Simulation ' STRPREFIX ' done. Starting plots.'];
-% sendmail('pankil.butala@gmail.com',STREMAIL);
+setpref('Internet','E_mail','pbutala@bu.edu');
+setpref('Internet','SMTP_Server','smtp.bu.edu');
+STREMAIL = ['Simulation ' STRPREFIX ' done. Starting plots.'];
+sendmail('pankil.butala@gmail.com',STREMAIL);
 fprintf('--scrCSKOFDM Done--\n');
 scrCSKOFDMPL;                                                  % Call Show Results script
 
