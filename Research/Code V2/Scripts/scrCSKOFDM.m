@@ -15,7 +15,7 @@ fDECODER = 3; % 1.XYZ 2.RGB 3.TRIs
 rng('default');
 
 CHAROVERWRITE = '~';
-STRPREFIX = '1_CBC2_';
+STRPREFIX = '3_CBC1_';
 % STRPREFIX = 'Scratch_';
 if(fARCHIVE)
     CHARIDXARCHIVE = '';           % ARCHIVE INDEX
@@ -34,8 +34,8 @@ lambdas = LAMBDAMIN:LAMBDADELTA:LAMBDAMAX;
 
 RMN = 703; RSC = 1; RSD = 0;              % Mean, SD and scale to generate SPD of Red led
 GMN = 564; GSC = 1; GSD = 0;               % Mean, SD and scale to generate SPD of Green led
-% BMN = 429; BSC = 1; BSD = 0;               % Mean, SD and scale to generate SPD of Blue led
-BMN = 509; BSC = 1; BSD = 0;               % Mean, SD and scale to generate SPD of Blue led
+BMN = 429; BSC = 1; BSD = 0;               % Mean, SD and scale to generate SPD of Blue led
+% BMN = 509; BSC = 1; BSD = 0;               % Mean, SD and scale to generate SPD of Blue led
 cieFile = 'CIE1931_JV_1978_2deg';                 % CIE XYZ CMF curves file
 flCIE = [cieFile '.csv'];
 RES = 0.1;                                  % x,y Resolution for xy<->CCT conversion
@@ -47,7 +47,7 @@ BResp = cResp.getResponsivity(BMN);    % Get responsivities vs wavelength for Si
 
 NTX = 3; NRX = 3;
 
-TOTALBITS = 2e5;                            % Total bit for transmtter to simulate
+TOTALBITS = 5e5;                            % Total bit for transmtter to simulate
 
 WBX = 50; WBY = 500; WBW = 275; WBH = 75;   % Wait Box X,,Y,WID,HGT
 WBTITLE = 'Running CSK-OFDM Simulation...'; % Wait Box title
@@ -71,9 +71,9 @@ Yc = 1;
 RNGSNRMIN = 0; RNGSNRMAX = 150; SNROFST = 0;
 RNGSNRLOOP = RNGSNRMAX - RNGSNRMIN + 1;                                         % Number of SNR in each SNR loop
 BERRATIOS = [1 5 10 50 100 500 1000]; 
-DELTASNR = [0.01 0.05 0.1 2 3 4 5];                % BER ratios to gracefully calculate next SNR
+DELTASNR = [0.05 0.1 0.1 2 3 4 5];                % BER ratios to gracefully calculate next SNR
 % DELTASNR = [1 2 5 10 10 10 20];                                                   % SNR increment to gracefully calculate next SNR
-BERTH = 1e-3;   BERTHMIN = 0.5*BERTH;       % BER thresholds;
+BERTH = 1e-3;   BERTHMIN = 0.1*BERTH;       % BER thresholds;
 
 % OFDM RANGES
 RNGOFDMTYPES = {'dcoofdm';'acoofdm'};   LENOFDMTYPES = numel(RNGOFDMTYPES); % OFDM types
@@ -82,11 +82,11 @@ RNGMODDCO = power(2,2);               LENMOD  = numel(RNGMODDCO);           % Su
 RNGMODACO = RNGMODDCO.^2;
 RNGMODNSC = power(2,6);                 LENMODNSC = numel(RNGMODNSC);       % Number of subcarriers
 
-DOFST = 0.25;
+DOFST = 0.1;
 RNGOFDMOFSTACOXTR = 0.2;
 RNGOFDMOFSTDCOXTR = 3.2;                              LENOFSTIGNR = numel(RNGOFDMOFSTDCOXTR);   % OFDM extra offsets  
-RNGOFDMOFSTACO = [0:DOFST:4 RNGOFDMOFSTACOXTR];       
-RNGOFDMOFSTDCO = [0:DOFST:4 RNGOFDMOFSTDCOXTR];       LENOFDMOFST = numel(RNGOFDMOFSTDCO);      % OFDM offsets
+RNGOFDMOFSTACO = [0:DOFST:5 RNGOFDMOFSTACOXTR];       
+RNGOFDMOFSTDCO = [0:DOFST:5 RNGOFDMOFSTDCOXTR];       LENOFDMOFST = numel(RNGOFDMOFSTDCO);      % OFDM offsets
 
 % RNGOFDMOFSTACO = 0.2;
 % RNGOFDMOFSTDCO = 3.2;         LENOFDMOFST = numel(RNGOFDMOFSTDCO);  % OFDM offsets

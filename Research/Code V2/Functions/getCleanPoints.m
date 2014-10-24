@@ -27,7 +27,13 @@ for i=1:NDIM
     Pi(:,i) = V(:);
 end
 d = varargin{NDIM+1};
-Po = Pi(1,:);
+Po = nan;
+for j=1:LVECTI
+    if ~isnan(Pi(j,:))
+        Po = Pi(j,:);
+        break;
+    end
+end
 Pt0 = Po;
 for k = 2:LVECTI
    dP = sqrt(sum((Pi(k,:)-Pt0).^2,2));

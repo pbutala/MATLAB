@@ -19,14 +19,23 @@
 % Copyright (C) Pankil Butala 2014
 % Modifications: 
 % 04/14/14: Added optional 'fEnergy' flag. If true, symbols are scaled to
-% suffice unit energy. Else symbols are scaled to get integral coefficients
-%           
+% suffice unit energy on average (assume uniform symbol distribution). 
+% Else symbols are scaled to get integral coefficients
+% Default: fEnergy = false;
+% 
+% 10/14/14: Added optional 'fGray' flag. If true, QAM syms are arranged to
+% reflect Gray code
+% Default: fGray: true;
+% 
 % End Header --------------------------------------------------------------
 
-function Syms = getQAMsyms(M,fEnergy)
+function Syms = getQAMsyms(M,fEnergy,fGray)
 bps = log2(M);      % bits per symbol
 if ~exist('fEnergy','var')
-    fEnergy = true;
+    fEnergy = false;
+end
+if ~exist('fGray','var')
+    fGray = true;
 end
 % Sanity check for integral exponent (bps must be integer)
 if (rem(bps,1) ~= 0) || (M==0)  
@@ -46,9 +55,17 @@ cofY = (1-ncY)/2:1:(ncY-1)/2;   % coefficients along dimention Y
 C = ReC + 1j*ImC;                   % generate all Complex Symbol matrix
 Syms = C(:);                        % Vectorize the Symbol matrix
 if(fEnergy)                     % if UNIT ENERGY
-    Syms = Syms/sqrt(sum(abs(Syms).^2));% Normalize symbols to have total energy = 1
+    Syms = Syms/sqrt((Syms'*Syms)/M);% Normalize symbols to have average energy = 1
 else
     Syms = Syms*2;              % integral symbols
+end
+if(fGray)                       % if GRAY CODE
+    symBits = getGrayBits(M);    % get gray coded bits for order 'M'
+    symIdx = bin2decMat(symBits)+1; % convert bits to decimal index to rearrange symbols.
+    for i=ncY+1:2*ncY:M         % flip every other row.
+        symIdx(i:i+ncY-1) = symIdx(i+ncY-1:-1:i);
+    end
+    Syms(1:end) = Syms(symIdx);  % Arrange symbols to reflect M-ary Gray code.
 end
 
 if nargout == 0                 % if no output argument specified, display constellation
@@ -69,4 +86,5 @@ if nargout == 0                 % if no output argument specified, display const
     ylabel('Imag');             % Y axis shoes Im constellation values
     tStr = sprintf('%d-QAM constellation diagram',M);   % Generate title
     title(tStr);                % Show title
+    text(Re+dRe/10,Im+dIm/10,dec2bin(0:M-1)); 
 end

@@ -23,7 +23,7 @@ N = 64;
 % bpsym = bpsc*(N/2-1); % dco
 bpsym = bpsc*(N/4); % aco
 
-SYMCNT = ceil((2e4)/bpsym);
+SYMCNT = ceil((1e4)/bpsym);
 TOTALBITS = bpsym*SYMCNT;
 
 BERmc = zeros(1,SNRCNT);

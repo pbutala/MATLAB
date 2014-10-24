@@ -10,6 +10,7 @@ close all;
 clearvars -except ctFileVars;
 clc;
 load(ctFileVars);                                                             % LOAD DATA
+ctFilePlot = [ctDirData STRPREFIX 'plCSKOFDM' CHARIDXARCHIVE '.mat'];   % Plot file name
 
 % DEFAULT COSMETIC SETTINGS
 dlinelw = get(0,'DefaultLineLineWidth');
@@ -151,7 +152,7 @@ try
                     %** START: find SNR for target BER **
                     iTH = find(BER(:,iM,iNSC,iDC,iOf) <= BERTH,1,'first');
                     if ~isempty(iTH)
-                        SNRatTBER(iM,iNSC,iDC,iOf) = RNGSNROFST(iTH);
+                        SNRatTBER(iM,iNSC,iDC,iOf) = RNGSNROFST(iTH,iM,iNSC,iDC,iOf);
                     end
                     %** END: find SNR for target BER **
                 end
@@ -318,8 +319,10 @@ try
         waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
     end
     % ********************** ************************ *********************
+    save(ctFilePlot);                       % save workspace
     delete(hWB);
 catch ex
+    save(ctFilePlot);                       % save workspace
     delete(hWB);
     %% restore defaults
     set(0,'DefaultLineMarkerSize',dlinems);
