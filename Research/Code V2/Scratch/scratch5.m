@@ -15,8 +15,7 @@ fDECODER = 3; % 1.XYZ 2.RGB 3.TRIs
 rng('default');
 
 CHAROVERWRITE = '~';
-STRPREFIX = '3_CBC1_';
-% STRPREFIX = 'Scratch_';
+STRPREFIX = 'Scratch_';
 if(fARCHIVE)
     CHARIDXARCHIVE = '';           % ARCHIVE INDEX
 else
@@ -34,8 +33,8 @@ lambdas = LAMBDAMIN:LAMBDADELTA:LAMBDAMAX;
 
 RMN = 703; RSC = 1; RSD = 0;              % Mean, SD and scale to generate SPD of Red led
 GMN = 564; GSC = 1; GSD = 0;               % Mean, SD and scale to generate SPD of Green led
-BMN = 429; BSC = 1; BSD = 0;               % Mean, SD and scale to generate SPD of Blue led
-% BMN = 509; BSC = 1; BSD = 0;               % Mean, SD and scale to generate SPD of Blue led
+% BMN = 429; BSC = 1; BSD = 0;               % Mean, SD and scale to generate SPD of Blue led
+BMN = 509; BSC = 1; BSD = 0;               % Mean, SD and scale to generate SPD of Blue led
 cieFile = 'CIE1931_JV_1978_2deg';                 % CIE XYZ CMF curves file
 flCIE = [cieFile '.csv'];
 RES = 0.1;                                  % x,y Resolution for xy<->CCT conversion
@@ -47,9 +46,8 @@ BResp = cResp.getResponsivity(BMN);    % Get responsivities vs wavelength for Si
 
 NTX = 3; NRX = 3;
 
-TOTALBITS = 5e5;                            % Total bit for transmtter to simulate
+TOTALBITS = 1e3;                            % Total bit for transmtter to simulate
 
-WBX = 50; WBY = 500; WBW = 275; WBH = 75;   % Wait Box X,,Y,WID,HGT
 WBTITLE = 'Running CSK-OFDM Simulation...'; % Wait Box title
 FIGTITLE = 'Off';
 MKTYP = {'o','+','^','s'};
@@ -59,21 +57,21 @@ MKCLR = {[0 1 0],[1 0.5 0],[0 0 1],[1 0 0]};
 C_M = 4;
 %      00,    01,    10,    11     (g w b r)
 % CBC 1
-x = [0.402; 0.435; 0.169; 0.734];
-y = [0.597; 0.290; 0.007; 0.265];
+% x = [0.402; 0.435; 0.169; 0.734];
+% y = [0.597; 0.290; 0.007; 0.265];
 % CBC 2: this is as specified in standard. varies slightly from actual
 % calculation. !!                                                           **********IMP**********
-% x = [0.402; 0.382; 0.011; 0.734];
-% y = [0.597; 0.532; 0.733; 0.265];
+x = [0.402; 0.382; 0.011; 0.734];
+y = [0.597; 0.532; 0.733; 0.265];
 Yc = 1;
 
 %% ranges
 RNGSNRMIN = 0; RNGSNRMAX = 150; SNROFST = 0;
 RNGSNRLOOP = RNGSNRMAX - RNGSNRMIN + 1;                                         % Number of SNR in each SNR loop
 BERRATIOS = [1 5 10 50 100 500 1000]; 
-DELTASNR = [0.05 0.1 0.1 2 3 4 5];                % BER ratios to gracefully calculate next SNR
-% DELTASNR = [1 2 5 10 10 10 20];                                                   % SNR increment to gracefully calculate next SNR
-BERTH = 1e-3;   BERTHMIN = 0.1*BERTH;       % BER thresholds;
+% DELTASNR = [0.01 0.05 0.1 2 3 4 5];                % BER ratios to gracefully calculate next SNR
+DELTASNR = [1 2 5 10 10 10 20];                                                   % SNR increment to gracefully calculate next SNR
+BERTH = 1e-2;   BERTHMIN = 0.5*BERTH;       % BER thresholds;
 
 % OFDM RANGES
 RNGOFDMTYPES = {'dcoofdm';'acoofdm'};   LENOFDMTYPES = numel(RNGOFDMTYPES); % OFDM types
@@ -82,21 +80,24 @@ RNGMODDCO = power(2,2);               LENMOD  = numel(RNGMODDCO);           % Su
 RNGMODACO = RNGMODDCO.^2;
 RNGMODNSC = power(2,6);                 LENMODNSC = numel(RNGMODNSC);       % Number of subcarriers
 
-DOFST = 0.1;
+DOFST = 2;
 RNGOFDMOFSTACOXTR = 0.2;
 RNGOFDMOFSTDCOXTR = 3.2;                              LENOFSTIGNR = numel(RNGOFDMOFSTDCOXTR);   % OFDM extra offsets  
-RNGOFDMOFSTACO = [0:DOFST:5 RNGOFDMOFSTACOXTR];       
-RNGOFDMOFSTDCO = [0:DOFST:5 RNGOFDMOFSTDCOXTR];       LENOFDMOFST = numel(RNGOFDMOFSTDCO);      % OFDM offsets
+RNGOFDMOFSTACO = [0:DOFST:4 RNGOFDMOFSTACOXTR];       
+RNGOFDMOFSTDCO = [0:DOFST:4 RNGOFDMOFSTDCOXTR];       LENOFDMOFST = numel(RNGOFDMOFSTDCO);      % OFDM offsets
 
 % RNGOFDMOFSTACO = 0.2;
 % RNGOFDMOFSTDCO = 3.2;         LENOFDMOFST = numel(RNGOFDMOFSTDCO);  % OFDM offsets
 
+% O_RES = 1e-3; O_PERS = power(2,10); O_MAXMC = 1e9;
+WBX = 50; WBY = 500; WBW = 275; WBH = 75;   % Wait Box X,,Y,WID,HGT
 %% config
 
 % STATION
 ctDirRes = '..\..\..\..\MatlabResults\15. CSKOFDM\';
 ctDirData = [ctDirRes STRPREFIX 'Data\'];
-ctFileCodeSrc = '.\scrCSKOFDM.m';
+ctFileCodeSrc = '.\scratch2.m';
+        
 % switch fSTATION
 %     % Results directory; Spource file; LED table dir;
 %     case 1
@@ -151,6 +152,7 @@ try
     ctMatDir = '..\Matfiles\LEDPSD\';
     sPSDDIR = [ctMatDir cieFile '\' sSPDTYP '\' sprintf('R_%d_%d_%d_G_%d_%d_%d_B_%d_%d_%d',...
         RMN,RSD,RSC,GMN,GSD,GSC,BMN,BSD,BSC) '\'];
+            
 %     switch fSTATION
 %         % Results directory; Spource file; LED table dir;
 %         case 1
@@ -428,10 +430,13 @@ try
             end                                                                 % LOOP STOP OFFSET
         end                                                                     % LOOP STOP MODNSC
     end
-    
+    fprintf('Loops done\n');
     save(ctFileVars);                       % save workspace
+    fprintf('Saved workspace (init)\n');
     I = find(RNGSNRDB == 0);
-
+%     [D1,D2,D3,D4,D5] = ind2sub(size(RNGSNRDB),I);
+%     RNGSNRDB(D1(D1~=1),D2(D1~=1),D3(D1~=1),D4(D1~=1),D5(D1~=1)) = nan;
+%     BER(D1(D1~=1),D2(D1~=1),D3(D1~=1),D4(D1~=1),D5(D1~=1)) = nan;
     RNGSNRDB(I) = nan;
     BER(I) = nan;
     %% prep stop
@@ -443,18 +448,18 @@ try
     delete(hWB);
 catch ex
     delete(hWB);
-        setpref('Internet','E_mail','pbutala@bu.edu');
-        setpref('Internet','SMTP_Server','smtp.bu.edu');
-        STREMAIL = ['Simulation ' STRPREFIX ' error!'];
-        sendmail('pankil.butala@gmail.com',STREMAIL);
+%         setpref('Internet','E_mail','pbutala@bu.edu');
+%         setpref('Internet','SMTP_Server','smtp.bu.edu');
+%         STREMAIL = ['Simulation ' STRPREFIX ' error!'];
+%         sendmail('pankil.butala@gmail.com',STREMAIL);
     rethrow(ex);
 end
-setpref('Internet','E_mail','pbutala@bu.edu');
-setpref('Internet','SMTP_Server','smtp.bu.edu');
-STREMAIL = ['Simulation ' STRPREFIX ' done. Starting plots.'];
-sendmail('pankil.butala@gmail.com',STREMAIL);
-fprintf('--scrCSKOFDM Done--\n');
-scrCSKOFDMPL;                                                  % Call Show Results script
+% setpref('Internet','E_mail','pbutala@bu.edu');
+% setpref('Internet','SMTP_Server','smtp.bu.edu');
+% STREMAIL = ['Simulation ' STRPREFIX ' done. Starting plots.'];
+% sendmail('pankil.butala@gmail.com',STREMAIL);
+% fprintf('--scrCSKOFDM Done--\n');
+% scrCSKOFDMPL;                                                  % Call Show Results script
 
 
 

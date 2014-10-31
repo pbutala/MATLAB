@@ -15,7 +15,7 @@ fDECODER = 3; % 1.XYZ 2.RGB 3.TRIs
 rng('default');
 
 CHAROVERWRITE = '~';
-STRPREFIX = '3_CBC1_';
+STRPREFIX = 'Scratch_';
 % STRPREFIX = 'Scratch_';
 if(fARCHIVE)
     CHARIDXARCHIVE = '';           % ARCHIVE INDEX
@@ -97,27 +97,6 @@ RNGOFDMOFSTDCO = [0:DOFST:5 RNGOFDMOFSTDCOXTR];       LENOFDMOFST = numel(RNGOFD
 ctDirRes = '..\..\..\..\MatlabResults\15. CSKOFDM\';
 ctDirData = [ctDirRes STRPREFIX 'Data\'];
 ctFileCodeSrc = '.\scrCSKOFDM.m';
-% switch fSTATION
-%     % Results directory; Spource file; LED table dir;
-%     case 1
-%         ctDirRes = '\\ad\eng\users\p\b\pbutala\My Documents\MatlabResults\15. CSKOFDM\';
-%         ctDirData = [ctDirRes STRPREFIX 'Data\'];
-%         ctFileCodeSrc = '\\ad\eng\users\p\b\pbutala\My Documents\MATLAB\Research\Code V2\Scripts\scrCSKOFDM.m';
-%     case 2
-%         ctDirRes = '/home/pbutala/My Documents/MatlabResults/15. CSKOFDM/';
-%         ctDirData = [ctDirRes STRPREFIX 'Data/'];
-%         ctFileCodeSrc = '/home/pbutala/My Documents/MATLAB/Research/Code V2/Scripts/scrCSKOFDM.m';
-%     case 3
-%         ctDirRes = 'C:\\Users\\pbutala\\Documents\\MatlabResults\\15. CSKOFDM\\';
-%         ctDirData = [ctDirRes STRPREFIX 'Data\\'];
-%         ctFileCodeSrc = 'C:\\Users\\pbutala\\My Documents\\MATLAB\\Research\\Code V2\\Scripts\\scrCSKOFDM.m';
-%     case 4
-%         ctDirRes = 'C:\\Users\\Pankil\\Documents\\MatlabResults\\15. CSKOFDM\\';
-%         ctDirData = [ctDirRes STRPREFIX 'Data\\'];
-%         ctFileCodeSrc = 'C:\\Users\\Pankil\\My Documents\\MATLAB\\Research\\Code V2\\Scripts\\scrCSKOFDM.m';
-%     otherwise
-%         error('Station not defined');
-% end
 ctFileCodeDest = [ctDirData STRPREFIX 'scrCSKOFDM' CHARIDXARCHIVE '.m']; % Script copy name
 ctFileVars = [ctDirData STRPREFIX 'datCSKOFDM' CHARIDXARCHIVE '.mat'];   % Data file name
 if ~exist(ctDirData,'dir')   % if data directory does NOT exist
@@ -128,13 +107,6 @@ end
 try
     delete([ctDirData '*' CHAROVERWRITE '.*']);
     %% prep start
-    % Wait Bar to show progress
-    hWB = waitbar(0,'Simulation: 0.00% done','Name',WBTITLE,...
-        'Visible','Off',...
-        'CreateCancelBtn',...
-        'setappdata(gcbf,''canceling'',1)');
-    set(hWB,'Position',[WBX WBY WBW WBH],'Visible','On');
-    setappdata(hWB,'canceling',0);
     LOOPCOUNT = 1;
     TOTALLOOPS = RNGSNRLOOP*LENMOD*LENMODNSC*LENOFDMOFST*LENOFDMTYPES;
     
@@ -151,27 +123,6 @@ try
     ctMatDir = '..\Matfiles\LEDPSD\';
     sPSDDIR = [ctMatDir cieFile '\' sSPDTYP '\' sprintf('R_%d_%d_%d_G_%d_%d_%d_B_%d_%d_%d',...
         RMN,RSD,RSC,GMN,GSD,GSC,BMN,BSD,BSC) '\'];
-%     switch fSTATION
-%         % Results directory; Spource file; LED table dir;
-%         case 1
-%             ctMatDir = '\\ad\eng\users\p\b\pbutala\My Documents\MATLAB\Research\Code V2\Matfiles\LEDPSD\';
-%             sPSDDIR = [ctMatDir cieFile '\' sSPDTYP '\' sprintf('R_%d_%d_%d_G_%d_%d_%d_B_%d_%d_%d',...
-%                 RMN,RSD,RSC,GMN,GSD,GSC,BMN,BSD,BSC) '\'];
-%         case 2
-%             ctMatDir = '/home/pbutala/My Documents/MATLAB/Research/Code V2/Matfiles/LEDPSD/';
-%             sPSDDIR = [ctMatDir cieFile '\' sSPDTYP '/' sprintf('R_%d_%d_%d_G_%d_%d_%d_B_%d_%d_%d',...
-%                 RMN,RSD,RSC,GMN,GSD,GSC,BMN,BSD,BSC) '/'];
-%         case 3
-%             ctMatDir = 'C:\\Users\\pbutala\\Documents\\MATLAB\\Research\\Code V2\\Matfiles\\LEDPSD\\';
-%             sPSDDIR = [ctMatDir cieFile '\' sSPDTYP '\\' sprintf('R_%d_%d_%d_G_%d_%d_%d_B_%d_%d_%d',...
-%                 RMN,RSD,RSC,GMN,GSD,GSC,BMN,BSD,BSC) '\\'];
-%         case 4
-%             ctMatDir = 'C:\\Users\\Pankil\\Documents\\MATLAB\\Research\\Code V2\\Matfiles\\LEDPSD\\';
-%             sPSDDIR = [ctMatDir cieFile '\' sSPDTYP '\\' sprintf('R_%d_%d_%d_G_%d_%d_%d_B_%d_%d_%d',...
-%                 RMN,RSD,RSC,GMN,GSD,GSC,BMN,BSD,BSC) '\\'];
-%         otherwise
-%             error('Station not defined');
-%     end
     RGBledmat = [sPSDDIR sprintf('res_%0.5f',RES) '.mat'];                  % LED table mat-file
     %% SPDs
     switch SPDTYP
@@ -397,30 +348,10 @@ try
                         else
                             DSNR = 0;
                         end
-                        % Update progress on wait bar
-                        LOOPCOUNT = LOOPCOUNT + DSNR;
-                        PROGRESS = LOOPCOUNT/TOTALLOOPS;
-                        TELAPSED = toc(TSTART);
-                        TREM = (TELAPSED/PROGRESS)-TELAPSED;
-                        waitbar(PROGRESS,hWB,sprintf('Simulation: %0.2f%% done...\nEstimated time remaining: %s',PROGRESS*100,getTimeString(TREM)));
-                        if(getappdata(hWB,'canceling'))
-                            delete(hWB);
-                            error('Simulation aborted');
-                        end
                         
                         % check and break if BER for ALL channels are below set thresholds
                         if (RNGSNRDB(iSNR,iM,iNSC,iDC,iOf) >= RNGSNRMAX) || (BER(iSNR,iM,iNSC,iDC,iOf) < BERTHMIN)
                             LOOPDONE = true;
-                            % LOOPCOUNT = RNGSNRLOOP*iM*iNSC*iDC*iOf;
-                            LOOPCOUNT = RNGSNRLOOP*LOOPIDX;
-                            PROGRESS = LOOPCOUNT/TOTALLOOPS;
-                            TELAPSED = toc(TSTART);
-                            TREM = (TELAPSED/PROGRESS)-TELAPSED;
-                            waitbar(PROGRESS,hWB,sprintf('Simulation: %0.2f%% done...\nEstimated time remaining: %s',PROGRESS*100,getTimeString(TREM)));
-                            if(getappdata(hWB,'canceling'))
-                                delete(hWB);
-                                error('Simulation aborted');
-                            end
                         end
                         iSNR = iSNR + 1;
                     end                                                         % WHILE
@@ -440,20 +371,18 @@ try
         copyfile(ctFileCodeSrc,ctFileCodeDest); % save script
         save(ctFileVars);                       % save workspace
     end
-    delete(hWB);
 catch ex
-    delete(hWB);
-        setpref('Internet','E_mail','pbutala@bu.edu');
-        setpref('Internet','SMTP_Server','smtp.bu.edu');
-        STREMAIL = ['Simulation ' STRPREFIX ' error!'];
-        sendmail('pankil.butala@gmail.com',STREMAIL);
+%         setpref('Internet','E_mail','pbutala@bu.edu');
+%         setpref('Internet','SMTP_Server','smtp.bu.edu');
+%         STREMAIL = ['Simulation ' STRPREFIX ' error!'];
+%         sendmail('pankil.butala@gmail.com',STREMAIL);
     rethrow(ex);
 end
-setpref('Internet','E_mail','pbutala@bu.edu');
-setpref('Internet','SMTP_Server','smtp.bu.edu');
-STREMAIL = ['Simulation ' STRPREFIX ' done. Starting plots.'];
-sendmail('pankil.butala@gmail.com',STREMAIL);
-fprintf('--scrCSKOFDM Done--\n');
+% setpref('Internet','E_mail','pbutala@bu.edu');
+% setpref('Internet','SMTP_Server','smtp.bu.edu');
+% STREMAIL = ['Simulation ' STRPREFIX ' done. Starting plots.'];
+% sendmail('pankil.butala@gmail.com',STREMAIL);
+% fprintf('--scrCSKOFDM Done--\n');
 scrCSKOFDMPL;                                                  % Call Show Results script
 
 
