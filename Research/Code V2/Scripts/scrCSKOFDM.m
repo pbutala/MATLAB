@@ -5,7 +5,7 @@ end
 close all;
 clearvars;
 clc;
-addpath(genpath('..\..'));
+addpath(genpath('..'));
 % FLAGS
 % fSTATION = 1;   % 1.PHO445 2.ENGGRID 3.LAPTOP 4.Optimus
 fSAVEALL = true;
@@ -94,9 +94,9 @@ RNGOFDMOFSTDCO = [0:DOFST:5 RNGOFDMOFSTDCOXTR];       LENOFDMOFST = numel(RNGOFD
 %% config
 
 % STATION
-ctDirRes = '..\..\..\..\MatlabResults\15. CSKOFDM\';
-ctDirData = [ctDirRes STRPREFIX 'Data\'];
-ctFileCodeSrc = '.\scrCSKOFDM.m';
+ctDirRes = '../../../../MatlabResults/15. CSKOFDM/';
+ctDirData = [ctDirRes STRPREFIX 'Data/'];
+ctFileCodeSrc = './scrCSKOFDM.m';
 % switch fSTATION
 %     % Results directory; Spource file; LED table dir;
 %     case 1
@@ -148,9 +148,9 @@ try
             error('SPDTYPE must be either ''Gaussian'' or ''Lorentzian''');
     end
     % STATION
-    ctMatDir = '..\Matfiles\LEDPSD\';
-    sPSDDIR = [ctMatDir cieFile '\' sSPDTYP '\' sprintf('R_%d_%d_%d_G_%d_%d_%d_B_%d_%d_%d',...
-        RMN,RSD,RSC,GMN,GSD,GSC,BMN,BSD,BSC) '\'];
+    ctMatDir = '../Matfiles/LEDPSD/';
+    sPSDDIR = [ctMatDir cieFile '/' sSPDTYP '/' sprintf('R_%d_%d_%d_G_%d_%d_%d_B_%d_%d_%d',...
+        RMN,RSD,RSC,GMN,GSD,GSC,BMN,BSD,BSC) '/'];
 %     switch fSTATION
 %         % Results directory; Spource file; LED table dir;
 %         case 1
