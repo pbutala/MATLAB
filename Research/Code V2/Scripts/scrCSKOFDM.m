@@ -5,7 +5,7 @@ end
 close all;
 clearvars;
 clc;
-
+addpath(genpath('..\..'));
 % FLAGS
 % fSTATION = 1;   % 1.PHO445 2.ENGGRID 3.LAPTOP 4.Optimus
 fSAVEALL = true;
