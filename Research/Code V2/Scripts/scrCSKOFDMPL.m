@@ -33,8 +33,10 @@ FIGTITLE = 'Off';
 
 try
     % Wait Bar to show progress
-    hWB = waitbar(0,'Plotting Results: 0.00% done','Name',WBTITLE,'Visible','Off');
-    set(hWB,'Position',[WBX WBY WBW WBH],'Visible','On');
+    if fSHOWPGBAR
+        hWB = waitbar(0,'Plotting Results: 0.00% done','Name',WBTITLE,'Visible','Off');
+        set(hWB,'Position',[WBX WBY WBW WBH],'Visible','On');
+    end
     % PLOT Configs
     PLOTDMIN = 5;
     RNGSNROFST = RNGSNRDB - SNROFST;
@@ -91,7 +93,9 @@ try
     % Update Wait bar
     LOOPCOUNT = LOOPCOUNT+1;
     PROGRESS = LOOPCOUNT/TOTALLOOPS;
-    waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
+    if fSHOWPGBAR
+        waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
+    end
     
     % ********************** PLOT AND SAVE COLOR GAMUT*********************
     FIGGMT = figure('Name','RGB LED xy gamut','NumberTitle',FIGTITLE);
@@ -118,7 +122,9 @@ try
     % Update Wait bar
     LOOPCOUNT = LOOPCOUNT+1;
     PROGRESS = LOOPCOUNT/TOTALLOOPS;
-    waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
+    if fSHOWPGBAR
+        waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
+    end
     
     % ********************** PLOT AND SAVE BER vs SNR *********************
     for iM = 1:LENMOD
@@ -182,7 +188,9 @@ try
                 % Update Wait bar
                 LOOPCOUNT = LOOPCOUNT+1;
                 PROGRESS = LOOPCOUNT/TOTALLOOPS;
-                waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
+                if fSHOWPGBAR
+                    waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
+                end
             end
         end
     end
@@ -248,7 +256,9 @@ try
                 % Update Wait bar
                 LOOPCOUNT = LOOPCOUNT+1;
                 PROGRESS = LOOPCOUNT/TOTALLOOPS;
-                waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
+                if fSHOWPGBAR
+                    waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
+                end
             end
         end
     end
@@ -309,14 +319,18 @@ try
                 % Update Wait bar
                 LOOPCOUNT = LOOPCOUNT+1;
                 PROGRESS = LOOPCOUNT/TOTALLOOPS;
-                waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
+                if fSHOWPGBAR
+                    waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
+                end
             end
         end
     else
         % Update Wait bar
         LOOPCOUNT = LOOPCOUNT+LENMOD*LENMODNSC;
         PROGRESS = LOOPCOUNT/TOTALLOOPS;
-        waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
+        if fSHOWPGBAR
+            waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
+        end
     end
     % ********************** ************************ *********************
     save(ctFilePlot);                       % save workspace

@@ -6,12 +6,14 @@ close all;
 clearvars;
 clc;
 addpath(genpath('..'));
+
 % FLAGS
 % fSTATION = 1;   % 1.PHO445 2.ENGGRID 3.LAPTOP 4.Optimus
 fSAVEALL = true;
 fCLOSEALL = true;
 fARCHIVE = true;
 fDECODER = 3; % 1.XYZ 2.RGB 3.TRIs
+fSHOWPGBAR = isequal(strfind(pwd,'graduate/pbutala'),[]);
 rng('default');
 
 CHAROVERWRITE = '~';
@@ -129,12 +131,14 @@ try
     delete([ctDirData '*' CHAROVERWRITE '.*']);
     %% prep start
     % Wait Bar to show progress
-    hWB = waitbar(0,'Simulation: 0.00% done','Name',WBTITLE,...
-        'Visible','Off',...
-        'CreateCancelBtn',...
-        'setappdata(gcbf,''canceling'',1)');
-    set(hWB,'Position',[WBX WBY WBW WBH],'Visible','On');
-    setappdata(hWB,'canceling',0);
+    if fSHOWPGBAR
+        hWB = waitbar(0,'Simulation: 0.00% done','Name',WBTITLE,...
+            'Visible','Off',...
+            'CreateCancelBtn',...
+            'setappdata(gcbf,''canceling'',1)');
+        set(hWB,'Position',[WBX WBY WBW WBH],'Visible','On');
+        setappdata(hWB,'canceling',0);
+    end
     LOOPCOUNT = 1;
     TOTALLOOPS = RNGSNRLOOP*LENMOD*LENMODNSC*LENOFDMOFST*LENOFDMTYPES;
     
@@ -402,10 +406,12 @@ try
                         PROGRESS = LOOPCOUNT/TOTALLOOPS;
                         TELAPSED = toc(TSTART);
                         TREM = (TELAPSED/PROGRESS)-TELAPSED;
-                        waitbar(PROGRESS,hWB,sprintf('Simulation: %0.2f%% done...\nEstimated time remaining: %s',PROGRESS*100,getTimeString(TREM)));
-                        if(getappdata(hWB,'canceling'))
-                            delete(hWB);
-                            error('Simulation aborted');
+                        if fSHOWPGBAR
+                            waitbar(PROGRESS,hWB,sprintf('Simulation: %0.2f%% done...\nEstimated time remaining: %s',PROGRESS*100,getTimeString(TREM)));
+                            if(getappdata(hWB,'canceling'))
+                                delete(hWB);
+                                error('Simulation aborted');
+                            end
                         end
                         
                         % check and break if BER for ALL channels are below set thresholds
@@ -416,10 +422,12 @@ try
                             PROGRESS = LOOPCOUNT/TOTALLOOPS;
                             TELAPSED = toc(TSTART);
                             TREM = (TELAPSED/PROGRESS)-TELAPSED;
-                            waitbar(PROGRESS,hWB,sprintf('Simulation: %0.2f%% done...\nEstimated time remaining: %s',PROGRESS*100,getTimeString(TREM)));
-                            if(getappdata(hWB,'canceling'))
-                                delete(hWB);
-                                error('Simulation aborted');
+                            if fSHOWPGBAR
+                                waitbar(PROGRESS,hWB,sprintf('Simulation: %0.2f%% done...\nEstimated time remaining: %s',PROGRESS*100,getTimeString(TREM)));
+                                if(getappdata(hWB,'canceling'))
+                                    delete(hWB);
+                                    error('Simulation aborted');
+                                end
                             end
                         end
                         iSNR = iSNR + 1;
