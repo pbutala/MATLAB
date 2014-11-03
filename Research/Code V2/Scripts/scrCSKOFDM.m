@@ -15,8 +15,8 @@ fDECODER = 3; % 1.XYZ 2.RGB 3.TRIs
 rng('default');
 
 CHAROVERWRITE = '~';
-STRPREFIX = '3_CBC1_';
-% STRPREFIX = 'Scratch_';
+% STRPREFIX = '3_CBC1_';
+STRPREFIX = 'Scratch_';
 if(fARCHIVE)
     CHARIDXARCHIVE = '';           % ARCHIVE INDEX
 else
@@ -47,7 +47,7 @@ BResp = cResp.getResponsivity(BMN);    % Get responsivities vs wavelength for Si
 
 NTX = 3; NRX = 3;
 
-TOTALBITS = 5e5;                            % Total bit for transmtter to simulate
+TOTALBITS = 1e3;                            % Total bit for transmtter to simulate
 
 WBX = 50; WBY = 500; WBW = 275; WBH = 75;   % Wait Box X,,Y,WID,HGT
 WBTITLE = 'Running CSK-OFDM Simulation...'; % Wait Box title
@@ -73,7 +73,7 @@ RNGSNRLOOP = RNGSNRMAX - RNGSNRMIN + 1;                                         
 BERRATIOS = [1 5 10 50 100 500 1000]; 
 DELTASNR = [0.05 0.1 0.1 2 3 4 5];                % BER ratios to gracefully calculate next SNR
 % DELTASNR = [1 2 5 10 10 10 20];                                                   % SNR increment to gracefully calculate next SNR
-BERTH = 1e-3;   BERTHMIN = 0.1*BERTH;       % BER thresholds;
+BERTH = 1e-2;   BERTHMIN = 0.1*BERTH;       % BER thresholds;
 
 % OFDM RANGES
 RNGOFDMTYPES = {'dcoofdm';'acoofdm'};   LENOFDMTYPES = numel(RNGOFDMTYPES); % OFDM types
@@ -82,7 +82,7 @@ RNGMODDCO = power(2,2);               LENMOD  = numel(RNGMODDCO);           % Su
 RNGMODACO = RNGMODDCO.^2;
 RNGMODNSC = power(2,6);                 LENMODNSC = numel(RNGMODNSC);       % Number of subcarriers
 
-DOFST = 0.1;
+DOFST = 2;
 RNGOFDMOFSTACOXTR = 0.2;
 RNGOFDMOFSTDCOXTR = 3.2;                              LENOFSTIGNR = numel(RNGOFDMOFSTDCOXTR);   % OFDM extra offsets  
 RNGOFDMOFSTACO = [0:DOFST:5 RNGOFDMOFSTACOXTR];       
