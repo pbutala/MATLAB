@@ -73,8 +73,8 @@ Yc = 1;
 RNGSNRMIN = 0; RNGSNRMAX = 150; SNROFST = 0;
 RNGSNRLOOP = RNGSNRMAX - RNGSNRMIN + 1;                                         % Number of SNR in each SNR loop
 BERRATIOS = [1 5 10 50 100 500 1000]; 
-DELTASNR = [0.05 0.1 0.1 2 3 4 5];                % BER ratios to gracefully calculate next SNR
-% DELTASNR = [1 2 5 10 10 10 20];                                                   % SNR increment to gracefully calculate next SNR
+% DELTASNR = [0.05 0.1 0.1 2 3 4 5];                % BER ratios to gracefully calculate next SNR
+DELTASNR = [1 2 5 10 10 10 20];                                                   % SNR increment to gracefully calculate next SNR
 BERTH = 1e-2;   BERTHMIN = 0.1*BERTH;       % BER thresholds;
 
 % OFDM RANGES
@@ -99,27 +99,7 @@ RNGOFDMOFSTDCO = [0:DOFST:5 RNGOFDMOFSTDCOXTR];       LENOFDMOFST = numel(RNGOFD
 ctDirRes = '../../../../MatlabResults/15. CSKOFDM/';
 ctDirData = [ctDirRes STRPREFIX 'Data/'];
 ctFileCodeSrc = './scrCSKOFDM.m';
-% switch fSTATION
-%     % Results directory; Spource file; LED table dir;
-%     case 1
-%         ctDirRes = '\\ad\eng\users\p\b\pbutala\My Documents\MatlabResults\15. CSKOFDM\';
-%         ctDirData = [ctDirRes STRPREFIX 'Data\'];
-%         ctFileCodeSrc = '\\ad\eng\users\p\b\pbutala\My Documents\MATLAB\Research\Code V2\Scripts\scrCSKOFDM.m';
-%     case 2
-%         ctDirRes = '/home/pbutala/My Documents/MatlabResults/15. CSKOFDM/';
-%         ctDirData = [ctDirRes STRPREFIX 'Data/'];
-%         ctFileCodeSrc = '/home/pbutala/My Documents/MATLAB/Research/Code V2/Scripts/scrCSKOFDM.m';
-%     case 3
-%         ctDirRes = 'C:\\Users\\pbutala\\Documents\\MatlabResults\\15. CSKOFDM\\';
-%         ctDirData = [ctDirRes STRPREFIX 'Data\\'];
-%         ctFileCodeSrc = 'C:\\Users\\pbutala\\My Documents\\MATLAB\\Research\\Code V2\\Scripts\\scrCSKOFDM.m';
-%     case 4
-%         ctDirRes = 'C:\\Users\\Pankil\\Documents\\MatlabResults\\15. CSKOFDM\\';
-%         ctDirData = [ctDirRes STRPREFIX 'Data\\'];
-%         ctFileCodeSrc = 'C:\\Users\\Pankil\\My Documents\\MATLAB\\Research\\Code V2\\Scripts\\scrCSKOFDM.m';
-%     otherwise
-%         error('Station not defined');
-% end
+
 ctFileCodeDest = [ctDirData STRPREFIX 'scrCSKOFDM' CHARIDXARCHIVE '.m']; % Script copy name
 ctFileVars = [ctDirData STRPREFIX 'datCSKOFDM' CHARIDXARCHIVE '.mat'];   % Data file name
 if ~exist(ctDirData,'dir')   % if data directory does NOT exist
@@ -155,27 +135,7 @@ try
     ctMatDir = '../Matfiles/LEDPSD/';
     sPSDDIR = [ctMatDir cieFile '/' sSPDTYP '/' sprintf('R_%d_%d_%d_G_%d_%d_%d_B_%d_%d_%d',...
         RMN,RSD,RSC,GMN,GSD,GSC,BMN,BSD,BSC) '/'];
-%     switch fSTATION
-%         % Results directory; Spource file; LED table dir;
-%         case 1
-%             ctMatDir = '\\ad\eng\users\p\b\pbutala\My Documents\MATLAB\Research\Code V2\Matfiles\LEDPSD\';
-%             sPSDDIR = [ctMatDir cieFile '\' sSPDTYP '\' sprintf('R_%d_%d_%d_G_%d_%d_%d_B_%d_%d_%d',...
-%                 RMN,RSD,RSC,GMN,GSD,GSC,BMN,BSD,BSC) '\'];
-%         case 2
-%             ctMatDir = '/home/pbutala/My Documents/MATLAB/Research/Code V2/Matfiles/LEDPSD/';
-%             sPSDDIR = [ctMatDir cieFile '\' sSPDTYP '/' sprintf('R_%d_%d_%d_G_%d_%d_%d_B_%d_%d_%d',...
-%                 RMN,RSD,RSC,GMN,GSD,GSC,BMN,BSD,BSC) '/'];
-%         case 3
-%             ctMatDir = 'C:\\Users\\pbutala\\Documents\\MATLAB\\Research\\Code V2\\Matfiles\\LEDPSD\\';
-%             sPSDDIR = [ctMatDir cieFile '\' sSPDTYP '\\' sprintf('R_%d_%d_%d_G_%d_%d_%d_B_%d_%d_%d',...
-%                 RMN,RSD,RSC,GMN,GSD,GSC,BMN,BSD,BSC) '\\'];
-%         case 4
-%             ctMatDir = 'C:\\Users\\Pankil\\Documents\\MATLAB\\Research\\Code V2\\Matfiles\\LEDPSD\\';
-%             sPSDDIR = [ctMatDir cieFile '\' sSPDTYP '\\' sprintf('R_%d_%d_%d_G_%d_%d_%d_B_%d_%d_%d',...
-%                 RMN,RSD,RSC,GMN,GSD,GSC,BMN,BSD,BSC) '\\'];
-%         otherwise
-%             error('Station not defined');
-%     end
+
     RGBledmat = [sPSDDIR sprintf('res_%0.5f',RES) '.mat'];                  % LED table mat-file
     %% SPDs
     switch SPDTYP
@@ -203,7 +163,7 @@ try
         load(RGBledmat,'RGB');              % Load RGB led
     else
         RGB = cLEDs(RES,Rch,Gch,Bch,flCIE);
-        RGB.initialize();                   % Initialize led
+        RGB.initialize(fSHOWPGBAR);                   % Initialize led
         if ~exist(sPSDDIR,'dir')
             mkdir(sPSDDIR);                 % Create directory to store characterization data
         end
@@ -263,8 +223,9 @@ try
                     end
                     O_SYMS = getQAMsyms(O_M);                                           % Get QAM symbols
                     O_BPS(iM,iNSC,iOf) = d*log2(O_M);                                      % Calculate Bits Per Symbol
-                    
-                    waitbar(0,hWB,sprintf('Computing mean OFDM signal...'));
+                    if fSHOWPGBAR
+                        waitbar(0,hWB,sprintf('Computing mean OFDM signal...'));
+                    end
                     [~,~,O_tSig_AVG(iM,iNSC,iDC,iOf)] = getOFDMMean(ofdmType, MODNSC, O_M, OffsetDcoStddev, OffsetAcoStddev);
                     LOOPDONE = false; iSNR = 1;
                     while ~LOOPDONE                                                 % LOOP START SNR (dynamically select next SNR)
@@ -448,13 +409,17 @@ try
         copyfile(ctFileCodeSrc,ctFileCodeDest); % save script
         save(ctFileVars);                       % save workspace
     end
-    delete(hWB);
+    if exist('hWB','var') && ishandle(hWB)
+        delete(hWB);
+    end
 catch ex
-    delete(hWB);
-        setpref('Internet','E_mail','pbutala@bu.edu');
-        setpref('Internet','SMTP_Server','smtp.bu.edu');
-        STREMAIL = ['Simulation ' STRPREFIX ' error!'];
-        sendmail('pankil.butala@gmail.com',STREMAIL);
+    if exist('hWB','var') && ishandle(hWB)
+        delete(hWB);
+    end
+    setpref('Internet','E_mail','pbutala@bu.edu');
+    setpref('Internet','SMTP_Server','smtp.bu.edu');
+    STREMAIL = ['Simulation ' STRPREFIX ' error!'];
+    sendmail('pankil.butala@gmail.com',STREMAIL);
     rethrow(ex);
 end
 setpref('Internet','E_mail','pbutala@bu.edu');

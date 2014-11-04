@@ -334,10 +334,14 @@ try
     end
     % ********************** ************************ *********************
     save(ctFilePlot);                       % save workspace
-    delete(hWB);
+    if exist('hWB','var') && ishandle(hWB)
+        delete(hWB);
+    end
 catch ex
     save(ctFilePlot);                       % save workspace
-    delete(hWB);
+    if exist('hWB','var') && ishandle(hWB)
+        delete(hWB);
+    end
     %% restore defaults
     set(0,'DefaultLineMarkerSize',dlinems);
     set(0,'DefaultLineLineWidth',dlinelw);
