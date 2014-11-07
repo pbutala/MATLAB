@@ -29,13 +29,17 @@ switch(lower(event.Type))
         % Scale OFDM symbol
         signal = txSig/S.modCLIPH;  % signal max is 1
         
+%         % overwrite signal with ramp 0-1 TODO: just for test. DELETE
+%         dSig = 1/numel(signal);
+%         signal = 0:dSig:1-dSig;
+        
         % Generate frame
         frame = [pilot(:);signal(:)];
         frIP = updnClock(frame,S.dFs,S.dCLKs,true);
         
-        % Ensure Pilot is between 0 and 1
-        frIP = frIP/(max(frIP(1:S.frmPILOTLEN16SF))- min(frIP(1:S.frmPILOTLEN16SF)));
-        frIP = frIP - min(frIP(1:S.frmPILOTLEN16SF));
+        % Ensure Pilot is between -1 and 1
+        frIP = 2*frIP/(max(frIP(1:S.frmPILOTLEN16SF)) - min(frIP(1:S.frmPILOTLEN16SF)));
+        frIP = frIP - min(frIP(1:S.frmPILOTLEN16SF)) - 1;
         
         % Shift, Scale
         TXFRAME = frIP*S.dSIGMAX;

@@ -3,7 +3,8 @@ classdef SYSTEMTX < SYSTEM
         dCLKs = 1e9;                    % device transmit/receive sample clock
         dCLKSRC = 0;                    % device clock source for interface
         dSIGMAX = power(2,15)-1;        % transmitter peak signal
-        dSIGMIN = 0;
+%         dSIGMIN = 0;
+        dSIGMIN = -power(2,15)+1;
         dETHID = SYSTEM.GetNetPCIcards('TX'); % device network card id
     end
 end

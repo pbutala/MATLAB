@@ -9,7 +9,7 @@ classdef SYSTEM
         dFs = 40e6;                     % Signal: sample rate (2CE the signal BW)
         modTYPE = 'DCOOFDM';            % type of OFDM
         modOFST = 3.2;                  % offset applied to time domain signal
-        modN = 256;              % # total subcarriers
+        modN = 8;              % # total subcarriers
         modM = 4;                       % M-QAM
         modCLIPH = 3.2;                   % clip high
         modCLIPL = 0;                   % clip low

@@ -66,11 +66,12 @@ switch(lower(event.Type))
             
             % CALCULATE OFFSET AND GAIN
             CHNLOFST = min(RXPILOT);
-            CHNLGAIN = (max(RXPILOT)-min(RXPILOT))/Stx.dSIGMAX;
+%             CHNLGAIN = (max(RXPILOT)-min(RXPILOT))/Stx.dSIGMAX;
+            CHNLGAIN = (max(RXPILOT)-min(RXPILOT))/(Stx.dSIGMAX - Stx.dSIGMIN);
             
             % SCALE RECEIVED SIGNAL FOR DETECTION
             RXFRAMESCL = (RXFRAME-CHNLOFST)/(CHNLGAIN*Stx.dSIGMAX);
-            RXDATASCL = S.modCLIPL + ((RXDATA-CHNLOFST)*(S.modCLIPH-S.modCLIPL))/(CHNLGAIN*Stx.dSIGMAX);
+            RXDATASCL = S.modCLIPL + ((RXDATA-CHNLOFST)*(S.modCLIPH-S.modCLIPL))/(CHNLGAIN*(Stx.dSIGMAX - Stx.dSIGMIN));
             
             % DECODE OFDM
             figure(FIGCONST);
