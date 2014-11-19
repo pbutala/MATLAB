@@ -1,46 +1,50 @@
 classdef cFIFO < handle
-    properties(SetAccess = immutable)
-        BUFSIZEMAX;             % FIFO Buffer Size
+% cFIFO: class to handle a FIFO.
+
+    properties(SetAccess = immutable, GetAccess = private)
+        BUFSIZE;             % FIFO Buffer Size
     end % properties - immutable
     
-    properties(SetAccess = private)
+    properties(SetAccess = private, GetAccess = private)
         BUFFER;                 % FIFO buffer
-        IDXPUSH = 1;            % Push Start Offset
-        IDXPULL = 0;            % Pull Start Offset
+        IDXTAIL;                % Push Start Offset
+        IDXHEAD;                % Pull Start Offset
     end % properties - private
     
     properties(SetAccess = private, Dependent = true)
-        COUNT;                % Number of pending values in FIFO
-        isEmpty;                % flag indicating if buffer is empty
+        COUNT;                  % Number of queued values in FIFO
     end % properties - private
     
     methods
+        % CONSTRUCTOR
         function obj = cFIFO(SZ)
         % cFIFO class constructor
         % obj = cFIFO(SZ) creates an instance of cFIFO with buffer size SZ.
-            obj.BUFSIZEMAX = SZ;
+            SZ = SZ+ 1;         % when head==tail, buffer is empty. Thus SZ+1 ensures SZ elements can be queued
+            obj.BUFSIZE = SZ;
             obj.BUFFER = zeros(SZ,1);
+            obj.IDXTAIL = 1;
+            obj.IDXHEAD = 1;
         end % contructor
         
-        function ovFlag = push(obj, data)
-        % ovFlag = cFIFO.push(data)
+        % ENQUEUE
+        function ovFlag = enQ(obj, data)
+        % ovFlag = cFIFO.enQ(data)
         % Adds data to top of buffer and returns ovFlag = true if buffer
         % overflows
             CNT = numel(data);
-            ovFlag = (CNT > (obj.BUFSIZEMAX - obj.COUNT));
+            ovFlag = (CNT > (obj.BUFSIZE - obj.COUNT - 1));
             if ovFlag
-                warning('Push created an overflow. Data in buffer might be corrupted.');
+                warning('Enqueue created an overflow. Data in buffer might be corrupted.');
             end
-            I = obj.getIndexes(obj.IDXPUSH, CNT);
-            if obj.isEmpty
-                obj.IDXPULL = obj.IDXPUSH;
-            end
+            I = obj.getIndexes(obj.IDXTAIL, CNT+1);
             obj.BUFFER(I(1:end-1)) = data;
-            obj.IDXPUSH = I(end);
+            obj.IDXTAIL = I(end);
         end % push
         
-        function [data,CNT] = pull(obj, MAXCOUNT)
-        % [data CNT] = cFIFO.pull(MAXCOUNT)
+        % DEQUEUE
+        function [data,CNT] = deQ(obj, MAXCOUNT)
+        % [data CNT] = cFIFO.deQ(MAXCOUNT)
         % Returns upto 'MAXCOUNT' data values from bottom of buffer.
         % Return value CNT gives number of values returned.
             if MAXCOUNT <= obj.COUNT
@@ -48,63 +52,44 @@ classdef cFIFO < handle
             else
                 CNT = obj.COUNT;
             end
-            I = obj.getIndexes(obj.IDXPULL, CNT);
+            if CNT == 0
+                warning('No data in queue.');
+            end
+            I = obj.getIndexes(obj.IDXHEAD, CNT+1);
             data = obj.BUFFER(I(1:end-1));
-            obj.IDXPULL = I(end);
-            if obj.IDXPULL == obj.IDXPUSH
-                obj.setEmpty();
-            end
+            obj.IDXHEAD = I(end);
         end % pull
-        
-        function [data,CNT] = pullPad(obj, MAXCOUNT, vPad)
-        % [data CNT] = cFIFO.pull(MAXCOUNT, vPad)
-        % Returns upto 'MAXCOUNT' data values from bottom of buffer.
-        % Return value CNT gives number of values returned. 
-        % if MAXCOUNT > cFIFO.COUNT, pads returned data with scalar vPad
-            [data,CNT] = obj.pull(MAXCOUNT);
-            dCNT = MAXCOUNT-CNT;
-            if dCNT>0
-                if ~exist('vPad','var');
-                    vPad = 0;
-                end
-                data(end+1:end+dCNT) = vPad;
-            end
-        end % pullPad
     end % methods
     
     methods(Access = private)
+        % GET INDEXES
         function I = getIndexes(obj,IDX,CNT)
         % I = getIndexes(obj,IDX,CNT) returns CNT number of indexes
         % starting at index IDX
-            I = IDX : (IDX + CNT);
-            while ~isempty(I(I>obj.BUFSIZEMAX))
-                I(I>obj.BUFSIZEMAX) = I(I>obj.BUFSIZEMAX) - obj.BUFSIZEMAX;
+            I = IDX : (IDX + CNT - 1);
+            while ~isempty(I(I>obj.BUFSIZE))
+                I(I>obj.BUFSIZE) = I(I>obj.BUFSIZE) - obj.BUFSIZE;
             end
         end % getIndexes
-        
-        function setEmpty(obj)
-        % setEmpty() sets the buffer to empty
-            obj.IDXPULL = 0;
-            % obj.IDXPUSH = 1;
-        end
     end % methods - private
     
     % GETTERS/SETTERS
     methods
+        % COUNT
         function val = get.COUNT(obj)
-            if obj.isEmpty
-                val = 0;
-            else
-                val = obj.IDXPUSH - obj.IDXPULL;
-                if val <= 0
-                    val = obj.BUFSIZEMAX + val;
-                end
+            val = obj.IDXTAIL - obj.IDXHEAD;
+            if val < 0
+                val = obj.BUFSIZE + val;
             end
         end % COUNT
         
-        function val = get.isEmpty(obj)
-            val = (obj.IDXPULL == 0);
-        end % isEmpty
+%         % BUFSIZE
+%         function val = get.BUFSIZE(obj)
+%             % bufsize is set to SZ+1 in constructor to avoid queue empty
+%             % conflict. Hence, this getter is implemented to return number
+%             % of values that queue can store without overwrite.
+%             val = obj.BUFSIZE - 1;
+%         end % COUNT
         
     end % methods - getters/setters
 end % classdef cFIFO

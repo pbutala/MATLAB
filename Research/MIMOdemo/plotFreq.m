@@ -13,16 +13,16 @@ FT = fft(X,N)/L;
 FTM = abs(FT);
 FTA = angle(FT);
 
-fr = clk/2*linspace(0,1,N/2+1);
+fr = clk/2*linspace(0,1,floor(N/2)+1);
 switch(lower(side))
     case 'single'
         f = fr;
-        mag = FTM(1:N/2+1);
-        ang = FTA(1:N/2+1);
+        mag = FTM(1:floor(N/2)+1);
+        ang = FTA(1:floor(N/2)+1);
     case 'whole'
         f = [-fr(end-1:-1:2) fr];
-        mag = circshift(FTM(:),N/2-1);
-        ang = circshift(FTA(:),N/2-1);
+        mag = circshift(FTM(:),floor(N/2)-1);
+        ang = circshift(FTA(:),floor(N/2)-1);
     otherwise
         error('Side must be either ''Single'' or ''Whole''');
 end

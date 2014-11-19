@@ -1,0 +1,41 @@
+classdef cPilot
+    % base class to handle pilots.
+    
+    properties(SetAccess = protected)
+        PILOT;                      % Pilot samples at CLKOUT rate
+    end % properties - protected
+    
+    properties(SetAccess = immutable, GetAccess = protected)
+        CLKIN;                      % Clock-In, Data sample clock
+        CLKOUT;                     % Clock-Out, Signal sample clock
+    end % properties - immutable, protected
+    
+    properties(Dependent = true, SetAccess = private)
+        LENGTH;                     % Length of output pilot signal
+    end % properties - dependent
+    
+    methods
+        % CONSTRUCTOR
+        function obj = cPilot(clkin, clkout)
+        % cPilot class constructor
+        obj.CLKIN = clkin;
+        obj.CLKOUT = clkout;
+        end % contructor
+    end % methods
+    
+    methods(Abstract, Access = protected)
+        val = getPilot(obj, clkout);  % gets pilot signal and stores in PILOT
+    end % methods - abstract, protected
+    
+    methods(Abstract)
+        idx = alignPilot(obj, sig, clksmp);  % aligns signal containing pilot sampled at clksmp
+    end % methods - abstract
+    
+    % Getters/Setters
+    methods
+        function val = get.LENGTH(obj)
+            val = numel(obj.PILOT);
+        end % LENGTH
+    end % methods - getters/setters
+    
+end
