@@ -14,6 +14,10 @@ classdef cModOFDM < cModulator
         NPSYM;                      % Samples Per Symbol
     end % properties - protected
     
+    properties
+        FILTER = 'IDEALRECT';       % Up/Dn sampling filter type
+    end % properties
+    
     methods
         % CONSTRUCTOR
         function obj = cModOFDM(ofdmtyp, nsc, syms, dcoofst, clpLo, clpHi, scl, ofst,...
@@ -72,7 +76,7 @@ classdef cModOFDM < cModulator
                 tBits = reshape(strm,[log2(obj.MSC), obj.BPSYM/log2(obj.MSC)]);
                 data = bin2decMat(tBits.') + 1;
                 % Generate OFDM symbol
-                sig = genOFDMsignal(... % Variable Arguments to the function
+                tSig = genOFDMsignal(... % Variable Arguments to the function
                     'data',data,...
                     'OFDMtype',obj.OFDMTYP,...
                     'N',obj.NSC,...
@@ -81,6 +85,7 @@ classdef cModOFDM < cModulator
                     'ClipHigh',obj.SIGHI,...
                     'OffsetDcoStddev', obj.DCOOFST,...
                     'ShowConst',false);
+                sig = updnClock(tSig,obj.CLKIN,obj.CLKOUT,obj.FILTER,false);
                 figure;
                 plot(sig);
                 title('OFDM signal');

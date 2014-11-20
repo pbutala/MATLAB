@@ -18,6 +18,10 @@ classdef cDemodOFDM < cDemodulator
         NPSYM;                      % Samples Per Symbol
     end % properties - protected
     
+    properties
+        FILTER = 'RAISEDCOSINE';       % Up/Dn sampling filter type
+    end % properties
+    
     methods
         % CONSTRUCTOR
         function obj = cDemodOFDM(ofdmtyp, nsc, syms, ofst,...
@@ -61,7 +65,7 @@ classdef cDemodOFDM < cDemodulator
         function demodulate(obj)
             while(obj.BUFIN.COUNT >= obj.NPSYM)
                 strm = obj.BUFIN.deQ(obj.NPSYM);
-                tSig = updnClock(strm,obj.CLKIN,obj.CLKOUT,true);
+                tSig = updnClock(strm,obj.CLKIN,obj.CLKOUT,obj.FILTER,true);
                 figure;
                 plot(tSig);
                 title('OFDM signal Rx recovered');

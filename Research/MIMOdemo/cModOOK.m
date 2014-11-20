@@ -11,6 +11,10 @@ classdef cModOOK < cModulator
         NPSYM;                      % Samples Per Symbol (output)
     end % properties - protected
     
+    properties
+        FILTER = 'RAISEDCOSINE';    % Up/Dn sampling filter type
+    end % properties
+    
     methods
         % CONSTRUCTOR
         function obj = cModOOK(on, off, clkin, clkout, scl, ofst,...
@@ -27,7 +31,7 @@ classdef cModOOK < cModulator
                 bufszin = bps;            % default input buffer size
             end
             if~exist('bufszout','var')
-                bufszout = nps;  % default output buffer size
+                bufszout = bufszin*nps;  % default output buffer size
             end
             obj = obj@cModulator(clkin, clkout, bufszin, bufszout, off, on, scl, ofst);
             obj.BPSYM = bps;
@@ -38,11 +42,12 @@ classdef cModOOK < cModulator
     methods 
         % MODULATE
         function sig = modulate(obj)
-            sig = obj.BUFIN.deQ(obj.BUFIN.COUNT);
-            I = sig((sig~=obj.ON_BIT)&(sig~=obj.OFF_BIT));
+            tSig = obj.BUFIN.deQ(obj.BUFIN.COUNT);
+            I = tSig((tSig~=obj.ON_BIT)&(tSig~=obj.OFF_BIT));
             if ~isempty(I)
                 warning('Input stream contains values other than ON(%d) and OFF(%d) bits',obj.ON_BIT,obj.OFF_BIT);
             end
+            sig = updnClock(tSig,obj.CLKIN,obj.CLKOUT,obj.FILTER,false);
         end % modulate
         
     end % methods - overloaded

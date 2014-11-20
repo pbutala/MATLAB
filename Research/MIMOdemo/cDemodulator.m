@@ -16,6 +16,11 @@ classdef cDemodulator
         NPSYM;                      % Samples Per Symbol  (output)
     end % properties - abstract, protected
     
+    properties(Dependent = true, SetAccess = private)
+        COUNTIN;                    % Number of samples in input stream
+        COUNTOUT;                   % Number of samples in output stream
+    end % properties - dependent
+    
     methods
         % CONSTRUCTOR
         function obj = cDemodulator(clkin, clkout, SZIN, SZOUT)
@@ -45,4 +50,15 @@ classdef cDemodulator
     methods(Abstract)
         demodulate(obj);  % convert signal to bits and queue in BUFOUT.
     end % methods - abstract
+    
+    % Getters/Setters
+    methods
+        function val = get.COUNTIN(obj)
+            val= obj.BUFIN.COUNT;
+        end % COUNTIN
+        
+        function val = get.COUNTOUT(obj)
+            val= obj.BUFOUT.COUNT;
+        end % COUNTOUT
+    end
 end

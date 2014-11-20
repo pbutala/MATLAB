@@ -20,6 +20,11 @@ classdef cModulator
         NPSYM;                      % Samples Per Symbol (output)
     end % properties - abstract, protected
     
+    properties(Dependent = true, SetAccess = private)
+        COUNTIN;                    % Number of samples in input stream
+        COUNTOUT;                   % Number of samples in output stream
+    end % properties - dependent
+    
     methods
         % CONSTRUCTOR
         function obj = cModulator(clkin, clkout, SZIN, SZOUT, lo, hi, scl, ofst)
@@ -53,8 +58,7 @@ classdef cModulator
         % STREAM INPUT
         function write(obj,data)
             obj.BUFIN.enQ(data);
-            sig = obj.modulate();
-            sigUS = updnClock(sig,obj.CLKIN,obj.CLKOUT,false);
+            sigUS = obj.modulate();
             sigUS(sigUS<obj.SIGLO) = obj.SIGLO;
             sigUS(sigUS>obj.SIGHI) = obj.SIGHI;
             sigUS = sigUS*obj.SCALE + obj.OFFSET;
@@ -70,4 +74,15 @@ classdef cModulator
     methods(Abstract)
         sig = modulate(obj);  % convert bits to signal and queue in BUFOUT.
     end % methods - abstract
+    
+    % Getters/Setters
+    methods
+        function val = get.COUNTIN(obj)
+            val= obj.BUFIN.COUNT;
+        end % COUNTIN
+        
+        function val = get.COUNTOUT(obj)
+            val= obj.BUFOUT.COUNT;
+        end % COUNTOUT
+    end
 end

@@ -4,6 +4,10 @@ classdef cPilotBarker < cPilot
         TYPE;
     end % properties - immutable
     
+    properties
+        FILTER = 'RAISEDCOSINE';    % Up/Dn sampling filter type
+    end % properties
+    
     methods
         % CONSTRUCTOR
         function obj = cPilotBarker(type, clkin, clkout)
@@ -27,7 +31,7 @@ classdef cPilotBarker < cPilot
                 case 'BARKER13'
                     plt = [1;1;1;1;1;0;0;1;1;0;1;0;1];
             end
-            val = updnClock(plt, obj.CLKIN, clkout, true);
+            val = updnClock(plt, obj.CLKIN, clkout, obj.FILTER, true);
         end % getPilot
     end % methods - protected
     

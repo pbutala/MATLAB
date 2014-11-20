@@ -17,6 +17,10 @@ classdef cDemodOOK < cDemodulator
         NPSYM;                      % Samples Per Symbol
     end % properties - protected
     
+    properties
+        FILTER = 'IDEALRECT';       % Up/Dn sampling filter type
+    end % properties
+    
     methods
         % CONSTRUCTOR
         function obj = cDemodOOK(on, off, clkin, clkout, bufszin, bufszout)
@@ -32,7 +36,7 @@ classdef cDemodOOK < cDemodulator
                 bufszin = nps;            % default input buffer size
             end
             if~exist('bufszout','var')
-                bufszout = bps;  % default output buffer size
+                bufszout = bufszin/nps;  % default output buffer size
             end
             obj = obj@cDemodulator(clkin, clkout, bufszin, bufszout);
             obj.ON_SIG = on;
