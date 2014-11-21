@@ -65,10 +65,7 @@ classdef cDemodOFDM < cDemodulator
         function demodulate(obj)
             while(obj.BUFIN.COUNT >= obj.NPSYM)
                 strm = obj.BUFIN.deQ(obj.NPSYM);
-                tSig = updnClock(strm,obj.CLKIN,obj.CLKOUT,obj.FILTER,true);
-                figure;
-                plot(tSig);
-                title('OFDM signal Rx recovered');
+                tSig = updnClock(strm,obj.CLKIN,obj.CLKOUT,obj.FILTER,false);
                 rxDat = decodeOFDMsignal(tSig,...
                     'OFDMtype',obj.OFDMTYP,...
                     'N',obj.NSC,...

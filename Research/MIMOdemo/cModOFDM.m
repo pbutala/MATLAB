@@ -86,9 +86,6 @@ classdef cModOFDM < cModulator
                     'OffsetDcoStddev', obj.DCOOFST,...
                     'ShowConst',false);
                 sig = updnClock(tSig,obj.CLKIN,obj.CLKOUT,obj.FILTER,false);
-                figure;
-                plot(sig);
-                title('OFDM signal');
             end % while loop
         end % modulate
     end % methods - overloaded

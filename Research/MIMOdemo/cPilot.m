@@ -31,6 +31,22 @@ classdef cPilot
         idx = alignPilot(obj, sig, clksmp);  % aligns signal containing pilot sampled at clksmp
     end % methods - abstract
     
+    methods
+        function scl = getScale(obj, plt, clksmp)
+            pltR = obj.getPilot(clksmp);
+            pltR = pltR - min(pltR);
+            pltR = pltR/max(pltR);
+            
+            if ~isequal(numel(plt),numel(pltR))
+                error('Input pilot and reference have different lengths.');
+            end
+            plt = plt-min(plt);
+            pltR = pltR-min(pltR);
+            
+            scl = sum(abs(plt))/sum(abs(pltR));
+        end % getScale
+    end % methods - public
+    
     % Getters/Setters
     methods
         function val = get.LENGTH(obj)

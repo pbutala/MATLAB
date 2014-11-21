@@ -1,5 +1,5 @@
 function drCrosshair(X,Y,fMrk,type,varargin)
-%UNTITLED Summary of this function goes here
+%   drCrosshair Summary of this function goes here
 %   Detailed explanation goes here
 if ~isequal(size(X),size(Y))
     error('X and Y must have same lengths');

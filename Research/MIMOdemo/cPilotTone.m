@@ -1,49 +1,29 @@
-classdef cPilotBarker < cPilot
-    % base class to handle Barker pilots.
+classdef cPilotTone < cPilot
+    % base class to handle tone pilots.
     properties(SetAccess = immutable)
-        TYPE;
+        NCYCLE;
     end % properties - immutable
     
     properties
-        FILTER = 'RAISEDCOSINE';    % Up/Dn sampling filter type
+        FILTER = 'IDEALRECT';    % Up/Dn sampling filter type
     end % properties
     
     methods
         % CONSTRUCTOR
-        function obj = cPilotBarker(type, clkin, clkout)
-            % cPilotBarker class constructor
+        function obj = cPilotTone(ncycl, clkin, clkout)
+            % cPilotTone class constructor
+            warning('Not yet reliable. Error check needed.');
             obj = obj@cPilot(clkin,clkout);
-            switch(upper(type))
-                case {'BARKER11', 'BARKER13'}
-                    obj.TYPE = upper(type);
-                otherwise
-                    error('Pilot type must be ''BARKER11'',''BARKER13''');
-            end
+            obj.NCYCLE = ncycl;
             obj.PILOT = obj.getPilot(clkout);
         end % contructor
     end % methods
     
     methods(Access = protected)
         function val = getPilot(obj, clkout)
-            switch(obj.TYPE)
-                case 'BARKER1'
-                    plt = 1;
-                case 'BARKER2'
-                    plt = [1;0];
-                case 'BARKER3'
-                    plt = [1;1;0];
-                case 'BARKER4'
-                    plt = [1;1;0;1];
-                case 'BARKER5'
-                    plt = [1;1;1;0;1];
-                case 'BARKER7'
-                    plt = [1;1;1;0;0;1;0];
-                case 'BARKER11'
-                    plt = [1;1;1;0;0;0;1;0;0;1;0];
-                case 'BARKER13'
-                    plt = [1;1;1;1;1;0;0;1;1;0;1;0;1];
-            end
-            val = updnClock(plt, obj.CLKIN, clkout, obj.FILTER, false);
+            n = 0:ceil(obj.NCYCLE*clkout/obj.CLKIN);
+            val = sin(2*pi*n(:)*obj.CLKIN/clkout)-1;
+            val = updnClock(val, clkout, clkout, obj.FILTER, false);
         end % getPilot
     end % methods - protected
     
@@ -63,11 +43,6 @@ classdef cPilotBarker < cPilot
                 [acor, lag] = xcorr(pltR,sigC);
                 [~,I] = max(acor(lag<=0));
                 idx = rem(abs(lag(I)), sigLen) + 1;
-%                 figure;
-%                 plot(lag,acor);
-%                 drCrosshair(lag(I), acor(I), true, 'half', 'r');
-%                 str = sprintf(' lag = %d',lag(I));
-%                 text(lag(I), acor(I), str);
                 idx = obj.alignFine(sig, pltR, idx);
             end
         end % alignPilot
@@ -102,62 +77,3 @@ classdef cPilotBarker < cPilot
         end % alignFine
     end % methods - private
 end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
