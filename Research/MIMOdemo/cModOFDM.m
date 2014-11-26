@@ -85,7 +85,7 @@ classdef cModOFDM < cModulator
                     'ClipHigh',obj.SIGHI,...
                     'OffsetDcoStddev', obj.DCOOFST,...
                     'ShowConst',false);
-                sig = updnClock(tSig,obj.CLKIN,obj.CLKOUT,obj.FILTER,true);
+                sig = updnClock(tSig,obj.CLKIN,obj.CLKOUT,obj.FILTER,false);
             end % while loop
         end % modulate
     end % methods - overloaded

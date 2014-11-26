@@ -41,11 +41,11 @@ txFrm = [demo.DAC.setRail2Rail(demo.plt.PILOT); txSig];
 % txFrm = demo.DAC.setRail2Rail(plt.PILOT);
 % CHANNEL
 h = 1;
-
 % for SHIFT = 0:NFRM-1
 for SHIFT = 0:9
     % Transmit frame with DAC
     txFrmCh = demo.DAC.getOutput(txFrm);
+    NFRM = demo.frmTxNSmp16;
     
     % Shift frame start (sampling offset at receiver)
     sftIs = NFRM-SHIFT+1:2*NFRM-SHIFT;
@@ -57,9 +57,6 @@ for SHIFT = 0:9
     end
     txFrmCh = txFrmCh(sftIs);
     
-%     figure;
-%     plot(txFrmCh);
-    
     % Scale frame (channel gain)
     frmCh = h*txFrmCh;
     
@@ -67,24 +64,22 @@ for SHIFT = 0:9
     rxFrmCh = updnClock(frmCh,demo.DAC.dCLKs,demo.ADC.dCLKs);
     rxFrm = demo.ADC.getOutput(rxFrmCh);
     
-    % Upsample received frame to transmit (DAC) clock for better alignment
-    rxFrmUP = updnClock(rxFrm,demo.ADC.dCLKs,demo.DAC.dCLKs);
-    
     % Find frame starting index by aligning pilot
-    idx = demo.plt.alignPilot(rxFrmUP-min(rxFrmUP), demo.DAC.dCLKs);
+    idx = demo.plt.alignPilot(rxFrm-min(rxFrm), demo.ADC.dCLKs);
     
-    % Find pilot in up-sampled received frame
-    pltIs = idx:idx+demo.plt.LENGTH-1;
+    % Find pilot in received frame
+    NFRM = demo.frmRxNSmp16;
+    pltIs = idx:idx+demo.plt.getLength(demo.ADC.dCLKs)-1;
     while ~isempty(pltIs(pltIs<=0))
         pltIs(pltIs<=0) = pltIs(pltIs<=0) + NFRM;
     end
     while ~isempty(pltIs(pltIs>NFRM))
         pltIs(pltIs>NFRM) = pltIs(pltIs>NFRM) - NFRM;
     end
-    rxPltUS = rxFrmUP(pltIs);
+    rxPltUS = rxFrm(pltIs);
     
     % Estimate channel gain from pilot
-    hhat = demo.plt.getScale(rxPltUS, demo.DAC.dCLKs);
+    hhat = demo.plt.getScale(rxPltUS, demo.ADC.dCLKs);
     scl = 1/(hhat*demo.mod.SCALE*demo.DAC.dGAIN);
     
     % Find signal in up-sampled received frame
@@ -93,9 +88,7 @@ for SHIFT = 0:9
     else
         sigIs = [pltIs(end)+1:NFRM, 1:pltIs(1)-1];
     end
-    
-    rxSigUS = rxFrmUP(sigIs);
-    rxSig = updnClock(rxSigUS,demo.DAC.dCLKs,demo.ADC.dCLKs);
+    rxSig = rxFrm(sigIs);
     
     % Scale received signal
     rxSig = rxSig*scl;
@@ -112,10 +105,7 @@ for SHIFT = 0:9
     % TODO: Block enabled only for simulated hardware
     alnErr = idx-1-SHIFT;
     alnErr(alnErr<=-NFRM/2) = alnErr(alnErr<=-NFRM/2) + NFRM;
-    fprintf('Shift = %4d, BERRs = %3d, ALNERR = %4d\n',SHIFT,berr,alnErr);
-%     if(abs(alnErr) >= 1/(2*demo.demod.SMPLF))
-%         fprintf('Shift = %d, idx = %d, err = %d\n',SHIFT,idx,alnErr);
-%     end
+    fprintf('BERRs = %3d\n',berr);
 end
 
 
