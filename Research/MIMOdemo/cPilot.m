@@ -45,6 +45,10 @@ classdef cPilot
             
             scl = sum(abs(plt))/sum(abs(pltR));
         end % getScale
+        
+        function len = getLength(obj, clksmp)
+            len = ceil(obj.LENGTH*clksmp/obj.CLKOUT);
+        end % getLength
     end % methods - public
     
     % Getters/Setters
