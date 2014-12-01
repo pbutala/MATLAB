@@ -4,14 +4,17 @@ clearvars;
 clc;
 rng('Default');
 
-global FIGTITLE demo txBits;
+global FIGTITLE demo BPFrm datBits;
+global SYNC;
+
 FIGTITLE = 'Off';
 fSig = 25e6;
 fPlt = 25e6;
+SYNC = 1;       % 1: transmit 0: receive
 
 % ----OOK----
 fprintf('--OOK--\n');
-spFrm = 256;
+spFrm = 8;
 demo = cDemoOOK(fSig, fPlt, spFrm);
 BPFrm = spFrm;
 %------------
@@ -23,29 +26,38 @@ BPFrm = spFrm;
 % BPFrm = spFrm*demo.mod.BPSYM;
 % %------------
 
-% Generate bits to transmit
-txBits = randi([0 1],BPFrm,1);
+% initialize buffer to hold data bits for BER calculation
+datBits(1) = cFIFO(BPFrm);
+datBits(2) = cFIFO(BPFrm);
+datBits(3) = cFIFO(BPFrm);
+datBits(4) = cFIFO(BPFrm);
+% for i=2:4
+%     datBits(i) = cFIFO(BPFrm);
+% end
+%--------------------------------
 
 % Start Transmit Routine
 txTmr = timer('Name','StartTxClt',...
-              'StartDelay', 4,...
-              'Period', 1,...
-              'TasksToExecute', 1, ...
+              'StartDelay', 2,...
+              'Period', 0.25,...
+              'TasksToExecute', 7, ...
               'ExecutionMode', 'fixedRate',...
               'StartFcn', @demoTxTimer,...
               'StopFcn', @demoTxTimer,...
               'TimerFcn', @demoTxTimer);
 start(txTmr);
-pause(2);
+%--------------------------------
 
 % Start Receive Routine
 rxTmr = timer('Name','StartRxClt',...
-              'StartDelay', 4,...
-              'Period', 1,...
-              'TasksToExecute', 4, ...
+              'StartDelay', 2,...
+              'Period', 0.25,...
+              'TasksToExecute', 7,...
               'ExecutionMode', 'fixedRate',...
               'StartFcn', @demoRxTimer,...
               'StopFcn', @demoRxTimer,...
               'TimerFcn', @demoRxTimer);
 start(rxTmr);
+%--------------------------------
+
 %--END--

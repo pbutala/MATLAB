@@ -1,6 +1,7 @@
 function demoTxTimer(obj,event)
-global FIGTITLE demo txBits;
+global FIGTITLE FIGTX demo BPFrm SYNC datBits;
 persistent TXCLT;
+persistent CHNLWRITE;
 
 switch(lower(event.Type))
     case{'startfcn'}
@@ -19,6 +20,14 @@ switch(lower(event.Type))
         fwrite(TXCLT,[demo.DAC.CMD_BURSTSIZE demo.DAC.CHNL_ALL demo.DAC.LEN_BS_LSB demo.DAC.LEN_BS_MSB]);
         fwrite(TXCLT,typecast(int16(demo.frmTxNSmp16),'uint8'));
         
+        % Initialize persistent variables
+        CHNLWRITE = demo.DAC.CHNL_4; % so in timer, channel 1 is selected first
+        
+        % Create figures to plot transmitted signal and processing chain
+        for i=1:4
+            FIGTX(i) = figure('Name', sprintf('Frame - Transmit %d (%d Msps)', i, demo.DAC.dCLKs/1e6), 'NumberTitle', FIGTITLE);
+        end
+        
     case{'stopfcn'}
         fclose(TXCLT);
         delete(obj);
@@ -26,47 +35,55 @@ switch(lower(event.Type))
         clear TXCLT;
         
     case{'timerfcn'}
-        % Queue bits to transmit in modulator
-        demo.mod.write(txBits);
-        
-        % Read modulated signal
-        txSig = demo.mod.read(demo.mod.COUNTOUT);
-        txSig(txSig>demo.DAC.dSIGMAX) = demo.DAC.dSIGMAX;
-        txSig(txSig<demo.DAC.dSIGMIN) = demo.DAC.dSIGMIN;
-        
-        % Generate transmit frame
-        txFrm = [demo.DAC.setRail2Rail(demo.plt.PILOT); txSig];
-        
-        % Plot transmit frame
-        figure('Name', sprintf('Frame - Transmit (%d Msps)',demo.DAC.dCLKs/1e6), 'NumberTitle', FIGTITLE);
-        plot(1:demo.frmTxNSmp16, txFrm);
-        axis([1 demo.frmTxNSmp16  min(txFrm) max(txFrm)]);
-        xlabel('Normalized time');
-        ylabel('Signal value');
-        title('Transmit frame');
-        
-        % Write data to channel 1
-        fwrite(TXCLT,[demo.DAC.CMD_DATA demo.DAC.CHNL_1 typecast(int16(demo.frmTxNSmp8),'uint8')]);
-        fwrite(TXCLT,typecast(int16(txFrm),'uint8'));
-        
-        % Write data to channel 2
-        fwrite(TXCLT,[demo.DAC.CMD_DATA demo.DAC.CHNL_2 typecast(int16(demo.frmTxNSmp8),'uint8')]);
-        fwrite(TXCLT,typecast(int16(txFrm),'uint8'));
-        
-        % Write data to channel 3
-        fwrite(TXCLT,[demo.DAC.CMD_DATA demo.DAC.CHNL_3 typecast(int16(demo.frmTxNSmp8),'uint8')]);
-        fwrite(TXCLT,typecast(int16(txFrm),'uint8'));
-        
-        % Write data to channel 4
-        fwrite(TXCLT,[demo.DAC.CMD_DATA demo.DAC.CHNL_4 typecast(int16(demo.frmTxNSmp8),'uint8')]);
-        fwrite(TXCLT,typecast(int16(txFrm),'uint8'));
-        
-        % Enable channels
-        fwrite(TXCLT,[demo.DAC.CMD_ENCHNL demo.DAC.CHNL_4 demo.DAC.ZERO_UC demo.DAC.ZERO_UC]);    % All channels are enabled irrespective of CHNL selection
-        
-        % Arm DAC
-        fwrite(TXCLT,[demo.DAC.CMD_ARMDAC demo.DAC.CHNL_ALL demo.DAC.ZERO_UC demo.DAC.ZERO_UC]);
-        
+        if (SYNC == 1)  % if sync state == transmit
+            % Set channel to transmit on
+            switch(CHNLWRITE)
+                case{demo.ADC.CHNL_1}
+                    CHNLWRITE = demo.DAC.CHNL_2;
+                case{demo.ADC.CHNL_2}
+                    CHNLWRITE = demo.DAC.CHNL_3;
+                case{demo.ADC.CHNL_3}
+                    CHNLWRITE = demo.DAC.CHNL_4;
+                case{demo.ADC.CHNL_4}
+                    CHNLWRITE = demo.DAC.CHNL_1;
+            end
+            CHNLWRITEIDX = log2(double(CHNLWRITE))+1;
+            
+            % Queue bits to transmit in modulator
+%             rng('default');
+            txBits = randi([0 1],BPFrm,1);
+            demo.mod.write(txBits);
+            datBits(CHNLWRITEIDX).enQ(txBits);
+            
+            % Read modulated signal
+            txSig = demo.mod.read(demo.mod.COUNTOUT);
+            txSig(txSig>demo.DAC.dSIGMAX) = demo.DAC.dSIGMAX;
+            txSig(txSig<demo.DAC.dSIGMIN) = demo.DAC.dSIGMIN;
+            
+            % Generate transmit frame
+            txFrm = [demo.DAC.setRail2Rail(demo.plt.PILOT); txSig];
+            
+            % Plot transmit frame
+            figure(FIGTX(CHNLWRITEIDX));
+            plot(1:demo.frmTxNSmp16, txFrm);
+            axis([1 demo.frmTxNSmp16  min(txFrm) max(txFrm)]);
+            xlabel('Normalized time');
+            ylabel('Signal value');
+            title('Transmit frame');
+            
+            % Write data to channel 1
+            fwrite(TXCLT,[demo.DAC.CMD_DATA CHNLWRITE typecast(int16(demo.frmTxNSmp8),'uint8')]);
+            fwrite(TXCLT,typecast(int16(txFrm),'uint8'));
+            
+            if (CHNLWRITE == demo.ADC.CHNL_4)
+                % Enable channels
+                fwrite(TXCLT,[demo.DAC.CMD_ENCHNL demo.DAC.CHNL_4 demo.DAC.ZERO_UC demo.DAC.ZERO_UC]);    % All channels are enabled irrespective of CHNL selection
+                
+                % Arm DAC
+                fwrite(TXCLT,[demo.DAC.CMD_ARMDAC demo.DAC.CHNL_ALL demo.DAC.ZERO_UC demo.DAC.ZERO_UC]);
+                SYNC = 0;       % Set sync state to receive
+            end
+        end
     otherwise
         error('Unknown timer event: %s',char(event.Type));
 end

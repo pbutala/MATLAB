@@ -12,7 +12,7 @@ classdef cDemoConfig
         fPlt;                   % Pilot bandwidth
         fSig;                   % Signal bandwidth
         SPFRM;                  % Number of symbols per frame
-    end % properties immutable
+    end % properties - immutable
     
     properties(Dependent = true, SetAccess = private)
         frmTxNSmp16;            % number of 16 bit-samples in upsampled frame tx
@@ -20,6 +20,7 @@ classdef cDemoConfig
         frmRxNSmp16;            % number of 16 bit-samples in upsampled frame rx
         frmRxNSmp8;             % number of 8 bit-samples in upsampled frame rx
     end % properties - dependent
+    
     methods
         % CONSTRUCTOR
         function obj = cDemoConfig(Fsig, Fplt, spFrm)
