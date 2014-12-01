@@ -18,9 +18,12 @@ classdef cDemoOFDM < cDemoConfig
     
     methods
         % CONSTRUCTOR
-        function obj = cDemoOFDM(Fsig, Fplt)
+        function obj = cDemoOFDM(Fsig, Fplt, spFrm)
             % constructor - creates an instance of cDemoOFDM
-            obj = obj@cDemoConfig(Fsig, Fplt);
+            if ~exist('spFrm','var')
+                spFrm = 1;
+            end
+            obj = obj@cDemoConfig(Fsig, Fplt, spFrm);
             obj.plt = cPilotBarker('BARKER13', obj.fPlt, obj.DAC.dCLKs);
             
             % OFDM parameters

@@ -47,7 +47,9 @@ classdef cModOOK < cModulator
             if ~isempty(I)
                 warning('Input stream contains values other than ON(%d) and OFF(%d) bits',obj.ON_BIT,obj.OFF_BIT);
             end
-            sig = updnClock(tSig,obj.CLKIN,obj.CLKOUT,obj.FILTER,false);
+            % sig = updnClock(tSig,obj.CLKIN,obj.CLKOUT,obj.FILTER,false);
+            sigUS = repmat(tSig(:).',ceil(obj.CLKOUT/obj.CLKIN),1);
+            sig = sigUS(:);
         end % modulate
         
     end % methods - overloaded

@@ -98,7 +98,7 @@ classdef cPilotBarker < cPilot
                 pltR = sig(pltI);
                 MSE(i) = sum(plt.*pltR);
             end
-            idx = IDXs(MSE==max(MSE));
+            idx = IDXs(find(MSE==max(MSE),1,'first'));
         end % alignFine
     end % methods - private
 end

@@ -11,6 +11,7 @@ classdef cDemoConfig
         DAC;                    % Digital to Analog convertor
         fPlt;                   % Pilot bandwidth
         fSig;                   % Signal bandwidth
+        SPFRM;                  % Number of symbols per frame
     end % properties immutable
     
     properties(Dependent = true, SetAccess = private)
@@ -21,18 +22,19 @@ classdef cDemoConfig
     end % properties - dependent
     methods
         % CONSTRUCTOR
-        function obj = cDemoConfig(Fsig, Fplt)
+        function obj = cDemoConfig(Fsig, Fplt, spFrm)
             obj.ADC = cFMC116_ETH();
             obj.DAC = cFMC204_ETH();
             obj.fSig = Fsig;
             obj.fPlt = Fplt;
+            obj.SPFRM = spFrm;
         end % cDemoConfig
     end % methods
     
     % Getters/Setters
     methods
         function val = get.frmTxNSmp16(obj)
-            val = (obj.plt.LENGTH + obj.mod.NPSYM);
+            val = (obj.plt.LENGTH + obj.SPFRM*obj.mod.NPSYM);
         end % frmTxNSmp16
         
         function val = get.frmRxNSmp16(obj)

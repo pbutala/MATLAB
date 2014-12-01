@@ -98,8 +98,8 @@ switch(lower(event.Type))
         % Plot receive signal (@fSig*2 clock)
         figure(FIGRX);
         subplot(FIGNR,FIGNC,3);
-        plot(1:demo.demod.NPSYM, rxSig);
-        axis([1 demo.demod.NPSYM min(rxSig) max(rxSig)]);
+        plot(1:demo.SPFRM*demo.demod.NPSYM, rxSig);
+        axis([1 demo.SPFRM*demo.demod.NPSYM min(rxSig) max(rxSig)]);
         xlabel('Normalized time');
         ylabel('Signal value');
         title('Recovered signal');
