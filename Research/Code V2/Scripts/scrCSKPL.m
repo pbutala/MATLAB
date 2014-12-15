@@ -86,7 +86,7 @@ try
     % Update Wait bar
     LOOPCOUNT = LOOPCOUNT+1;
     PROGRESS = LOOPCOUNT/TOTALLOOPS;
-    waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
+    waitbar(PROGRESS,hWB,sprintf('Plotting Results: %0.2f%% done...',PROGRESS*100));
     
     % ********************** PLOT AND SAVE COLOR GAMUT*********************
     FIGGMT = figure('Name','RGB LED xy gamut','NumberTitle',FIGTITLE);
@@ -113,7 +113,7 @@ try
     % Update Wait bar
     LOOPCOUNT = LOOPCOUNT+1;
     PROGRESS = LOOPCOUNT/TOTALLOOPS;
-    waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
+    waitbar(PROGRESS,hWB,sprintf('Plotting Results: %0.2f%% done...',PROGRESS*100));
     
     % *********************** PLOT AND SAVE SYMBOLS ***********************
     for i=1:IDXCHST
@@ -161,7 +161,7 @@ try
         % Update Wait bar
         LOOPCOUNT = LOOPCOUNT+1;
         PROGRESS = LOOPCOUNT/TOTALLOOPS;
-        waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
+        waitbar(PROGRESS,hWB,sprintf('Plotting Results: %0.2f%% done...',PROGRESS*100));
     end
     
     % ********************** PLOT AND SAVE BER vs SNR *********************
@@ -186,12 +186,16 @@ try
     % Update Wait bar
     LOOPCOUNT = LOOPCOUNT+1;
     PROGRESS = LOOPCOUNT/TOTALLOOPS;
-    waitbar(PROGRESS,hWB,sprintf('Results: %0.2f%% done...',PROGRESS*100));
+    waitbar(PROGRESS,hWB,sprintf('Plotting Results: %0.2f%% done...',PROGRESS*100));
     
     % ********************** ************************ *********************
-    delete(hWB);
+    if (exist('hWB','var')&& ishandle(hWB))
+        delete(hWB);
+    end
 catch ex
-    delete(hWB);
+    if (exist('hWB','var')&& ishandle(hWB))
+        delete(hWB);
+    end
     %% restore defaults
     set(0,'DefaultLineMarkerSize',dlinems);
     set(0,'DefaultLineLineWidth',dlinelw);

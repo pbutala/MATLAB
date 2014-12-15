@@ -10,12 +10,12 @@ clc;
 fSTATION = 4;   % 1.PHO445 2.ENGGRID 3.LAPTOP 4.Optimus
 fSAVEALL = true;
 fCLOSEALL = false;
-fARCHIVE = true;
+fARCHIVE = false;
 f0XYZ1RGB = true;
 rng('default');
 
 CHAROVERWRITE = '~';
-STRPREFIX = '2_CBC2_RGB_';
+STRPREFIX = '0_Scratch_';
 % STRPREFIX = '1_';
 if(fARCHIVE)
     CHARIDXARCHIVE = '';           % ARCHIVE INDEX
@@ -34,8 +34,8 @@ lambdas = LAMBDAMIN:LAMBDADELTA:LAMBDAMAX;
 
 RMN = 703; RSC = 1; RSD = 0;              % Mean, SD and scale to generate SPD of Red led
 GMN = 564; GSC = 1; GSD = 0;               % Mean, SD and scale to generate SPD of Green led
-% BMN = 429; BSC = 1; BSD = 0;               % Mean, SD and scale to generate SPD of Blue led
-BMN = 509; BSC = 1; BSD = 0;               % Mean, SD and scale to generate SPD of Blue led
+BMN = 429; BSC = 1; BSD = 0;               % Mean, SD and scale to generate SPD of Blue led
+% BMN = 509; BSC = 1; BSD = 0;               % Mean, SD and scale to generate SPD of Blue led
 cieFile = 'CIE1931_JV_1978_2deg';                 % CIE XYZ CMF curves file
 flCIE = [cieFile '.csv'];
 RES = 0.1;                                  % x,y Resolution for xy<->CCT conversion
@@ -47,7 +47,7 @@ BResp = cResp.getResponsivity(BMN);    % Get responsivities vs wavelength for Si
 
 NTX = 3; NRX = 3;
 
-TOTALBITS = 2e5;                            % Total bit for transmtter to simulate
+TOTALBITS = 1e4;                            % Total bit for transmtter to simulate
 
 WBX = 50; WBY = 500; WBW = 275; WBH = 75;   % Wait Box X,,Y,WID,HGT
 WBTITLE = 'Running CSK Simulation...'; % Wait Box title
@@ -71,8 +71,8 @@ Yc = 1;
 %% ranges
 RNGSNRMIN = 0; RNGSNRMAX = 100; SNROFST = 0;
 RNGSNRLOOP = RNGSNRMAX - RNGSNRMIN + 1;                                         % Number of SNR in each SNR loop
-BERRATIOS = [1 5 10 50 100 500 1000]; DELTASNR = [0.01 0.05 0.1 2 3 4 5];                % BER ratios to gracefully calculate next SNR
-% DELTASNR = [1 2 5 10 10 10 20];                                                   % SNR increment to gracefully calculate next SNR
+BERRATIOS = [1 5 10 50 100 500 1000]; % DELTASNR = [0.01 0.05 0.1 2 3 4 5];                % BER ratios to gracefully calculate next SNR
+DELTASNR = [1 2 5 10 10 10 20];                                                   % SNR increment to gracefully calculate next SNR
 BERTH = 1e-3;   BERTHMIN = 0.75*BERTH;       % BER thresholds;
 
 RNGSNRST = 20:10:RNGSNRMAX;   LENSNRST = numel(RNGSNRST);
@@ -334,14 +334,18 @@ try
         end
         iSNR = iSNR + 1;
     end
+    if exist('hWB','var') && ishandle(hWB)
+        delete(hWB);
+    end
     %% prep stop
     if fSAVEALL                                                                 % SAVE script and data
         copyfile(ctFileCodeSrc,ctFileCodeDest); % save script
         save(ctFileVars);                       % save workspace
     end
-    delete(hWB);
 catch ex
-    delete(hWB);
+    if exist('hWB','var') && ishandle(hWB)
+        delete(hWB);
+    end
     %     setpref('Internet','E_mail','pbutala@bu.edu');
     %     setpref('Internet','SMTP_Server','smtp.bu.edu');
     %     STREMAIL = ['Simulation ' STRPREFIX ' error!'];

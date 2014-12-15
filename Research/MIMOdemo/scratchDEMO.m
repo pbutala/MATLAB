@@ -43,7 +43,7 @@ txSig(txSig<demo.DAC.dSIGMIN) = demo.DAC.dSIGMIN;
 txFrm = [demo.DAC.setRail2Rail(demo.plt.PILOT); txSig];
 % txFrm = demo.DAC.setRail2Rail(plt.PILOT);
 % Plot transmit frame
-FIGTX = figure('Name', sprintf('Simulate Transmit',demo.DAC.dCLKs/1e6), 'NumberTitle', FIGTITLE);
+FIGTX = figure('Name', sprintf('Simulate Transmit'), 'NumberTitle', FIGTITLE);
 plot(1:demo.frmTxNSmp16, txFrm);
 axis([1 demo.frmTxNSmp16  min(txFrm) max(txFrm)]);
 xlabel('Normalized time');
