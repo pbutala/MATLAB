@@ -121,29 +121,35 @@ try
         load(FileChnlSt);
         FIGCHST = figure('Name','Constellation','NumberTitle',FIGTITLE);
         
-        if f0XYZ1RGB
-        else
+        switch fDECODER
+            case {2}
             RGB.obs.showGamut();
         end
         hold on;
         for j=1:size(CHST.SYMS,2)
             I = find(CHST.TxIdx == j);
             if ~isempty(I)
-                if f0XYZ1RGB
-                    scatter3(CHST.RxSymEst(1,I),CHST.RxSymEst(2,I),CHST.RxSymEst(3,I),MKTYP{j},'MarkerEdgeColor',MKCLR{j},'linewidth',1);
-                else
-                    scatter(CHST.RxSymEst(1,I),CHST.RxSymEst(2,I),MKTYP{j},'MarkerEdgeColor',MKCLR{j},'linewidth',1);
+                switch fDECODER
+                    case {1,3}
+                        scatter3(CHST.RxSymEst(1,I),CHST.RxSymEst(2,I),CHST.RxSymEst(3,I),MKTYP{j},'MarkerEdgeColor',MKCLR{j},'linewidth',1);
+                    case 2
+                        scatter(CHST.RxSymEst(1,I),CHST.RxSymEst(2,I),MKTYP{j},'MarkerEdgeColor',MKCLR{j},'linewidth',1);
                 end
             end
         end
         
-        if f0XYZ1RGB
-            scatter3(CHST.SYMS(1,:),CHST.SYMS(2,:),CHST.SYMS(3,:),80,'k','x','linewidth',2);
-            axis([0 1 0 1 0 1]);
-            view(3);
-            rotate3d on;
-        else
-            scatter(CHST.SYMS(1,:),CHST.SYMS(2,:),80,'k','x','linewidth',2);
+        switch fDECODER
+            case 1
+                scatter3(CHST.SYMS(1,:),CHST.SYMS(2,:),CHST.SYMS(3,:),80,'k','x','linewidth',2);
+                view(3);
+                rotate3d on;
+            case 2
+                scatter(CHST.SYMS(1,:),CHST.SYMS(2,:),80,'k','x','linewidth',2);
+            case 3
+                scatter3(CHST.SYMS(1,:),CHST.SYMS(2,:),CHST.SYMS(3,:),80,'k','x','linewidth',2);
+                axis([0 1 0 1 0 1]);
+                view(3);
+                rotate3d on;
         end
         
         grid on;

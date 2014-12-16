@@ -12,7 +12,9 @@ fSTATION = 1;   % 1.PHO445 2.ENGGRID 3.LAPTOP 4.Optimus
 fSAVEALL = true;
 fCLOSEALL = false;
 fARCHIVE = false;
-f0XYZ1RGB = true;
+
+fDECODER = 3; % 1.XYZ 2.RGB 3.TRIs
+
 fSHOWPGBAR = isequal(strfind(pwd,'graduate/pbutala'),[]);
 rng('default');
 
@@ -82,28 +84,6 @@ RNGBERST = power(10,[-3 -4]);     LENBERST = numel(RNGBERST);
 IDXSNRST = 1; IDXBERST = 1; IDXCHST = 0;
 %% config
 
-% STATION
-% switch fSTATION
-%     % Results directory; Spource file; LED table dir;
-%     case 1
-%         ctDirRes = '\\ad\eng\users\p\b\pbutala\My Documents\MatlabResults\14. CSK\';
-%         ctDirData = [ctDirRes STRPREFIX 'Data\'];
-%         ctFileCodeSrc = '\\ad\eng\users\p\b\pbutala\My Documents\MATLAB\Research\Code V2\Scripts\scrCSK.m';
-%     case 2
-%         ctDirRes = '/home/pbutala/My Documents/MatlabResults/14. CSK/';
-%         ctDirData = [ctDirRes STRPREFIX 'Data/'];
-%         ctFileCodeSrc = '/home/pbutala/My Documents/MATLAB/Research/Code V2/Scripts/scrCSK.m';
-%     case 3
-%         ctDirRes = 'C:\\Users\\pbutala\\Documents\\MatlabResults\\14. CSK\\';
-%         ctDirData = [ctDirRes STRPREFIX 'Data\\'];
-%         ctFileCodeSrc = 'C:\\Users\\pbutala\\My Documents\\MATLAB\\Research\\Code V2\\Scripts\\scrCSK.m';
-%     case 4
-%         ctDirRes = 'C:\\Users\\Pankil\\Documents\\MatlabResults\\14. CSK\\';
-%         ctDirData = [ctDirRes STRPREFIX 'Data\\'];
-%         ctFileCodeSrc = 'C:\\Users\\Pankil\\My Documents\\MATLAB\\Research\\Code V2\\Scripts\\scrCSK.m';
-%     otherwise
-%         error('Station not defined');
-% end
 ctDirRes = '..\..\..\..\MatlabResults\14. CSK\';
 ctDirData = [ctDirRes STRPREFIX 'Data\'];
 ctFileCodeSrc = '.\scrCSK.m';
@@ -139,28 +119,6 @@ try
         otherwise
             error('SPDTYPE must be either ''Gaussian'' or ''Lorentzian''');
     end
-    % STATION
-%     switch fSTATION
-%         % Results directory; Spource file; LED table dir;
-%         case 1
-%             ctMatDir = '\\ad\eng\users\p\b\pbutala\My Documents\MATLAB\Research\Code V2\Matfiles\LEDPSD\';
-%             sPSDDIR = [ctMatDir cieFile '\' sSPDTYP '\' sprintf('R_%d_%d_%d_G_%d_%d_%d_B_%d_%d_%d',...
-%                 RMN,RSD,RSC,GMN,GSD,GSC,BMN,BSD,BSC) '\'];
-%         case 2
-%             ctMatDir = '/home/pbutala/My Documents/MATLAB/Research/Code V2/Matfiles/LEDPSD/';
-%             sPSDDIR = [ctMatDir cieFile '\' sSPDTYP '/' sprintf('R_%d_%d_%d_G_%d_%d_%d_B_%d_%d_%d',...
-%                 RMN,RSD,RSC,GMN,GSD,GSC,BMN,BSD,BSC) '/'];
-%         case 3
-%             ctMatDir = 'C:\\Users\\pbutala\\Documents\\MATLAB\\Research\\Code V2\\Matfiles\\LEDPSD\\';
-%             sPSDDIR = [ctMatDir cieFile '\' sSPDTYP '\\' sprintf('R_%d_%d_%d_G_%d_%d_%d_B_%d_%d_%d',...
-%                 RMN,RSD,RSC,GMN,GSD,GSC,BMN,BSD,BSC) '\\'];
-%         case 4
-%             ctMatDir = 'C:\\Users\\Pankil\\Documents\\MATLAB\\Research\\Code V2\\Matfiles\\LEDPSD\\';
-%             sPSDDIR = [ctMatDir cieFile '\' sSPDTYP '\\' sprintf('R_%d_%d_%d_G_%d_%d_%d_B_%d_%d_%d',...
-%                 RMN,RSD,RSC,GMN,GSD,GSC,BMN,BSD,BSC) '\\'];
-%         otherwise
-%             error('Station not defined');
-%     end
     ctMatDir = '..\Matfiles\LEDPSD\';
     sPSDDIR = [ctMatDir cieFile '\' sSPDTYP '\' sprintf('R_%d_%d_%d_G_%d_%d_%d_B_%d_%d_%d',...
         RMN,RSD,RSC,GMN,GSD,GSC,BMN,BSD,BSC) '\'];
@@ -191,7 +149,7 @@ try
         load(RGBledmat,'RGB');              % Load RGB led
     else
         RGB = cLEDs(RES,Rch,Gch,Bch,flCIE);
-        RGB.initialize();                   % Initialize led
+        RGB.initialize(fSHOWPGBAR);                   % Initialize led
         if ~exist(sPSDDIR,'dir')
             mkdir(sPSDDIR);                 % Create directory to store characterization data
         end
@@ -203,11 +161,16 @@ try
     
     %% Generate Symbols
     SYMS = zeros(NTX,M);
+    TRIS = zeros(NTX,M);
     PTXAVG = 0;
     for iSym = 1:M
         xc = x(iSym); yc = y(iSym);
         [S,Ds,Ts] = RGB.getPSD(xc,yc);       % Get transmitter(s) SPD for set x,y
-        SYMS(:,iSym) = Ts;
+%         SYMS(:,iSym) = Ts;
+        for iTx = 1:NTX
+            TRIS(iTx,iSym) = Ts(iTx);
+            SYMS(iTx,iSym) = Ds{iTx}.rdFlux;
+        end
         PTXAVG = PTXAVG + S.rdFlux/M;
     end
     
@@ -237,10 +200,13 @@ try
         BITERR = 0; BITCOUNT = 0;
         ARLEN = floor(TOTALBITS/BITSSYM);
         SZRXSYMS = [3 ARLEN];
-        if f0XYZ1RGB
-            SYMSEST = SYMS;
-        else
-            SYMSEST = [x,y,1-x-y]';
+        switch fDECODER
+            case 1
+                SYMSEST = SYMS;
+            case 2
+                SYMSEST = [x,y,1-x-y]';
+            case 3
+                SYMSEST = TRIS;
         end
         CHST = cChnlState(ARLEN,SZRXSYMS,SYMSEST,H);
         CHST.SNRdB = RNGSNRDB(iSNR);
@@ -259,28 +225,47 @@ try
             
             %% Estimate transmitted vector
             Xh = H\Y;
-            XYZh = RGB.Txyz*Xh;
-            xyzh = XYZh/sum(XYZh,1);
             
-            if f0XYZ1RGB
-                % MAP estimate (on RGB data)
-                for iSym = 1:M
-                    vYSym = Y-SYMSRX(:,iSym);
-                    dYSym(iSym) = sum((vYSym.*vYSym),1);
-                end
-                CHST.RxSymEst(:,MCIDX) = Xh;
-            else
-                %% MAP estimate (on xyz data)
-                vYSym = zeros(3,1);
-                for iSym = 1:M
-                    vYSym(1) = xyzh(1)-x(iSym);
-                    vYSym(2) = xyzh(2)-y(iSym);
-                    dYSym(iSym) = sum((vYSym.*vYSym),1);
-                end
-                CHST.RxSymEst(:,MCIDX) = xyzh;
+            switch fDECODER
+                case 1
+                    % MAP estimate (on RGB data) TODO: Has Errors. Need to Fix
+                    for iSym = 1:M
+                        vYSym = Y-SYMSRX(:,iSym);
+                        dYSym(iSym) = sum((vYSym.*vYSym),1);
+                    end
+                    CHST.RxSymEst(:,MCIDX) = Xh;
+                case 2
+                    % MAP estimate (on xyz data) TODO: Has Errors. Need to Fix
+                    XYZh = RGB.Txyz*Xh;
+                    xyzh = XYZh/sum(XYZh,1);
+                    vYSym = zeros(3,1);
+                    for iSym = 1:M
+                        vYSym(1) = xyzh(1)-x(iSym);
+                        vYSym(2) = xyzh(2)-y(iSym);
+                        dYSym(iSym) = sum((vYSym.*vYSym),1);
+                    end
+                    CHST.RxSymEst(:,MCIDX) = xyzh;
+                case 3
+                    % MAP estimate (on tristimulus values)
+                    % calibrate for primary powers
+                    th(1) = Xh(1)/RGB.PSDs{1}.rdFlux;
+                    th(2) = Xh(2)/RGB.PSDs{2}.rdFlux;
+                    th(3) = Xh(3)/RGB.PSDs{3}.rdFlux;
+                    th = th/sum(th);
+                    
+                    vYSym = zeros(3,1);
+                    for iSym = 1:M
+                        vYSym(1) = th(1)-TRIS(1,iSym);
+                        vYSym(2) = th(2)-TRIS(2,iSym);
+                        vYSym(3) = th(3)-TRIS(3,iSym);
+                        dYSym(iSym) = sum((vYSym.*vYSym),1);
+                    end
+                    CHST.RxSymEst(:,MCIDX) = th;
+                otherwise
+                    error('Decoder not defined');
             end
-            
-            SYMIDXh = find(dYSym == min(dYSym),1,'first');
+%             SYMIDXh = find(dYSym == min(dYSym),1,'first');
+            [~,SYMIDXh] = min(dYSym,[],2);
             CHST.RxIdx(MCIDX) = SYMIDXh;
             
             BITSh = dec2binMat(SYMIDXh-1,log2(M));
@@ -326,7 +311,7 @@ try
         TELAPSED = toc(TSTART);
         TREM = (TELAPSED/PROGRESS)-TELAPSED;
         if fSHOWPGBAR
-            waitbar(PROGRESS,hWB,sprintf('Simulation: %0.2f%% done...\nEstimated time remaining: %0.0f min',PROGRESS*100,TREM/60));
+            waitbar(PROGRESS,hWB,sprintf('Simulation: %0.2f%% done...\nEstimated time remaining: %s',PROGRESS*100,getTimeString(TREM)));
             if(getappdata(hWB,'canceling'))
                 delete(hWB);
                 error('Simulation aborted');
@@ -338,8 +323,10 @@ try
             LOOPDONE = true;
             LOOPCOUNT = RNGSNRLOOP;
             PROGRESS = LOOPCOUNT/TOTALLOOPS;
+            TELAPSED = toc(TSTART);
+            TREM = (TELAPSED/PROGRESS)-TELAPSED;
             if fSHOWPGBAR
-                waitbar(PROGRESS,hWB,sprintf('Simulation: %0.2f%% done...',PROGRESS*100));
+                waitbar(PROGRESS,hWB,sprintf('Simulation: %0.2f%% done...\nEstimated time remaining: %s',PROGRESS*100,getTimeString(TREM)));
                 if(getappdata(hWB,'canceling'))
                     delete(hWB);
                     error('Simulation aborted');
