@@ -7,7 +7,7 @@ clearvars;
 clc;
 
 % FLAGS
-fSTATION = 4;   % 1.PHO445 2.ENGGRID 3.LAPTOP 4.Optimus
+fSTATION = 1;   % 1.PHO445 2.ENGGRID 3.LAPTOP 4.Optimus
 fSAVEALL = true;
 fCLOSEALL = false;
 fARCHIVE = false;
@@ -81,27 +81,30 @@ IDXSNRST = 1; IDXBERST = 1; IDXCHST = 0;
 %% config
 
 % STATION
-switch fSTATION
-    % Results directory; Spource file; LED table dir;
-    case 1
-        ctDirRes = '\\ad\eng\users\p\b\pbutala\My Documents\MatlabResults\14. CSK\';
-        ctDirData = [ctDirRes STRPREFIX 'Data\'];
-        ctFileCodeSrc = '\\ad\eng\users\p\b\pbutala\My Documents\MATLAB\Research\Code V2\Scripts\scrCSK.m';
-    case 2
-        ctDirRes = '/home/pbutala/My Documents/MatlabResults/14. CSK/';
-        ctDirData = [ctDirRes STRPREFIX 'Data/'];
-        ctFileCodeSrc = '/home/pbutala/My Documents/MATLAB/Research/Code V2/Scripts/scrCSK.m';
-    case 3
-        ctDirRes = 'C:\\Users\\pbutala\\Documents\\MatlabResults\\14. CSK\\';
-        ctDirData = [ctDirRes STRPREFIX 'Data\\'];
-        ctFileCodeSrc = 'C:\\Users\\pbutala\\My Documents\\MATLAB\\Research\\Code V2\\Scripts\\scrCSK.m';
-    case 4
-        ctDirRes = 'C:\\Users\\Pankil\\Documents\\MatlabResults\\14. CSK\\';
-        ctDirData = [ctDirRes STRPREFIX 'Data\\'];
-        ctFileCodeSrc = 'C:\\Users\\Pankil\\My Documents\\MATLAB\\Research\\Code V2\\Scripts\\scrCSK.m';
-    otherwise
-        error('Station not defined');
-end
+% switch fSTATION
+%     % Results directory; Spource file; LED table dir;
+%     case 1
+%         ctDirRes = '\\ad\eng\users\p\b\pbutala\My Documents\MatlabResults\14. CSK\';
+%         ctDirData = [ctDirRes STRPREFIX 'Data\'];
+%         ctFileCodeSrc = '\\ad\eng\users\p\b\pbutala\My Documents\MATLAB\Research\Code V2\Scripts\scrCSK.m';
+%     case 2
+%         ctDirRes = '/home/pbutala/My Documents/MatlabResults/14. CSK/';
+%         ctDirData = [ctDirRes STRPREFIX 'Data/'];
+%         ctFileCodeSrc = '/home/pbutala/My Documents/MATLAB/Research/Code V2/Scripts/scrCSK.m';
+%     case 3
+%         ctDirRes = 'C:\\Users\\pbutala\\Documents\\MatlabResults\\14. CSK\\';
+%         ctDirData = [ctDirRes STRPREFIX 'Data\\'];
+%         ctFileCodeSrc = 'C:\\Users\\pbutala\\My Documents\\MATLAB\\Research\\Code V2\\Scripts\\scrCSK.m';
+%     case 4
+%         ctDirRes = 'C:\\Users\\Pankil\\Documents\\MatlabResults\\14. CSK\\';
+%         ctDirData = [ctDirRes STRPREFIX 'Data\\'];
+%         ctFileCodeSrc = 'C:\\Users\\Pankil\\My Documents\\MATLAB\\Research\\Code V2\\Scripts\\scrCSK.m';
+%     otherwise
+%         error('Station not defined');
+% end
+ctDirRes = '..\..\..\..\MatlabResults\14. CSK\';
+ctDirData = [ctDirRes STRPREFIX 'Data\'];
+ctFileCodeSrc = '.\scrCSK.m';
 ctFileCodeDest = [ctDirData STRPREFIX 'scrCSK' CHARIDXARCHIVE '.m']; % Script copy name
 ctFileVars = [ctDirData STRPREFIX 'datCSK' CHARIDXARCHIVE '.mat'];   % Data file name
 ctFileChnlStPRE = [ctDirData STRPREFIX 'datChnlStat'];   % Channel state file name
@@ -133,27 +136,30 @@ try
             error('SPDTYPE must be either ''Gaussian'' or ''Lorentzian''');
     end
     % STATION
-    switch fSTATION
-        % Results directory; Spource file; LED table dir;
-        case 1
-            ctMatDir = '\\ad\eng\users\p\b\pbutala\My Documents\MATLAB\Research\Code V2\Matfiles\LEDPSD\';
-            sPSDDIR = [ctMatDir cieFile '\' sSPDTYP '\' sprintf('R_%d_%d_%d_G_%d_%d_%d_B_%d_%d_%d',...
-                RMN,RSD,RSC,GMN,GSD,GSC,BMN,BSD,BSC) '\'];
-        case 2
-            ctMatDir = '/home/pbutala/My Documents/MATLAB/Research/Code V2/Matfiles/LEDPSD/';
-            sPSDDIR = [ctMatDir cieFile '\' sSPDTYP '/' sprintf('R_%d_%d_%d_G_%d_%d_%d_B_%d_%d_%d',...
-                RMN,RSD,RSC,GMN,GSD,GSC,BMN,BSD,BSC) '/'];
-        case 3
-            ctMatDir = 'C:\\Users\\pbutala\\Documents\\MATLAB\\Research\\Code V2\\Matfiles\\LEDPSD\\';
-            sPSDDIR = [ctMatDir cieFile '\' sSPDTYP '\\' sprintf('R_%d_%d_%d_G_%d_%d_%d_B_%d_%d_%d',...
-                RMN,RSD,RSC,GMN,GSD,GSC,BMN,BSD,BSC) '\\'];
-        case 4
-            ctMatDir = 'C:\\Users\\Pankil\\Documents\\MATLAB\\Research\\Code V2\\Matfiles\\LEDPSD\\';
-            sPSDDIR = [ctMatDir cieFile '\' sSPDTYP '\\' sprintf('R_%d_%d_%d_G_%d_%d_%d_B_%d_%d_%d',...
-                RMN,RSD,RSC,GMN,GSD,GSC,BMN,BSD,BSC) '\\'];
-        otherwise
-            error('Station not defined');
-    end
+%     switch fSTATION
+%         % Results directory; Spource file; LED table dir;
+%         case 1
+%             ctMatDir = '\\ad\eng\users\p\b\pbutala\My Documents\MATLAB\Research\Code V2\Matfiles\LEDPSD\';
+%             sPSDDIR = [ctMatDir cieFile '\' sSPDTYP '\' sprintf('R_%d_%d_%d_G_%d_%d_%d_B_%d_%d_%d',...
+%                 RMN,RSD,RSC,GMN,GSD,GSC,BMN,BSD,BSC) '\'];
+%         case 2
+%             ctMatDir = '/home/pbutala/My Documents/MATLAB/Research/Code V2/Matfiles/LEDPSD/';
+%             sPSDDIR = [ctMatDir cieFile '\' sSPDTYP '/' sprintf('R_%d_%d_%d_G_%d_%d_%d_B_%d_%d_%d',...
+%                 RMN,RSD,RSC,GMN,GSD,GSC,BMN,BSD,BSC) '/'];
+%         case 3
+%             ctMatDir = 'C:\\Users\\pbutala\\Documents\\MATLAB\\Research\\Code V2\\Matfiles\\LEDPSD\\';
+%             sPSDDIR = [ctMatDir cieFile '\' sSPDTYP '\\' sprintf('R_%d_%d_%d_G_%d_%d_%d_B_%d_%d_%d',...
+%                 RMN,RSD,RSC,GMN,GSD,GSC,BMN,BSD,BSC) '\\'];
+%         case 4
+%             ctMatDir = 'C:\\Users\\Pankil\\Documents\\MATLAB\\Research\\Code V2\\Matfiles\\LEDPSD\\';
+%             sPSDDIR = [ctMatDir cieFile '\' sSPDTYP '\\' sprintf('R_%d_%d_%d_G_%d_%d_%d_B_%d_%d_%d',...
+%                 RMN,RSD,RSC,GMN,GSD,GSC,BMN,BSD,BSC) '\\'];
+%         otherwise
+%             error('Station not defined');
+%     end
+    ctMatDir = '..\Matfiles\LEDPSD\';
+    sPSDDIR = [ctMatDir cieFile '\' sSPDTYP '\' sprintf('R_%d_%d_%d_G_%d_%d_%d_B_%d_%d_%d',...
+        RMN,RSD,RSC,GMN,GSD,GSC,BMN,BSD,BSC) '\'];
     RGBledmat = [sPSDDIR sprintf('res_%0.5f',RES) '.mat'];                  % LED table mat-file
     %% SPDs
     switch SPDTYP
