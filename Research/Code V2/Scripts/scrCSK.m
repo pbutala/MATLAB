@@ -5,6 +5,7 @@ end
 close all;
 clearvars;
 clc;
+addpath(genpath('..'));
 
 % FLAGS
 fSTATION = 1;   % 1.PHO445 2.ENGGRID 3.LAPTOP 4.Optimus
@@ -12,6 +13,7 @@ fSAVEALL = true;
 fCLOSEALL = false;
 fARCHIVE = false;
 f0XYZ1RGB = true;
+fSHOWPGBAR = isequal(strfind(pwd,'graduate/pbutala'),[]);
 rng('default');
 
 CHAROVERWRITE = '~';
@@ -117,12 +119,14 @@ try
     delete([ctDirData '*' CHAROVERWRITE '.*']);
     %% prep start
     % Wait Bar to show progress
-    hWB = waitbar(0,'Simulation: 0.00% done','Name',WBTITLE,...
-        'Visible','Off',...
-        'CreateCancelBtn',...
-        'setappdata(gcbf,''canceling'',1)');
-    set(hWB,'Position',[WBX WBY WBW WBH],'Visible','On');
-    setappdata(hWB,'canceling',0);
+    if fSHOWPGBAR
+        hWB = waitbar(0,'Simulation: 0.00% done','Name',WBTITLE,...
+            'Visible','Off',...
+            'CreateCancelBtn',...
+            'setappdata(gcbf,''canceling'',1)');
+        set(hWB,'Position',[WBX WBY WBW WBH],'Visible','On');
+        setappdata(hWB,'canceling',0);
+    end
     LOOPCOUNT = 1; 
     TOTALLOOPS = RNGSNRLOOP;
     
@@ -321,10 +325,12 @@ try
         PROGRESS = LOOPCOUNT/TOTALLOOPS;
         TELAPSED = toc(TSTART);
         TREM = (TELAPSED/PROGRESS)-TELAPSED;
-        waitbar(PROGRESS,hWB,sprintf('Simulation: %0.2f%% done...\nEstimated time remaining: %0.0f min',PROGRESS*100,TREM/60));
-        if(getappdata(hWB,'canceling'))
-            delete(hWB);
-            error('Simulation aborted');
+        if fSHOWPGBAR
+            waitbar(PROGRESS,hWB,sprintf('Simulation: %0.2f%% done...\nEstimated time remaining: %0.0f min',PROGRESS*100,TREM/60));
+            if(getappdata(hWB,'canceling'))
+                delete(hWB);
+                error('Simulation aborted');
+            end
         end
                             
         % check and break if BER for ALL channels are below set thresholds
@@ -332,10 +338,12 @@ try
             LOOPDONE = true;
             LOOPCOUNT = RNGSNRLOOP;
             PROGRESS = LOOPCOUNT/TOTALLOOPS;
-            waitbar(PROGRESS,hWB,sprintf('Simulation: %0.2f%% done...',PROGRESS*100));
-            if(getappdata(hWB,'canceling'))
-                delete(hWB);
-                error('Simulation aborted');
+            if fSHOWPGBAR
+                waitbar(PROGRESS,hWB,sprintf('Simulation: %0.2f%% done...',PROGRESS*100));
+                if(getappdata(hWB,'canceling'))
+                    delete(hWB);
+                    error('Simulation aborted');
+                end
             end
         end
         iSNR = iSNR + 1;
