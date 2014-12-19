@@ -14,6 +14,7 @@ fCLOSEALL = false;
 fARCHIVE = false;
 
 fDECODER = 3; % 1.XYZ 2.RGB 3.TRIs
+fCBC = 9; % 1<=fCBC<=9
 
 fSHOWPGBAR = isequal(strfind(pwd,'graduate/pbutala'),[]);
 rng('default');
@@ -30,16 +31,19 @@ end
 %% CONSTANTS
 LAMBDAMIN = 200; LAMBDADELTA = 1; LAMBDAMAX = 1100;
 lambdas = LAMBDAMIN:LAMBDADELTA:LAMBDAMAX;
+csk = cCSK(fCBC);
+RMN = csk.CBC(1).Center; RSC = 1; RSD = 0;              % Mean, SD and scale to generate SPD of Band-i (~Red)
+GMN = csk.CBC(2).Center; GSC = 1; GSD = 0;      % Mean, SD and scale to generate SPD of Band-j (~Green)
+BMN = csk.CBC(3).Center; BSC = 1; BSD = 0;               % Mean, SD and scale to generate SPD of Band-k (~Blue)
+% switch fCBC
+%     case 1
+%         GMN = 564; GSC = 1; GSD = 0;      % Mean, SD and scale to generate SPD of Band-j (~Green)
+%     case 2
+%         GMN = 509; GSC = 1; GSD = 0;      % Mean, SD and scale to generate SPD of Band-j (~Green)
+%     otherwise
+%         error('CBC-%d not supported.',fCBC);
+% end
 
-% CIE1931 RGB monochromatic wavelengths
-% RMN = 700; RSC = 1; RSD = 0;              % Mean, SD and scale to generate SPD of Red led
-% GMN = 546; GSC = 1; GSD = 0;               % Mean, SD and scale to generate SPD of Green led
-% BMN = 436; BSC = 1; BSD = 0;               % Mean, SD and scale to generate SPD of Blue led
-
-RMN = 703; RSC = 1; RSD = 0;              % Mean, SD and scale to generate SPD of Red led
-GMN = 564; GSC = 1; GSD = 0;               % Mean, SD and scale to generate SPD of Green led
-BMN = 429; BSC = 1; BSD = 0;               % Mean, SD and scale to generate SPD of Blue led
-% BMN = 509; BSC = 1; BSD = 0;               % Mean, SD and scale to generate SPD of Blue led
 cieFile = 'CIE1931_JV_1978_2deg';                 % CIE XYZ CMF curves file
 flCIE = [cieFile '.csv'];
 RES = 0.1;                                  % x,y Resolution for xy<->CCT conversion
@@ -63,13 +67,20 @@ MKCLR = {[0 1 0],[1 0.5 0],[0 0 1],[1 0 0]};
 %% M-CSK CONSTELLATION
 M = 4;
 %      00,    01,    10,    11     (g w b r)
-% CBC 1
-x = [0.402; 0.435; 0.169; 0.734];
-y = [0.597; 0.290; 0.007; 0.265];
-% CBC 2: this is as specified in standard. varies slightly from actual
-% calculation. !!                                                           **********IMP**********
-% x = [0.402; 0.382; 0.011; 0.734];
-% y = [0.597; 0.532; 0.733; 0.265];
+x = [csk.CBC(2).x 0 csk.CBC(3).x csk.CBC(1).x];
+y = [csk.CBC(2).y 0 csk.CBC(3).y csk.CBC(1).y];
+x(2) = mean(x([1 3 4]));
+y(2) = mean(y([1 3 4]));
+% switch fCBC
+%     case 1
+%         x = [0.402; 0.435; 0.169; 0.734];
+%         y = [0.597; 0.290; 0.007; 0.265];
+%     case 2
+%         x = [0.011; 0.305; 0.169; 0.734];
+%         y = [0.733; 0.335; 0.007; 0.265];
+%     otherwise
+%         error('CBC-%d not supported.',fCBC);
+% end
 Yc = 1;
 
 %% ranges

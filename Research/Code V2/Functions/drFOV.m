@@ -111,7 +111,7 @@ while(idx <= Np)
     Rmax = Rlim(idx);
     
     
-    [Xc Yc Zc] = cylinder([0 tan(Vh(idx))],Nsides);
+    [Xc,Yc,Zc] = cylinder([0 tan(Vh(idx))],Nsides);
     Xc = Xc*Rmax;
     Yc = Yc*Rmax;
     Zc = Zc*Rmax;

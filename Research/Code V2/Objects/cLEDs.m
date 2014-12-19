@@ -68,7 +68,7 @@ classdef cLEDs < handle
             obj.Txyz = obj.getRGB2XYZ();
         end
         
-        % initialize the class
+        % initialize the object
         function initialize(obj, fPGBAR)
             if ~exist('fPGBAR','var')
                 fPGBAR = true;
