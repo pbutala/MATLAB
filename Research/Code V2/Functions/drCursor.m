@@ -15,6 +15,7 @@ if(size(sty,1) == 1)
 end
 
 AX = gca;
+fHold = ishold;
 hold on;
 XLIM = get(AX,'XLim');
 YLIM = get(AX,'YLim');
@@ -35,5 +36,8 @@ for i=1:NC
             error('Cursor type must be either ''Vertical'' or ''Horizontal''.');
     end
     plot([x0 x1], [y0 y1], sty(i,:));
+end
+if ~fHold
+    hold off;
 end
 end

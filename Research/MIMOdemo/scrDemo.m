@@ -5,12 +5,21 @@ clc;
 rng('Default');
 
 global FIGTITLE demo BPFrm datBits;
-global SYNC;
+global SYNC; 
+global FIGWID FIGHGT TXSCR RXSCR SCRSZ;
+global FIGXOFF FIGYOFF FIGXDLT FIGYDLT;
 
 FIGTITLE = 'Off';
-fSig = 25e6;
-fPlt = 25e6;
+fSig = 1e6;
+fPlt = 1e6;
 SYNC = 1;       % 1: transmit 0: receive
+FIGWID = 560;
+FIGHGT = 420;
+TXSCR = 0;
+RXSCR = 1;
+SCRSZ = get(0,'ScreenSize');
+FIGXOFF = 96+FIGWID; FIGXDLT = 24;
+FIGYOFF = 0; FIGYDLT = 96;
 
 % ----OOK----
 fprintf('--OOK--\n');
@@ -27,7 +36,7 @@ BPFrm = spFrm;
 % %------------
 
 % initialize buffer to hold data bits for BER calculation
-datBits(1) = cFIFO(BPFrm);
+datBits = cFIFO(BPFrm);
 datBits(2) = cFIFO(BPFrm);
 datBits(3) = cFIFO(BPFrm);
 datBits(4) = cFIFO(BPFrm);

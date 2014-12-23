@@ -1,5 +1,7 @@
 function demoTxTimer(obj,event)
 global FIGTITLE FIGTX demo BPFrm SYNC datBits;
+global FIGWID FIGHGT TXSCR SCRSZ;
+global FIGXOFF FIGYOFF FIGXDLT FIGYDLT;
 persistent TXCLT;
 persistent CHNLWRITE;
 
@@ -25,7 +27,10 @@ switch(lower(event.Type))
         
         % Create figures to plot transmitted signal and processing chain
         for i=1:4
-            FIGTX(i) = figure('Name', sprintf('Frame - Transmit %d (%d Msps)', i, demo.DAC.dCLKs/1e6), 'NumberTitle', FIGTITLE);
+            L = FIGXOFF + TXSCR*SCRSZ(3) + rem(i-1,2)*(FIGWID+FIGXDLT);
+            B = FIGYOFF + SCRSZ(4) - (floor((i-1)/2)+1)*(FIGHGT+FIGYDLT);
+            FIGTX(i) = figure('Name', sprintf('Frame - Transmit %d (%d Msps)', i, demo.DAC.dCLKs/1e6), 'NumberTitle', FIGTITLE,...
+                            'Position',[L,B,FIGWID,FIGHGT]);
         end
         
     case{'stopfcn'}
@@ -38,19 +43,18 @@ switch(lower(event.Type))
         if (SYNC == 1)  % if sync state == transmit
             % Set channel to transmit on
             switch(CHNLWRITE)
-                case{demo.ADC.CHNL_1}
+                case{demo.DAC.CHNL_1}
                     CHNLWRITE = demo.DAC.CHNL_2;
-                case{demo.ADC.CHNL_2}
+                case{demo.DAC.CHNL_2}
                     CHNLWRITE = demo.DAC.CHNL_3;
-                case{demo.ADC.CHNL_3}
+                case{demo.DAC.CHNL_3}
                     CHNLWRITE = demo.DAC.CHNL_4;
-                case{demo.ADC.CHNL_4}
+                case{demo.DAC.CHNL_4}
                     CHNLWRITE = demo.DAC.CHNL_1;
             end
             CHNLWRITEIDX = log2(double(CHNLWRITE))+1;
             
             % Queue bits to transmit in modulator
-%             rng('default');
             txBits = randi([0 1],BPFrm,1);
             demo.mod.write(txBits);
             datBits(CHNLWRITEIDX).enQ(txBits);
@@ -77,7 +81,7 @@ switch(lower(event.Type))
             
             if (CHNLWRITE == demo.ADC.CHNL_4)
                 % Enable channels
-                fwrite(TXCLT,[demo.DAC.CMD_ENCHNL demo.DAC.CHNL_4 demo.DAC.ZERO_UC demo.DAC.ZERO_UC]);    % All channels are enabled irrespective of CHNL selection
+                fwrite(TXCLT,[demo.DAC.CMD_ENCHNL demo.DAC.CHNL_ALL demo.DAC.ZERO_UC demo.DAC.ZERO_UC]);    % All channels are enabled irrespective of CHNL selection
                 
                 % Arm DAC
                 fwrite(TXCLT,[demo.DAC.CMD_ARMDAC demo.DAC.CHNL_ALL demo.DAC.ZERO_UC demo.DAC.ZERO_UC]);
