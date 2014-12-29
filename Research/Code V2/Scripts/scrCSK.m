@@ -8,13 +8,13 @@ clc;
 addpath(genpath('..'));
 
 % FLAGS
-fSTATION = 1;   % 1.PHO445 2.ENGGRID 3.LAPTOP 4.Optimus
+% fSTATION = 1;   % 1.PHO445 2.ENGGRID 3.LAPTOP 4.Optimus
 fSAVEALL = true;
 fCLOSEALL = false;
 fARCHIVE = false;
 
 fDECODER = 3; % 1.XYZ 2.RGB 3.TRIs
-fCBC = 9; % 1<=fCBC<=9
+fCBC = 5; % 1<=fCBC<=9
 
 fSHOWPGBAR = isequal(strfind(pwd,'graduate/pbutala'),[]);
 rng('default');
@@ -31,18 +31,10 @@ end
 %% CONSTANTS
 LAMBDAMIN = 200; LAMBDADELTA = 1; LAMBDAMAX = 1100;
 lambdas = LAMBDAMIN:LAMBDADELTA:LAMBDAMAX;
-csk = cCSK(fCBC);
+csk = cCSK(fCBC);                                       % CSK object
 RMN = csk.CBC(1).Center; RSC = 1; RSD = 0;              % Mean, SD and scale to generate SPD of Band-i (~Red)
 GMN = csk.CBC(2).Center; GSC = 1; GSD = 0;      % Mean, SD and scale to generate SPD of Band-j (~Green)
 BMN = csk.CBC(3).Center; BSC = 1; BSD = 0;               % Mean, SD and scale to generate SPD of Band-k (~Blue)
-% switch fCBC
-%     case 1
-%         GMN = 564; GSC = 1; GSD = 0;      % Mean, SD and scale to generate SPD of Band-j (~Green)
-%     case 2
-%         GMN = 509; GSC = 1; GSD = 0;      % Mean, SD and scale to generate SPD of Band-j (~Green)
-%     otherwise
-%         error('CBC-%d not supported.',fCBC);
-% end
 
 cieFile = 'CIE1931_JV_1978_2deg';                 % CIE XYZ CMF curves file
 flCIE = [cieFile '.csv'];
@@ -54,6 +46,7 @@ GResp = cResp.getResponsivity(GMN);    % Get responsivities vs wavelength for Si
 BResp = cResp.getResponsivity(BMN);    % Get responsivities vs wavelength for Si-PIN PD (default)
 
 NTX = 3; NRX = 3;
+NRXrt = sqrt(NRX);
 
 TOTALBITS = 1e4;                            % Total bit for transmtter to simulate
 
@@ -71,22 +64,13 @@ x = [csk.CBC(2).x 0 csk.CBC(3).x csk.CBC(1).x];
 y = [csk.CBC(2).y 0 csk.CBC(3).y csk.CBC(1).y];
 x(2) = mean(x([1 3 4]));
 y(2) = mean(y([1 3 4]));
-% switch fCBC
-%     case 1
-%         x = [0.402; 0.435; 0.169; 0.734];
-%         y = [0.597; 0.290; 0.007; 0.265];
-%     case 2
-%         x = [0.011; 0.305; 0.169; 0.734];
-%         y = [0.733; 0.335; 0.007; 0.265];
-%     otherwise
-%         error('CBC-%d not supported.',fCBC);
-% end
-Yc = 1;
+
 
 %% ranges
 RNGSNRMIN = 0; RNGSNRMAX = 100; SNROFST = 0;
 RNGSNRLOOP = RNGSNRMAX - RNGSNRMIN + 1;                                         % Number of SNR in each SNR loop
-BERRATIOS = [1 5 10 50 100 500 1000]; % DELTASNR = [0.01 0.05 0.1 2 3 4 5];                % BER ratios to gracefully calculate next SNR
+BERRATIOS = [1 5 10 50 100 500 1000]; 
+% DELTASNR = [0.01 0.05 0.1 2 3 4 5];                % BER ratios to gracefully calculate next SNR
 DELTASNR = [1 2 5 10 10 10 20];                                                   % SNR increment to gracefully calculate next SNR
 BERTH = 1e-3;   BERTHMIN = 0.75*BERTH;       % BER thresholds;
 
@@ -97,7 +81,8 @@ IDXSNRST = 1; IDXBERST = 1; IDXCHST = 0;
 
 ctDirRes = '..\..\..\..\MatlabResults\14. CSK\';
 ctDirData = [ctDirRes STRPREFIX 'Data\'];
-ctFileCodeSrc = '.\scrCSK.m';
+% ctFileCodeSrc = '.\scrCSK.m';
+ctFileCodeSrc = [mfilename('fullpath') '.m'];
 ctFileCodeDest = [ctDirData STRPREFIX 'scrCSK' CHARIDXARCHIVE '.m']; % Script copy name
 ctFileVars = [ctDirData STRPREFIX 'datCSK' CHARIDXARCHIVE '.mat'];   % Data file name
 ctFileChnlStPRE = [ctDirData STRPREFIX 'datChnlStat'];   % Channel state file name
@@ -172,21 +157,27 @@ try
     
     %% Generate Symbols
     SYMS = zeros(NTX,M);
+    LFLX = zeros(1,M);
     TRIS = zeros(NTX,M);
     PTXAVG = 0;
     for iSym = 1:M
         xc = x(iSym); yc = y(iSym);
         [S,Ds,Ts] = RGB.getPSD(xc,yc);       % Get transmitter(s) SPD for set x,y
-%         SYMS(:,iSym) = Ts;
         for iTx = 1:NTX
             TRIS(iTx,iSym) = Ts(iTx);
             SYMS(iTx,iSym) = Ds{iTx}.rdFlux;
+            LFLX(iSym) = LFLX(iSym) + Ds{iTx}.lmFlux;
         end
-        PTXAVG = PTXAVG + S.rdFlux/M;
+        SYMS(:,iSym) = SYMS(:,iSym)/LFLX(iSym);
+        PTXAVG = PTXAVG + sum(SYMS(:,iSym),1)/M;
     end
+    XAVG = mean(SYMS,2);
     
     %% Compute channel matrix
     H = [RResp 0 0;0 GResp 0; 0 0 BResp];
+    
+    %% Compute average received signal power 
+    SIGRXAVG = sqrt(trace(H*XAVG*XAVG'*H'));
     
     %% Compute SYMS at Receiver
     SYMSRX = zeros(NRX,M);
@@ -231,7 +222,10 @@ try
             X = SYMS(:,SYMIDX);
             
             % Compute noise
-            W = (PTXAVG/SNRrt)*randn(NRX,1);
+            Wsd = SIGRXAVG/SNRrt;
+            W = (Wsd/NRXrt)*randn(NRX,1);
+            
+            % channel
             Y = H*X + W;
             
             %% Estimate transmitted vector

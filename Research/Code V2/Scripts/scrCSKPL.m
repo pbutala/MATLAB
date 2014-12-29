@@ -48,6 +48,7 @@ try
     % MKCLR = {[0 1 0],[1 0.5 0],[0 0 1],[1 0 0]};
     % Figure BER vs SNR config
     FIGBERYMIN = 0.9*BERTH; FIGBERYMAX = 1;
+    STRSNR = 'SNR_{avg}';
     
     LOOPCOUNT = 0;
     TOTALLOOPS = 3 + IDXCHST;
@@ -154,7 +155,7 @@ try
         
         grid on;
         
-        title(sprintf('Signal constellation for SNR_{avg}^{tx} = %0.2f(dB), BER = %0.1e',CHST.SNRdB,CHST.BER));
+        title(sprintf('Signal constellation for SNR_{avg} = %0.2f(dB), BER = %0.1e',CHST.SNRdB,CHST.BER));
         if fSAVEALL
             fname = [ctDirData STRPREFIX 'Constellation' sprintf('%d',i) CHARIDXARCHIVE];
             saveas(FIGCHST,[fname '.png'],'png');
@@ -178,7 +179,7 @@ try
     semilogy(RNGSNROFST,BER,'b-');  % Semilog AVG BER vs SNR
     axis([FIGBERXMIN FIGBERXMAX FIGBERYMIN FIGBERYMAX]);
     grid on;
-    xlabel(sprintf('SNR^{tx}_{avg}(dB)'));
+    xlabel(sprintf('SNR_{avg}(dB)'));
     ylabel('BER');
     if fSAVEALL
         fname = [ctDirData STRPREFIX 'BERvsSNR' CHARIDXARCHIVE];
