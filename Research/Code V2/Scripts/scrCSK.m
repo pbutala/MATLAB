@@ -8,15 +8,15 @@ clc;
 
 % FLAGS
 fSAVEALL = true;
-fCLOSEALL = false;
-fSAVECHST = false;
+fCLOSEALL = true;
+fSAVECHST = true;
 fDECODER = 2; % 1.RGB 2.XYZ 3.TRIs
 fSHOWPGBAR = isequal(strfind(pwd,'graduate/pbutala'),[]);
 rng('default');
 
-fARCHIVE = false;
+fARCHIVE = true;
 CHAROVERWRITE = '~';
-STRPREFIX = '0_Scratch_';
+STRPREFIX = 'CBCALL_';
 if(fARCHIVE)
     CHARIDXARCHIVE = '';           % ARCHIVE INDEX
 else
@@ -61,7 +61,7 @@ cResp = cResponsivity();                    % Responsivity class instance
 NTX = 3; NRX = 3;
 NRXrt = sqrt(NRX);
 
-TOTALBITS = 1e4;                            % Total bit for transmtter to simulate
+TOTALBITS = 2e5;                            % Total bit for transmtter to simulate
 
 WBX = 50; WBY = 500; WBW = 275; WBH = 75;   % Wait Box X,,Y,WID,HGT
 WBTITLE = 'Running CSK Simulation...'; % Wait Box title
@@ -78,9 +78,9 @@ RNGSNRMIN = 0; RNGSNRMAX = 100; SNROFST = 0;
 RNGSNRMINPL = 0; RNGSNRMAXPL = 60;
 RNGSNRLOOP = RNGSNRMAX - RNGSNRMIN + 1;                                         % Number of SNR in each SNR loop
 BERRATIOS = [1 5 10 50 100 500 1000];
-% DELTASNR = [0.01 0.05 0.1 2 3 4 5];                % BER ratios to gracefully calculate next SNR
-DELTASNR = [1 2 5 10 10 10 20];                                                   % SNR increment to gracefully calculate next SNR
-BERTH = 1e-3;   BERTHMIN = 0.75*BERTH;       % BER thresholds;
+DELTASNR = [0.01 0.05 0.1 2 3 4 5];                % BER ratios to gracefully calculate next SNR
+% DELTASNR = [1 2 5 10 10 10 20];                                                   % SNR increment to gracefully calculate next SNR
+BERTH = 1e-3;   BERTHMIN = 0.5*BERTH;       % BER thresholds;
 
 if fSAVECHST
     RNGSNRST = 20:10:RNGSNRMAX;   LENSNRST = numel(RNGSNRST);
@@ -381,10 +381,10 @@ catch ex
     if exist('hWB','var') && ishandle(hWB)
         delete(hWB);
     end
-    %     setpref('Internet','E_mail','pbutala@bu.edu');
-    %     setpref('Internet','SMTP_Server','smtp.bu.edu');
-    %     STREMAIL = ['Simulation ' STRPREFIX ' error!'];
-    %     sendmail('pankil.butala@gmail.com',STREMAIL);
+%         setpref('Internet','E_mail','pbutala@bu.edu');
+%         setpref('Internet','SMTP_Server','smtp.bu.edu');
+%         STREMAIL = ['Simulation ' STRPREFIX ' error!'];
+%         sendmail('pankil.butala@gmail.com',STREMAIL);
     rethrow(ex);
 end
 % setpref('Internet','E_mail','pbutala@bu.edu');

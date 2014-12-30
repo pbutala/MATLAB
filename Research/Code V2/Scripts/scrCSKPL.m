@@ -32,8 +32,10 @@ FIGTITLE = 'Off';
 
 try
     % Wait Bar to show progress
-    hWB = waitbar(0,'Plotting Results: 0.00% done','Name',WBTITLE,'Visible','Off');
-    set(hWB,'Position',[WBX WBY WBW WBH],'Visible','On');
+    if fSHOWPGBAR
+        hWB = waitbar(0,'Plotting Results: 0.00% done','Name',WBTITLE,'Visible','Off');
+        set(hWB,'Position',[WBX WBY WBW WBH],'Visible','On');
+    end
     % PLOT Configs
     RNGSNRMINPL = 0; RNGSNRMAXPL = 50;
     PLOTDMIN = 5;
@@ -105,7 +107,9 @@ try
         PROGRESS = LOOPCOUNT/TOTALLOOPS;
         TELAPSED = toc(TSTART);
         TREM = (TELAPSED/PROGRESS)-TELAPSED;
-        waitbar(PROGRESS,hWB,sprintf('Plotting Results: %0.2f%% done...\nEstimated time remaining: %s',PROGRESS*100,getTimeString(TREM)));
+        if fSHOWPGBAR
+            waitbar(PROGRESS,hWB,sprintf('Plotting Results: %0.2f%% done...\nEstimated time remaining: %s',PROGRESS*100,getTimeString(TREM)));
+        end
     end
     
     % ********************** PLOT AND SAVE COLOR GAMUT*********************
@@ -137,7 +141,9 @@ try
         PROGRESS = LOOPCOUNT/TOTALLOOPS;
         TELAPSED = toc(TSTART);
         TREM = (TELAPSED/PROGRESS)-TELAPSED;
-        waitbar(PROGRESS,hWB,sprintf('Plotting Results: %0.2f%% done...\nEstimated time remaining: %s',PROGRESS*100,getTimeString(TREM)));
+        if fSHOWPGBAR
+            waitbar(PROGRESS,hWB,sprintf('Plotting Results: %0.2f%% done...\nEstimated time remaining: %s',PROGRESS*100,getTimeString(TREM)));
+        end
     end
     % *********************** PLOT AND SAVE SYMBOLS ***********************
     if fSAVECHST
@@ -196,7 +202,9 @@ try
                 PROGRESS = LOOPCOUNT/TOTALLOOPS;
                 TELAPSED = toc(TSTART);
                 TREM = (TELAPSED/PROGRESS)-TELAPSED;
-                waitbar(PROGRESS,hWB,sprintf('Plotting Results: %0.2f%% done...\nEstimated time remaining: %s',PROGRESS*100,getTimeString(TREM)));
+                if fSHOWPGBAR
+                    waitbar(PROGRESS,hWB,sprintf('Plotting Results: %0.2f%% done...\nEstimated time remaining: %s',PROGRESS*100,getTimeString(TREM)));
+                end
             end
         end
     end
@@ -242,7 +250,9 @@ try
         PROGRESS = LOOPCOUNT/TOTALLOOPS;
         TELAPSED = toc(TSTART);
         TREM = (TELAPSED/PROGRESS)-TELAPSED;
-        waitbar(PROGRESS,hWB,sprintf('Plotting Results: %0.2f%% done...\nEstimated time remaining: %s',PROGRESS*100,getTimeString(TREM)));
+        if fSHOWPGBAR
+            waitbar(PROGRESS,hWB,sprintf('Plotting Results: %0.2f%% done...\nEstimated time remaining: %s',PROGRESS*100,getTimeString(TREM)));
+        end
         
         if LENCBC > 1
             % BER vs SNR
@@ -272,7 +282,9 @@ try
             PROGRESS = LOOPCOUNT/TOTALLOOPS;
             TELAPSED = toc(TSTART);
             TREM = (TELAPSED/PROGRESS)-TELAPSED;
-            waitbar(PROGRESS,hWB,sprintf('Plotting Results: %0.2f%% done...\nEstimated time remaining: %s',PROGRESS*100,getTimeString(TREM)));
+            if fSHOWPGBAR
+                waitbar(PROGRESS,hWB,sprintf('Plotting Results: %0.2f%% done...\nEstimated time remaining: %s',PROGRESS*100,getTimeString(TREM)));
+            end
         end
     end
     if LENCBC > 1
