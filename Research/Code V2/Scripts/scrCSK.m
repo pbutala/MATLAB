@@ -8,10 +8,10 @@ clc;
 
 % config
 RNGCBC = 1:9;                               % CBCs to consider
-M = 16;
-TOTALBITS = 1e4;                            % Total bit for transmtter to simulate
-% DELTASNR = [0.01 0.05 0.1 2 3 4 5];                % BER ratios to gracefully calculate next SNR
-DELTASNR = [1 2 5 10 10 10 20];                                                   % SNR increment to gracefully calculate next SNR
+M = 4;
+TOTALBITS = 5e5;                            % Total bit for transmtter to simulate
+DELTASNR = [0.01 0.05 0.1 2 3 4 5];                % BER ratios to gracefully calculate next SNR
+% DELTASNR = [1 2 5 10 10 10 20];                                                   % SNR increment to gracefully calculate next SNR
 
 % FLAGS
 fSAVEALL = true;
@@ -21,7 +21,7 @@ fDECODER = 2; % 1.RGB 2.XYZ 3.TRIs
 fSHOWPGBAR = isequal(strfind(pwd,'graduate/pbutala'),[]);
 fARCHIVE = true;
 CHAROVERWRITE = '~';
-STRPREFIX = 'M16_1e4_';
+STRPREFIX = sprintf('M%02d_',M);
 if(fARCHIVE)
     CHARIDXARCHIVE = '';           % ARCHIVE INDEX
 else
