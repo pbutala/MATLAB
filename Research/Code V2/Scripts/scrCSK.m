@@ -6,22 +6,28 @@ close all;
 clearvars;
 clc;
 
+% config
+RNGCBC = 1:9;                               % CBCs to consider
+M = 16;
+TOTALBITS = 1e4;                            % Total bit for transmtter to simulate
+% DELTASNR = [0.01 0.05 0.1 2 3 4 5];                % BER ratios to gracefully calculate next SNR
+DELTASNR = [1 2 5 10 10 10 20];                                                   % SNR increment to gracefully calculate next SNR
+
 % FLAGS
 fSAVEALL = true;
 fCLOSEALL = true;
-fSAVECHST = true;
+fSAVECHST = false;
 fDECODER = 2; % 1.RGB 2.XYZ 3.TRIs
 fSHOWPGBAR = isequal(strfind(pwd,'graduate/pbutala'),[]);
-rng('default');
-
 fARCHIVE = true;
 CHAROVERWRITE = '~';
-STRPREFIX = 'CBCALL_';
+STRPREFIX = 'M16_1e4_';
 if(fARCHIVE)
     CHARIDXARCHIVE = '';           % ARCHIVE INDEX
 else
     CHARIDXARCHIVE = CHAROVERWRITE; % OK TO OVERWRITE
 end
+rng('default');
 
 %% set paths
 ctFileCodeSrc = [mfilename('fullpath') '.m'];                           % get fullpath of current file
@@ -61,8 +67,6 @@ cResp = cResponsivity();                    % Responsivity class instance
 NTX = 3; NRX = 3;
 NRXrt = sqrt(NRX);
 
-TOTALBITS = 2e5;                            % Total bit for transmtter to simulate
-
 WBX = 50; WBY = 500; WBW = 275; WBH = 75;   % Wait Box X,,Y,WID,HGT
 WBTITLE = 'Running CSK Simulation...'; % Wait Box title
 FIGTITLE = 'Off';
@@ -71,15 +75,12 @@ MKTYP = {'o','+','^','s'};
 MKCLR = {[0 1 0],[1 0.5 0],[0 0 1],[1 0 0]};
 
 %% ranges
-RNGCBC = 1:9;                               % CBCs to consider
 LENCBC = numel(RNGCBC);                     % number of CBCs to consider
 
 RNGSNRMIN = 0; RNGSNRMAX = 100; SNROFST = 0;
 RNGSNRMINPL = 0; RNGSNRMAXPL = 60;
 RNGSNRLOOP = RNGSNRMAX - RNGSNRMIN + 1;                                         % Number of SNR in each SNR loop
 BERRATIOS = [1 5 10 50 100 500 1000];
-DELTASNR = [0.01 0.05 0.1 2 3 4 5];                % BER ratios to gracefully calculate next SNR
-% DELTASNR = [1 2 5 10 10 10 20];                                                   % SNR increment to gracefully calculate next SNR
 BERTH = 1e-3;   BERTHMIN = 0.5*BERTH;       % BER thresholds;
 
 if fSAVECHST
@@ -112,24 +113,18 @@ try
         fCBC = RNGCBC(iCBC);
         
         % CSK object to get CBCs
-        csk = cCSK(fCBC);                                       % CSK object
-        RMN = csk.CBC(1).Center; RSC = 1; RSD = 0;              % Mean, SD and scale to generate SPD of Band-i (~Red)
-        GMN = csk.CBC(2).Center; GSC = 1; GSD = 0;      % Mean, SD and scale to generate SPD of Band-j (~Green)
-        BMN = csk.CBC(3).Center; BSC = 1; BSD = 0;               % Mean, SD and scale to generate SPD of Band-k (~Blue)
+        csk(iCBC) = cCSK(fCBC,M);                                       % CSK object
+        RMN = csk(iCBC).CBC(1).Center; RSC = 1; RSD = 0;              % Mean, SD and scale to generate SPD of Band-i (~Red)
+        GMN = csk(iCBC).CBC(2).Center; GSC = 1; GSD = 0;      % Mean, SD and scale to generate SPD of Band-j (~Green)
+        BMN = csk(iCBC).CBC(3).Center; BSC = 1; BSD = 0;               % Mean, SD and scale to generate SPD of Band-k (~Blue)
         
         % Get responsivity for three bands
         RResp = cResp.getResponsivity(RMN);    % Get responsivities vs wavelength for Si-PIN PD (default)
         GResp = cResp.getResponsivity(GMN);    % Get responsivities vs wavelength for Si-PIN PD (default)
         BResp = cResp.getResponsivity(BMN);    % Get responsivities vs wavelength for Si-PIN PD (default)
         
-        % CSK x,y values
-        M = 4;
-        %      00,    01,    10,    11     (g w b r)
-        x = [csk.CBC(2).x 0 csk.CBC(3).x csk.CBC(1).x];
-        y = [csk.CBC(2).y 0 csk.CBC(3).y csk.CBC(1).y];
-        x(2) = mean(x([1 3 4]));
-        y(2) = mean(y([1 3 4]));
-
+        [x,y] = csk(iCBC).getSyms();
+        
         sPSDDIR = [ctMatDir cieFile '\' sSPDTYP '\' sprintf('R_%d_%d_%d_G_%d_%d_%d_B_%d_%d_%d',...
             RMN,RSD,RSC,GMN,GSD,GSC,BMN,BSD,BSC) '\'];
         RGBledmat = [sPSDDIR sprintf('res_%0.5f',RES) '.mat'];                  % LED table mat-file
