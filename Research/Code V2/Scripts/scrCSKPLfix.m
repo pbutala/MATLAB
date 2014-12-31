@@ -5,7 +5,7 @@ close all;
 clearvars;
 clc;
 
-CHAROVERWRITE = '';
+CHARIDXARCHIVE = '';
 STRPREFIX = 'CBCALL_';
 
 %% set paths
