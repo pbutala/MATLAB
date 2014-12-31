@@ -66,7 +66,7 @@ try
     PLCBCMKS = {'x';'+';'*';'s';'d';'h';'<';'v';'>'};
     
     LOOPCOUNT = 0;
-    TOTALLOOPS = LENCBC*3 + (fSAVECHST==true)*sum(IDXCHST(:)) + (LENCBC>1)*LENCBC*2;
+    TOTALLOOPS = LENCBC*4 + (fSAVECHST==true)*sum(IDXCHST(:)) + (LENCBC>1)*LENCBC*2;
     TSTART = tic;
     % ********************** PLOT AND SAVE SPDs responsivities *********************
     for iCBC=1:LENCBC
@@ -145,6 +145,37 @@ try
             waitbar(PROGRESS,hWB,sprintf('Plotting Results: %0.2f%% done...\nEstimated time remaining: %s',PROGRESS*100,getTimeString(TREM)));
         end
     end
+    
+    % ******************** PLOT AND SAVE CONSTELLATION ********************
+    for iCBC=1:LENCBC
+        fCBC = RNGCBC(iCBC);
+        FIGCNST = figure('Name',sprintf('CBC%d %d-CSK Constellation',fCBC,M),'NumberTitle',FIGTITLE);
+        RGBLED(iCBC).obs.showGamut();
+        hold on;
+        scatter(RGBLED(iCBC).xyz(1,:),RGBLED(iCBC).xyz(2,:),8,'.','m');
+        [x,y] = csk(iCBC).getSyms();
+        scatter(x,y,80,'k','x','linewidth',2);
+        
+        title(sprintf('%d-CSK constellation for CBC%d',M,fCBC));
+        if fSAVEALL
+            fname = [ctDirData STRPREFIX sprintf('%d-CSK_CBC%d_Const',M,fCBC) CHARIDXARCHIVE];
+            saveas(FIGCNST,[fname '.png'],'png');
+            saveas(FIGCNST,[fname '.fig'],'fig');
+            saveas(FIGCNST,[fname '.eps'],'epsc');
+        end
+        if fCLOSEALL
+            close(FIGCNST);
+        end
+        % Update Wait bar
+        LOOPCOUNT = LOOPCOUNT+1;
+        PROGRESS = LOOPCOUNT/TOTALLOOPS;
+        TELAPSED = toc(TSTART);
+        TREM = (TELAPSED/PROGRESS)-TELAPSED;
+        if fSHOWPGBAR
+            waitbar(PROGRESS,hWB,sprintf('Plotting Results: %0.2f%% done...\nEstimated time remaining: %s',PROGRESS*100,getTimeString(TREM)));
+        end
+    end
+    
     % *********************** PLOT AND SAVE SYMBOLS ***********************
     if fSAVECHST
         for iCBC=1:LENCBC
@@ -152,7 +183,7 @@ try
             for i=1:IDXCHST(iCBC)
                 FileChnlSt = [ctFileChnlStPRE sprintf('_CBC%d_%d',fCBC,i) CHARIDXARCHIVE '.mat'];
                 load(FileChnlSt);
-                FIGCHST = figure('Name',sprintf('CBC%d Constellation',fCBC),'NumberTitle',FIGTITLE);
+                FIGCHST = figure('Name',sprintf('CBC%d %d-CSK Received Symbols',fCBC,M),'NumberTitle',FIGTITLE);
                 
                 switch fDECODER
                     case {2}
@@ -187,9 +218,9 @@ try
                 
                 grid on;
                 
-                title(sprintf('CBC%d Signal constellation for SNR_{avg} = %0.2f(dB), BER = %0.1e',fCBC,CHST(iCBC).SNRdB,CHST(iCBC).BER));
+                title(sprintf('%d-CSK received symbols for CBC%d\nSNR_{avg} = %0.2f(dB), BER = %0.1e',M,fCBC,CHST(iCBC).SNRdB,CHST(iCBC).BER));
                 if fSAVEALL
-                    fname = [ctDirData STRPREFIX sprintf('CBC%d_Constellation%d',fCBC,i) CHARIDXARCHIVE];
+                    fname = [ctDirData STRPREFIX sprintf('%d-CSK_CBC%d_ReceivedSymbols%d',M,fCBC,i) CHARIDXARCHIVE];
                     saveas(FIGCHST,[fname '.png'],'png');
                     saveas(FIGCHST,[fname '.fig'],'fig');
                     saveas(FIGCHST,[fname '.eps'],'epsc');
@@ -211,12 +242,12 @@ try
     % ********************** PLOT AND SAVE BER vs SNR and LSNR *********************
     if LENCBC > 1
         sLGD = {}; hLGD = [];
-        FIGBERALL = figure('Name',sprintf('BER vs SNR'),'NumberTitle',FIGTITLE);
+        FIGBERALL = figure('Name',sprintf('%d-CSK BER vs SNR',M),'NumberTitle',FIGTITLE);
         set(gca,'YScale','Log');
         hold on;
         
         sLGDl = {}; hLGDl = [];
-        FIGLSNR = figure('Name',sprintf('BER vs LSNR'),'NumberTitle',FIGTITLE);
+        FIGLSNR = figure('Name',sprintf('%d-CSK BER vs LSNR',M),'NumberTitle',FIGTITLE);
         set(gca,'YScale','Log');
         hold on;
     end
@@ -226,7 +257,7 @@ try
         LSTL = [PLCBCLCS{iCBC} PLCBCLSS{iCBC}];
         MSTL = [PLCBCLCS{iCBC} PLCBCMKS{iCBC}];
         PSTL = [PLCBCLCS{iCBC} PLCBCLSS{iCBC} PLCBCMKS{iCBC}];
-        FIGBER(iCBC) = figure('Name',sprintf('CBC%d BER vs SNR',fCBC),'NumberTitle',FIGTITLE);
+        FIGBER(iCBC) = figure('Name',sprintf('%d-CSK BER vs SNR CBC%d',M,fCBC),'NumberTitle',FIGTITLE);
         [Xp,Yp] = getCleanPoints(RNGSNROFST(:,iCBC),log10(BER(:,iCBC)),PLOTDMIN);  % Get points well spaced out
         semilogy(Xp,power(10,Yp),MSTL);                         % Semilog AVG BER vs SNR Marker
         hold on;
@@ -235,9 +266,9 @@ try
         grid on;
         xlabel([STRSNR '(dB)']);
         ylabel('BER');
-        title(sprintf('CBC%d BER vs SNR',fCBC));
+        title(sprintf('%d-CSK BER vs SNR CBC%d',M,fCBC));
         if fSAVEALL
-            fname = [ctDirData STRPREFIX sprintf('CBC%d_BERvsSNR',fCBC) CHARIDXARCHIVE];
+            fname = [ctDirData STRPREFIX sprintf('%d-CSK_CBC%d_BERvsSNR',M,fCBC) CHARIDXARCHIVE];
             saveas(FIGBER(iCBC),[fname '.png'],'png');
             saveas(FIGBER(iCBC),[fname '.fig'],'fig');
             saveas(FIGBER(iCBC),[fname '.eps'],'epsc');
@@ -267,8 +298,9 @@ try
             PROGRESS = LOOPCOUNT/TOTALLOOPS;
             TELAPSED = toc(TSTART);
             TREM = (TELAPSED/PROGRESS)-TELAPSED;
-            waitbar(PROGRESS,hWB,sprintf('Plotting Results: %0.2f%% done...\nEstimated time remaining: %s',PROGRESS*100,getTimeString(TREM)));
-            
+            if fSHOWPGBAR
+                waitbar(PROGRESS,hWB,sprintf('Plotting Results: %0.2f%% done...\nEstimated time remaining: %s',PROGRESS*100,getTimeString(TREM)));
+            end
             % BER vs LSNR
             figure(FIGLSNR);
             [Xp,Yp] = getCleanPoints(RNGLSNROFST(:,iCBC),log10(BER(:,iCBC)),PLOTDMIN);  % Get points well spaced out
@@ -295,9 +327,9 @@ try
         grid on;
         xlabel([STRSNR '(dB)']);
         ylabel('BER');
-        title(sprintf('BER vs SNR'));
+        title(sprintf('%d-CSK BER vs SNR',M));
         if fSAVEALL
-            fname = [ctDirData STRPREFIX 'CBCALL_BERvsSNR' CHARIDXARCHIVE];
+            fname = [ctDirData STRPREFIX sprintf('%d-CSK_BERvsSNR',M) CHARIDXARCHIVE];
             saveas(FIGBERALL,[fname '.png'],'png');
             saveas(FIGBERALL,[fname '.fig'],'fig');
             saveas(FIGBERALL,[fname '.eps'],'epsc');
@@ -313,9 +345,9 @@ try
         grid on;
         xlabel([STRLSNR '(dB)']);
         ylabel('BER');
-        title(sprintf('BER vs LSNR (reference CBC%d)',RNGCBC(LDBIDX)));
+        title(sprintf('%d-CSK BER vs LSNR (ref CBC%d)',M,RNGCBC(LDBIDX)));
         if fSAVEALL
-            fname = [ctDirData STRPREFIX 'CBCALL_BERvsLSNR' CHARIDXARCHIVE];
+            fname = [ctDirData STRPREFIX sprintf('%d-CSK_BERvsLSNR',M) CHARIDXARCHIVE];
             saveas(FIGLSNR,[fname '.png'],'png');
             saveas(FIGLSNR,[fname '.fig'],'fig');
             saveas(FIGLSNR,[fname '.eps'],'epsc');
