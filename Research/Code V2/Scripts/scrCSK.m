@@ -7,11 +7,11 @@ clearvars;
 clc;
 
 % config
-RNGCBC = 1:9;                               % CBCs to consider
+RNGCBC = 6:7;                               % CBCs to consider
 M = 4;
-TOTALBITS = 5e5;                            % Total bit for transmtter to simulate
-DELTASNR = [0.01 0.05 0.1 2 3 4 5];                % BER ratios to gracefully calculate next SNR
-% DELTASNR = [1 2 5 10 10 10 20];                                                   % SNR increment to gracefully calculate next SNR
+TOTALBITS = 1e4;                            % Total bit for transmtter to simulate
+% DELTASNR = [0.01 0.05 0.1 2 3 4 5];                % BER ratios to gracefully calculate next SNR
+DELTASNR = [1 2 5 10 10 10 20];                                                   % SNR increment to gracefully calculate next SNR
 
 % FLAGS
 fSAVEALL = true;
@@ -30,18 +30,23 @@ end
 rng('default');
 
 %% set paths
+fs = filesep;
 ctFileCodeSrc = [mfilename('fullpath') '.m'];                           % get fullpath of current file
 [ctScrDir,~,~] = fileparts(ctFileCodeSrc);                              % get scripts dir
 cd(ctScrDir);                                                           % set scripts dir as pwd (reference)
-ctDirRes = '..\..\..\..\MatlabResults\14. CSK\';
-ctDirData = [ctDirRes STRPREFIX 'Data\'];
+ctDirRes = ['..' fs '..' fs '..' fs '..' fs 'MatlabResults' fs '14. CSK' fs];
+ctDirData = [ctDirRes STRPREFIX 'Data' fs];
+% ctDirRes = '../../../../MatlabResults/14. CSK/';
+% ctDirData = [ctDirRes STRPREFIX 'Data/'];
+
 ctFileCodeDest = [ctDirData STRPREFIX 'scrCSK' CHARIDXARCHIVE '.m'];    % Script copy name
 ctFileVars = [ctDirData STRPREFIX 'datCSK' CHARIDXARCHIVE '.mat'];      % Data file name
 ctFileChnlStPRE = [ctDirData STRPREFIX 'datChnlStat'];                  % Channel state file name
 if ~exist(ctDirData,'dir')                                              % if data directory does NOT exist
     mkdir(ctDirData);                                                   % create data dir
 end
-ctMatDir = '..\Matfiles\LEDPSD\';
+ctMatDir = ['..' fs 'Matfiles' fs 'LEDPSD' fs];
+% ctMatDir = '../Matfiles/LEDPSD/';
 
 addpath(genpath('..'));
 
@@ -125,8 +130,8 @@ try
         
         [x,y] = csk(iCBC).getSyms();
         
-        sPSDDIR = [ctMatDir cieFile '\' sSPDTYP '\' sprintf('R_%d_%d_%d_G_%d_%d_%d_B_%d_%d_%d',...
-            RMN,RSD,RSC,GMN,GSD,GSC,BMN,BSD,BSC) '\'];
+        sPSDDIR = [ctMatDir cieFile fs sSPDTYP fs sprintf('R_%d_%d_%d_G_%d_%d_%d_B_%d_%d_%d',...
+            RMN,RSD,RSC,GMN,GSD,GSC,BMN,BSD,BSC) fs];
         RGBledmat = [sPSDDIR sprintf('res_%0.5f',RES) '.mat'];                  % LED table mat-file
         
         %% SPDs
