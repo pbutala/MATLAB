@@ -7,7 +7,7 @@ clearvars;
 clc;
 
 % config
-RNGCBC = 6:7;                               % CBCs to consider
+RNGCBC = 1:9;                               % CBCs to consider
 M = 4;
 TOTALBITS = 1e4;                            % Total bit for transmtter to simulate
 % DELTASNR = [0.01 0.05 0.1 2 3 4 5];                % BER ratios to gracefully calculate next SNR
@@ -15,11 +15,11 @@ DELTASNR = [1 2 5 10 10 10 20];                                                 
 
 % FLAGS
 fSAVEALL = true;
-fCLOSEALL = true;
+fCLOSEALL = false;
 fSAVECHST = false;
 fDECODER = 2; % 1.RGB 2.XYZ 3.TRIs
 fSHOWPGBAR = isequal(strfind(pwd,'graduate/pbutala'),[]);
-fARCHIVE = true;
+fARCHIVE = false;
 CHAROVERWRITE = '~';
 STRPREFIX = sprintf('M%02d_',M);
 if(fARCHIVE)
@@ -113,6 +113,9 @@ try
     RNGSNRDB = [];
     PTXAVG = zeros(LENCBC,1);
     PAVGPERLM = zeros(LENCBC,1);
+    SYMS = zeros(NTX,M,LENCBC);
+    LFLX = zeros(M,LENCBC);
+    TRIS = zeros(NTX,M,LENCBC);
     % loop over CSK CBCs
     for iCBC = 1:LENCBC
         fCBC = RNGCBC(iCBC);
@@ -124,9 +127,9 @@ try
         BMN = csk(iCBC).CBC(3).Center; BSC = 1; BSD = 0;               % Mean, SD and scale to generate SPD of Band-k (~Blue)
         
         % Get responsivity for three bands
-        RResp = cResp.getResponsivity(RMN);    % Get responsivities vs wavelength for Si-PIN PD (default)
-        GResp = cResp.getResponsivity(GMN);    % Get responsivities vs wavelength for Si-PIN PD (default)
-        BResp = cResp.getResponsivity(BMN);    % Get responsivities vs wavelength for Si-PIN PD (default)
+        RResp(iCBC) = cResp.getResponsivity(RMN);    % Get responsivities vs wavelength for Si-PIN PD (default)
+        GResp(iCBC) = cResp.getResponsivity(GMN);    % Get responsivities vs wavelength for Si-PIN PD (default)
+        BResp(iCBC) = cResp.getResponsivity(BMN);    % Get responsivities vs wavelength for Si-PIN PD (default)
         
         [x,y] = csk(iCBC).getSyms();
         
@@ -170,26 +173,23 @@ try
         BITERR = 0;
         
         %% Generate Symbols
-        SYMS = zeros(NTX,M);
-        LFLX = zeros(1,M);
-        TRIS = zeros(NTX,M);
         for iSym = 1:M
             xc = x(iSym); yc = y(iSym);
             [S,Ds,Ts] = RGBLED(iCBC).getPSD(xc,yc);       % Get transmitter(s) SPD for set x,y
             for iTx = 1:NTX
-                TRIS(iTx,iSym) = Ts(iTx);
-                SYMS(iTx,iSym) = Ds{iTx}.rdFlux;
-                LFLX(iSym) = LFLX(iSym) + Ds{iTx}.lmFlux;
+                TRIS(iTx,iSym,iCBC) = Ts(iTx);
+                SYMS(iTx,iSym,iCBC) = Ds{iTx}.rdFlux;
+                LFLX(iSym,iCBC) = LFLX(iSym,iCBC) + Ds{iTx}.lmFlux;
             end
-            TRIS(:,iSym) = TXLM*TRIS(:,iSym)/LFLX(iSym);
-            SYMS(:,iSym) = TXLM*SYMS(:,iSym)/LFLX(iSym);
-            PTXAVG(iCBC) = PTXAVG(iCBC) + sum(SYMS(:,iSym),1)/M;
+            TRIS(:,iSym,iCBC) = TXLM*TRIS(:,iSym,iCBC)/LFLX(iSym,iCBC);
+            SYMS(:,iSym,iCBC) = TXLM*SYMS(:,iSym,iCBC)/LFLX(iSym,iCBC);
+            PTXAVG(iCBC) = PTXAVG(iCBC) + sum(SYMS(:,iSym,iCBC),1)/M;
             PAVGPERLM(iCBC) = PTXAVG(iCBC)/TXLM;
         end
-        XAVG = mean(SYMS,2);
+        XAVG = mean(SYMS(:,:,iCBC),2);
         
         %% Compute channel matrix
-        H = [RResp 0 0;0 GResp 0; 0 0 BResp];
+        H = [RResp(iCBC) 0 0;0 GResp(iCBC) 0; 0 0 BResp(iCBC)];
         
         %% Compute average received signal power
         SIGRXAVG = sqrt(trace(H*XAVG*XAVG'*H'));
@@ -197,7 +197,7 @@ try
         %% Compute SYMS at Receiver
         SYMSRX = zeros(NRX,M);
         for iSym = 1:M
-            SYMSRX(:,iSym) = H*SYMS(:,iSym);
+            SYMSRX(:,iSym) = H*SYMS(:,iSym,iCBC);
         end
         
         TSTART = tic;
@@ -220,11 +220,11 @@ try
                 SZRXSYMS = [3 ARLEN];
                 switch fDECODER
                     case 1
-                        SYMSEST = SYMS;
+                        SYMSEST = SYMS(:,:,iCBC);
                     case 2
                         SYMSEST = [x,y,1-x-y]';
                     case 3
-                        SYMSEST = TRIS;
+                        SYMSEST = TRIS(:,:,iCBC);
                 end
                 CHST(iCBC) = cChnlState(ARLEN,SZRXSYMS,SYMSEST,H);
                 CHST(iCBC).SNRdB = RNGSNRDB(iSNR,iCBC);
@@ -237,7 +237,7 @@ try
                 if fSAVECHST
                     CHST(iCBC).TxIdx(MCIDX) = SYMIDX;
                 end
-                X = SYMS(:,SYMIDX);
+                X = SYMS(:,SYMIDX,iCBC);
                 
                 % Compute noise
                 Wsd = SIGRXAVG/SNRrt;
@@ -282,9 +282,9 @@ try
                         
                         vYSym = zeros(3,1);
                         for iSym = 1:M
-                            vYSym(1) = th(1)-TRIS(1,iSym);
-                            vYSym(2) = th(2)-TRIS(2,iSym);
-                            vYSym(3) = th(3)-TRIS(3,iSym);
+                            vYSym(1) = th(1)-TRIS(1,iSym,iCBC);
+                            vYSym(2) = th(2)-TRIS(2,iSym,iCBC);
+                            vYSym(3) = th(3)-TRIS(3,iSym,iCBC);
                             dYSym(iSym) = sum((vYSym.*vYSym),1);
                         end
                         if fSAVECHST

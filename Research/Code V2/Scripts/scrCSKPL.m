@@ -66,9 +66,9 @@ try
     PLCBCMKS = {'x';'+';'*';'s';'d';'h';'<';'v';'>'};
     
     LOOPCOUNT = 0;
-    TOTALLOOPS = LENCBC*4 + (fSAVECHST==true)*sum(IDXCHST(:)) + (LENCBC>1)*LENCBC*2;
+    TOTALLOOPS = LENCBC*5 + (fSAVECHST==true)*sum(IDXCHST(:)) + (LENCBC>1)*LENCBC*2;
     TSTART = tic;
-    % ********************** PLOT AND SAVE SPDs responsivities *********************
+    % **************** PLOT AND SAVE SPDs and eye sensitivity *************
     for iCBC=1:LENCBC
         fCBC = RNGCBC(iCBC);
         FIGSPD = figure('Name',sprintf('Spectral Spreads CBC%d',fCBC),'NumberTitle',FIGTITLE);
@@ -101,6 +101,50 @@ try
         end
         if fCLOSEALL
             close(FIGSPD);
+        end
+        % Update Wait bar
+        LOOPCOUNT = LOOPCOUNT+1;
+        PROGRESS = LOOPCOUNT/TOTALLOOPS;
+        TELAPSED = toc(TSTART);
+        TREM = (TELAPSED/PROGRESS)-TELAPSED;
+        if fSHOWPGBAR
+            waitbar(PROGRESS,hWB,sprintf('Plotting Results: %0.2f%% done...\nEstimated time remaining: %s',PROGRESS*100,getTimeString(TREM)));
+        end
+    end
+    
+    % **************** PLOT AND SAVE SPDs and responsivities **************
+    for iCBC=1:LENCBC
+        fCBC = RNGCBC(iCBC);
+        FIGRESP = figure('Name',sprintf('Spectral Responsivities CBC%d',fCBC),'NumberTitle',FIGTITLE);
+        hold on;
+        sLGD = {}; hLGD = [];
+        for i=1:RGBLED(iCBC).NCLR
+            p = RGBLED(iCBC).PSDs{i};
+            LSTL = [PLTXLCS{i} PLTXLSS{i}]; MSTL = [PLTXLCS{i} PLTXMKS{i}]; PSTL = [PLTXLCS{i} PLTXLSS{i} PLTXMKS{i}];
+            Yp = p.npsd.Ymax; Xp = p.npsd.X(p.npsd.Y == Yp);
+            plot(p.npsd.X, p.npsd.Y, LSTL);
+            plot(Xp, Yp, MSTL);
+            hLGD(end+1) = plot(nan,nan,PSTL);
+            sLGD{end+1} = ['SPD: ' p.name];
+        end
+        R = cResp.getResponsivity(lambdas);
+        [Xp,Yp] = getCleanPoints(lambdas,R, 50);
+        plot(lambdas, R, 'k-');
+        plot(Xp, Yp, ['k' PLNSCMKS{1}]);
+        hLGD(end+1) = plot(nan,nan,['k-' PLNSCMKS{1}]);
+        sLGD{end+1} = 'Responsivity';
+        
+        legend(gca,hLGD,sLGD);
+        grid on;
+        
+        if fSAVEALL
+            fname = [ctDirData STRPREFIX sprintf('CBC%d_Responsivity',fCBC) CHARIDXARCHIVE];
+            saveas(FIGRESP,[fname '.png'],'png');
+            saveas(FIGRESP,[fname '.fig'],'fig');
+            saveas(FIGRESP,[fname '.eps'],'epsc');
+        end
+        if fCLOSEALL
+            close(FIGRESP);
         end
         % Update Wait bar
         LOOPCOUNT = LOOPCOUNT+1;
@@ -158,7 +202,7 @@ try
         
         title(sprintf('%d-CSK constellation for CBC%d',M,fCBC));
         if fSAVEALL
-            fname = [ctDirData STRPREFIX sprintf('%d-CSK_CBC%d_Const',M,fCBC) CHARIDXARCHIVE];
+            fname = [ctDirData STRPREFIX sprintf('%d-CSK_CBC%d_Constellation',M,fCBC) CHARIDXARCHIVE];
             saveas(FIGCNST,[fname '.png'],'png');
             saveas(FIGCNST,[fname '.fig'],'fig');
             saveas(FIGCNST,[fname '.eps'],'epsc');
