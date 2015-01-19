@@ -11,17 +11,17 @@ clc;
 RNGCBC = [2 1 7];                               % CBCs to consider
 % RNGCBC = 2;
 M = power(2,2);
-TOTALBITS = 2e5;                            % Total bit for transmtter to simulate
+TOTALBITS = 1e4;                            % Total bit for transmtter to simulate
 DELTASNR = [0.01 0.05 0.1 2 3 4 5];                % BER ratios to gracefully calculate next SNR
 % DELTASNR = [1 2 5 10 10 10 20];                                                   % SNR increment to gracefully calculate next SNR
 
 % FLAGS
 fSAVEALL = true;
-fCLOSEALL = true;
+fCLOSEALL = false;
 fSAVECHST = false;
 fDECODER = 2; % 1.RGB 2.XYZ 3.TRIs
 fSHOWPGBAR = isequal(strfind(pwd,'graduate/pbutala'),[]);
-fARCHIVE = true;
+fARCHIVE = false;
 CHAROVERWRITE = '~';
 STRPREFIX = sprintf('M%02d_',M);
 if(fARCHIVE)
@@ -36,7 +36,7 @@ fs = filesep;
 ctFileCodeSrc = [mfilename('fullpath') '.m'];                           % get fullpath of current file
 [ctScrDir,ctScrFile,ctScrExt] = fileparts(ctFileCodeSrc);                              % get scripts dir
 cd(ctScrDir);                                                           % set scripts dir as pwd (reference)
-ctDirRes = ['..' fs '..' fs '..' fs '..' fs 'MatlabResults' fs '14. CSKLinear' fs];
+ctDirRes = ['..' fs '..' fs '..' fs '..' fs 'MatlabResults' fs '14. CSKLinearTr' fs];
 ctDirData = [ctDirRes STRPREFIX 'Data' fs];
 
 ctFileCodeDest = [ctDirData STRPREFIX ctScrFile CHARIDXARCHIVE ctScrExt];    % Script copy name
@@ -101,8 +101,11 @@ try
         
         % Compute E[sum(Power)]/sqrt(3) for all symbols. This is used to compute
         % noise SD given SNR_{opt}
-        EP(iCBC) = sum(sum(P(:,:,iCBC),1),2)/(M);
+        PAVG(:,iCBC) = mean(P(:,:,iCBC),2);
+        EP(iCBC) = sum(PAVG(:,iCBC),1);
         
+        % channel matrix
+        H = eye(3);
         % prepare for simulations
         TSTART = tic;
         BITSSYM = log2(M);
@@ -131,11 +134,16 @@ try
                 X = P(:,SYMIDX,iCBC);
                 
                 % compute noise
-                W = (EP(iCBC)/SNR)*randn(3,1);
+                % StdDev Using sin13a formula
+                % SD = EP(iCBC)/SNR;
+                % StdDev Using SNR = Tr{HXX'H'}/sigma^2 formula
+                SD = sqrt(trace(H*PAVG(:,iCBC)*PAVG(:,iCBC)'*H')/SNR);
+                
+                W = SD*randn(3,1);
                 
                 % channel (H = eye(3) -> responsivity is considered unity
                 % for all three colors)
-                Y = X+W;
+                Y = H*X+W;
                 
                 % estimate transmitted vector under constraint H=eye(3) and sum(P)=1;
                 Xh = Y/sum(Y,1);
