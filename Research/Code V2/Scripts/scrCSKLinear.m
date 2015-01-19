@@ -38,7 +38,7 @@ ctFileCodeSrc = [mfilename('fullpath') '.m'];                           % get fu
 cd(ctScrDir);                                                           % set scripts dir as pwd (reference)
 ctDirRes = ['..' fs '..' fs '..' fs '..' fs 'MatlabResults' fs '14. CSKLinearTr' fs];
 ctDirData = [ctDirRes STRPREFIX 'Data' fs];
-
+ctDirOFDM = ['..' fs '..' fs '..' fs '..' fs 'OFDMcode' fs];
 ctFileCodeDest = [ctDirData STRPREFIX ctScrFile CHARIDXARCHIVE ctScrExt];    % Script copy name
 ctFileVars = [ctDirData STRPREFIX 'datCSKLinear' CHARIDXARCHIVE '.mat'];      % Data file name
 ctFileChnlStPRE = [ctDirData STRPREFIX 'datChnlStat'];                  % Channel state file name
@@ -47,6 +47,7 @@ if ~exist(ctDirData,'dir')                                              % if dat
 end
 
 addpath(genpath('..'));
+addpath(genpath(ctDirOFDM));
 
 %% CONSTANTS
 WBX = 50; WBY = 500; WBW = 275; WBH = 75;   % Wait Box X,,Y,WID,HGT
