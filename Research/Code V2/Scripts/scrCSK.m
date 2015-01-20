@@ -35,6 +35,7 @@ ctFileCodeSrc = [mfilename('fullpath') '.m'];                           % get fu
 [ctScrDir,~,~] = fileparts(ctFileCodeSrc);                              % get scripts dir
 cd(ctScrDir);                                                           % set scripts dir as pwd (reference)
 ctDirRes = ['..' fs '..' fs '..' fs '..' fs 'MatlabResults' fs '16. CSK' fs];
+ctDirOFDM = ['..' fs '..' fs '..' fs '..' fs 'OFDMcode' fs];
 ctDirData = [ctDirRes STRPREFIX 'Data' fs];
 % ctDirRes = '../../../../MatlabResults/14. CSK/';
 % ctDirData = [ctDirRes STRPREFIX 'Data/'];
@@ -49,6 +50,7 @@ ctMatDir = ['..' fs 'Matfiles' fs 'LEDPSD' fs];
 % ctMatDir = '../Matfiles/LEDPSD/';
 
 addpath(genpath('..'));
+addpath(genpath(ctDirOFDM));
 
 %% CONSTANTS
 LAMBDAMIN = 200; LAMBDADELTA = 1; LAMBDAMAX = 1100;
