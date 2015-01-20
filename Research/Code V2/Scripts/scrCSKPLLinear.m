@@ -37,7 +37,7 @@ try
         set(hWB,'Position',[WBX WBY WBW WBH],'Visible','On');
     end
     % PLOT Configs
-    RNGSNRMINPL = 0; RNGSNRMAXPL = 18;
+    RNGSNRMINPL = 0; RNGSNRMAXPL = 25;
     PLOTDMIN = 5;
     RNGSNROFST = RNGSNRDB - SNROFST;
     FIGBERXMIN = RNGSNRMINPL - SNROFST;

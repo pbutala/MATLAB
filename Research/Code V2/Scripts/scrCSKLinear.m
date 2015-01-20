@@ -8,20 +8,20 @@ clearvars;
 clc;
 
 % config
-RNGCBC = [2 1 7];                               % CBCs to consider
+RNGCBC = 1:9;                               % CBCs to consider
 % RNGCBC = 2;
 M = power(2,2);
-TOTALBITS = 1e4;                            % Total bit for transmtter to simulate
+TOTALBITS = 2e5;                            % Total bit for transmtter to simulate
 DELTASNR = [0.01 0.05 0.1 2 3 4 5];                % BER ratios to gracefully calculate next SNR
 % DELTASNR = [1 2 5 10 10 10 20];                                                   % SNR increment to gracefully calculate next SNR
 
 % FLAGS
 fSAVEALL = true;
-fCLOSEALL = false;
+fCLOSEALL = true;
 fSAVECHST = false;
 fDECODER = 2; % 1.RGB 2.XYZ 3.TRIs
 fSHOWPGBAR = isequal(strfind(pwd,'graduate/pbutala'),[]);
-fARCHIVE = false;
+fARCHIVE = true;
 CHAROVERWRITE = '~';
 STRPREFIX = sprintf('M%02d_',M);
 if(fARCHIVE)
@@ -56,8 +56,8 @@ WBTITLE = sprintf('%s Running Simulation...',ctScrFile); % Wait Box title
 %% ranges
 LENCBC = numel(RNGCBC);                     % number of CBCs to consider
 
-RNGSNRMIN = 0; RNGSNRMAX = 20; SNROFST = 0;
-RNGSNRMINPL = 0; RNGSNRMAXPL = 18;
+RNGSNRMIN = 0; RNGSNRMAX = 25; SNROFST = 0;
+RNGSNRMINPL = 0; RNGSNRMAXPL = 25;
 RNGSNRLOOP = RNGSNRMAX - RNGSNRMIN + 1;                                         % Number of SNR in each SNR loop
 BERRATIOS = [1 5 10 50 100 500 1000];
 BERTH = 1e-3;   BERTHMIN = 0.5*BERTH;       % BER thresholds;
@@ -107,6 +107,10 @@ try
         
         % channel matrix
         H = eye(3);
+        
+        % compute average received signal power
+        SIGRXAVG(iCBC) = sqrt(trace(H*PAVG(:,iCBC)*PAVG(:,iCBC)'*H'));
+        
         % prepare for simulations
         TSTART = tic;
         BITSSYM = log2(M);
@@ -123,6 +127,7 @@ try
             end
             
             SNR = power(10,RNGSNRDB(iSNR,iCBC)/10);
+            SNRrt = sqrt(SNR);
             BITERR = 0; BITCOUNT = 0;
             
             % monte carlo iterations
@@ -138,7 +143,7 @@ try
                 % StdDev Using sin13a formula
                 % SD = EP(iCBC)/SNR;
                 % StdDev Using SNR = Tr{HXX'H'}/sigma^2 formula
-                SD = sqrt(trace(H*PAVG(:,iCBC)*PAVG(:,iCBC)'*H')/SNR);
+                SD = SIGRXAVG(iCBC)/SNRrt;
                 
                 W = SD*randn(3,1);
                 
