@@ -8,18 +8,18 @@ clc;
 
 % config
 RNGCBC = 1:9;                               % CBCs to consider
-M = 4;
-TOTALBITS = 1e4;                            % Total bit for transmtter to simulate
-% DELTASNR = [0.01 0.05 0.1 2 3 4 5];                % BER ratios to gracefully calculate next SNR
-DELTASNR = [1 2 5 10 10 10 20];                                                   % SNR increment to gracefully calculate next SNR
+M = power(2,2);
+TOTALBITS = 2e5;                            % Total bit for transmtter to simulate
+DELTASNR = [0.01 0.05 0.1 2 3 4 5];                % BER ratios to gracefully calculate next SNR
+% DELTASNR = [1 2 5 10 10 10 20];                                                   % SNR increment to gracefully calculate next SNR
 
 % FLAGS
 fSAVEALL = true;
-fCLOSEALL = false;
-fSAVECHST = false;
+fCLOSEALL = true;
+fSAVECHST = true;
 fDECODER = 2; % 1.RGB 2.XYZ 3.TRIs
 fSHOWPGBAR = isequal(strfind(pwd,'graduate/pbutala'),[]);
-fARCHIVE = false;
+fARCHIVE = true;
 CHAROVERWRITE = '~';
 STRPREFIX = sprintf('M%02d_',M);
 if(fARCHIVE)
@@ -34,7 +34,7 @@ fs = filesep;
 ctFileCodeSrc = [mfilename('fullpath') '.m'];                           % get fullpath of current file
 [ctScrDir,~,~] = fileparts(ctFileCodeSrc);                              % get scripts dir
 cd(ctScrDir);                                                           % set scripts dir as pwd (reference)
-ctDirRes = ['..' fs '..' fs '..' fs '..' fs 'MatlabResults' fs '14. CSK' fs];
+ctDirRes = ['..' fs '..' fs '..' fs '..' fs 'MatlabResults' fs '16. CSK' fs];
 ctDirData = [ctDirRes STRPREFIX 'Data' fs];
 % ctDirRes = '../../../../MatlabResults/14. CSK/';
 % ctDirData = [ctDirRes STRPREFIX 'Data/'];
@@ -116,6 +116,8 @@ try
     SYMS = zeros(NTX,M,LENCBC);
     LFLX = zeros(M,LENCBC);
     TRIS = zeros(NTX,M,LENCBC);
+    
+    TSTART = tic;
     % loop over CSK CBCs
     for iCBC = 1:LENCBC
         fCBC = RNGCBC(iCBC);
@@ -138,30 +140,28 @@ try
         RGBledmat = [sPSDDIR sprintf('res_%0.5f',RES) '.mat'];                  % LED table mat-file
         
         %% SPDs
-        switch SPDTYP
-            case SPDTYPE.GAUSSIAN
-                Rspd = getSOG(RMN,RSD,RSC,lambdas);
-                Gspd = getSOG(GMN,GSD,GSC,lambdas);
-                Bspd = getSOG(BMN,BSD,BSC,lambdas);
-            case SPDTYPE.LORENTZIAN
-                Rspd = getLorentzian(RMN,RSD,lambdas);
-                Gspd = getLorentzian(GMN,GSD,lambdas);
-                Bspd = getLorentzian(BMN,BSD,lambdas);
-            otherwise
-                error('SPDTYPE must be either ''Gaussian'' or ''Lorentzian''');
-        end
-        
-        Rspd = Rspd/(sum(Rspd)*LAMBDADELTA);
-        Rch = cPSD(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,Rspd,'Red');   % Normalized RED SPD
-        Gspd = Gspd/(sum(Gspd)*LAMBDADELTA);
-        Gch = cPSD(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,Gspd,'Green');   % Normalized GREEN SPD
-        Bspd = Bspd/(sum(Bspd)*LAMBDADELTA);
-        Bch = cPSD(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,Bspd,'Blue');   % Normalized BLUE SPD
-        
-        %% variables
         if exist(RGBledmat,'file')              % If LED characterization table exists
             load(RGBledmat,'RGB');              % Load RGB led
         else
+            switch SPDTYP
+                case SPDTYPE.GAUSSIAN
+                    Rspd = getSOG(RMN,RSD,RSC,lambdas);
+                    Gspd = getSOG(GMN,GSD,GSC,lambdas);
+                    Bspd = getSOG(BMN,BSD,BSC,lambdas);
+                case SPDTYPE.LORENTZIAN
+                    Rspd = getLorentzian(RMN,RSD,lambdas);
+                    Gspd = getLorentzian(GMN,GSD,lambdas);
+                    Bspd = getLorentzian(BMN,BSD,lambdas);
+                otherwise
+                    error('SPDTYPE must be either ''Gaussian'' or ''Lorentzian''');
+            end
+            
+            Rspd = Rspd/(sum(Rspd)*LAMBDADELTA);
+            Rch = cPSD(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,Rspd,'Red');   % Normalized RED SPD
+            Gspd = Gspd/(sum(Gspd)*LAMBDADELTA);
+            Gch = cPSD(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,Gspd,'Green');   % Normalized GREEN SPD
+            Bspd = Bspd/(sum(Bspd)*LAMBDADELTA);
+            Bch = cPSD(LAMBDAMIN,LAMBDADELTA,LAMBDAMAX,Bspd,'Blue');   % Normalized BLUE SPD
             RGB = cLEDs(RES,Rch,Gch,Bch,flCIE);
             RGB.initialize(fSHOWPGBAR);                   % Initialize led
             if ~exist(sPSDDIR,'dir')
@@ -170,6 +170,11 @@ try
             save(RGBledmat,'RGB');              % Save LED characterization
         end
         RGBLED(iCBC) = RGB;
+        RGBLED(iCBC).PSDs{1}.name = sprintf('i band (%dnm)',RMN);
+        RGBLED(iCBC).PSDs{2}.name = sprintf('j band (%dnm)',GMN);
+        RGBLED(iCBC).PSDs{3}.name = sprintf('k band (%dnm)',BMN);
+        PPRIM(:,iCBC) = [RGBLED(iCBC).PSDs{1}.rdFlux; RGBLED(iCBC).PSDs{2}.rdFlux; RGBLED(iCBC).PSDs{3}.rdFlux];
+        
         BITERR = 0;
         
         %% Generate Symbols
@@ -200,7 +205,6 @@ try
             SYMSRX(:,iSym) = H*SYMS(:,iSym,iCBC);
         end
         
-        TSTART = tic;
         BITSSYM = log2(M);
         LOOPDONE = false; iSNR = 1;
         while ~LOOPDONE                                                 % LOOP START SNR (dynamically select next SNR)
@@ -222,7 +226,7 @@ try
                     case 1
                         SYMSEST = SYMS(:,:,iCBC);
                     case 2
-                        SYMSEST = [x,y,1-x-y]';
+                        SYMSEST = [x;y;1-x-y];
                     case 3
                         SYMSEST = TRIS(:,:,iCBC);
                 end
@@ -245,6 +249,7 @@ try
                 
                 % channel
                 Y = H*X + W;
+%                 Y = H*X;
                 
                 %% Estimate transmitted vector
                 Xh = H\Y;
@@ -261,7 +266,7 @@ try
                         end
                     case 2
                         % MAP estimate (on xyz data)
-                        XYZh = RGBLED(iCBC).Txyz*Xh;
+                        XYZh = RGBLED(iCBC).Txyz*(Xh./PPRIM(:,iCBC));
                         xyzh = XYZh/sum(XYZh,1);
                         vYSym = zeros(3,1);
                         for iSym = 1:M
@@ -328,7 +333,7 @@ try
                     FileChnlSt = [ctFileChnlStPRE sprintf('_CBC%d_%d',fCBC,IDXCHST(iCBC)) CHARIDXARCHIVE '.mat'];
                     save(FileChnlSt,'CHST');
                 end
-            %             clear CHST;
+                %             clear CHST;
             end
             % Calculate change in BER and SNR
             if iSNR>1
@@ -381,10 +386,10 @@ catch ex
     if exist('hWB','var') && ishandle(hWB)
         delete(hWB);
     end
-%         setpref('Internet','E_mail','pbutala@bu.edu');
-%         setpref('Internet','SMTP_Server','smtp.bu.edu');
-%         STREMAIL = ['Simulation ' STRPREFIX ' error!'];
-%         sendmail('pankil.butala@gmail.com',STREMAIL);
+    %         setpref('Internet','E_mail','pbutala@bu.edu');
+    %         setpref('Internet','SMTP_Server','smtp.bu.edu');
+    %         STREMAIL = ['Simulation ' STRPREFIX ' error!'];
+    %         sendmail('pankil.butala@gmail.com',STREMAIL);
     rethrow(ex);
 end
 % setpref('Internet','E_mail','pbutala@bu.edu');

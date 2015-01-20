@@ -79,6 +79,7 @@ try
     TOTALLOOPS = LENCBC*RNGSNRLOOP;
     RNGSNRDB = [];
     
+    TSTART = tic;
     for iCBC = 1:LENCBC
         fCBC = RNGCBC(iCBC); 
         % CSK object to get CBCs
@@ -112,7 +113,6 @@ try
         SIGRXAVG(iCBC) = sqrt(trace(H*PAVG(:,iCBC)*PAVG(:,iCBC)'*H'));
         
         % prepare for simulations
-        TSTART = tic;
         BITSSYM = log2(M);
         LOOPDONE = false; iSNR = 1;
         vYSym = zeros(2,1);

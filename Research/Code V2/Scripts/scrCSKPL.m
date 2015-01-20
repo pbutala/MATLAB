@@ -55,8 +55,8 @@ try
     PLDCOLC = 'c'; PLDCOLS = '-'; PLDCOMK = 'd';
     PLTXLCS = {'r';'g';'b'}; PLTXLSS = {'--';'-.';':'}; PLTXMKS = {'>';'s';'*'};
     PLNSCMKS = {'x';'h';'^';'+';'v';'*';'<';'p'};
-    MKTYP = {'o','+','^','s'}; 
-    MKCLR = {'g','y','b','r'};
+    MKTYP = {'o','+','^','s','*','x','d','v','o','+','^','s','*','x','d','v'}; 
+    MKCLR = {'g','y','b','r','g','b','y','r','r','b','y','g','g','y','b','r'};
     
     % Figure BER vs SNR config
     STRSNR = 'SNR_{avg}';
@@ -170,7 +170,8 @@ try
         [x,y,~] = RGBLED(iCBC).obs.getCoordinates(RGBLED(iCBC).PSDs{3});
         scatter(x,y,80,'x','b','LineWidth',2);
         
-        title(sprintf('CBC%d RGB LED xy gamut\nR:%dnm G:%dnm B:%dnm Res:%0.2f',fCBC,RMN,GMN,BMN,RES));
+        title(sprintf('CBC%d gamut\ni band:%dnm j band:%dnm k band:%dnm Res:%0.2f',fCBC,...
+                    csk(iCBC).CBC(1).Center,csk(iCBC).CBC(2).Center,csk(iCBC).CBC(3).Center,RES));
         if fSAVEALL
             fname = [ctDirData STRPREFIX sprintf('CBC%d_Gamut',fCBC) CHARIDXARCHIVE];
             saveas(FIGGMT,[fname '.png'],'png');

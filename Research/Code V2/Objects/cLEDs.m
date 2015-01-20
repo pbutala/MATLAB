@@ -1,7 +1,7 @@
 classdef cLEDs < handle
     % class to handle Multicolored LED
     properties(SetAccess = immutable)
-        PSDs;   % PSDs for each color forming the MC-LED
+%         PSDs;   % PSDs for each color forming the MC-LED
         Txyz;   % LEDs2XYZ transformation matrix
         obs;    % Standard observer (CIE XYZ 1978)
         flRes;  % color flux normalized increment resolution
@@ -13,6 +13,10 @@ classdef cLEDs < handle
         xyz;    % SPD XY coordinate on CIE 1978
         hWB;    % handle waitbar
         %         cct;    % correlated color temperature for each xyz(:,i) combination. using mccamy's formula. More accurate
+    end
+    
+    properties
+        PSDs;   % PSDs for each color forming the MC-LED
     end
     
     methods
