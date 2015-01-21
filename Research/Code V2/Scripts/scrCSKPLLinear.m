@@ -49,8 +49,8 @@ try
     PLDCOLC = 'c'; PLDCOLS = '-'; PLDCOMK = 'd';
     PLTXLCS = {'r';'g';'b'}; PLTXLSS = {'--';'-.';':'}; PLTXMKS = {'>';'s';'*'};
     PLNSCMKS = {'x';'h';'^';'+';'v';'*';'<';'p'};
-    MKTYP = {'o','+','^','s'};
-    MKCLR = {'g','y','b','r'};
+    MKTYP = {'o','+','^','s','*','x','d','v','o','+','^','s','*','x','d','v'}; 
+    MKCLR = {'g','y','b','r','g','b','y','r','r','b','y','g','g','y','b','r'};
     
     % Figure BER vs SNR config
     STRSNR = 'SNR_{avg}';
@@ -60,7 +60,7 @@ try
     PLCBCMKS = {'x';'+';'*';'s';'d';'h';'<';'v';'>'};
     
     LOOPCOUNT = 0;
-    TOTALLOOPS = LENCBC*2 + (LENCBC>1)*LENCBC;
+    TOTALLOOPS = LENCBC*2 + (fSAVECHST==true)*sum(IDXCHST(:)) + (LENCBC>1)*LENCBC;
     TSTART = tic;
     
     % ******************** PLOT AND SAVE CONSTELLATION ********************
@@ -94,6 +94,73 @@ try
         end
     end
     
+    % *********************** PLOT AND SAVE SYMBOLS ***********************
+    if ~exist('obs','var')
+        flCIE = 'CIE1931_JV_1978_2deg.csv';
+        obs = cCIE(flCIE);
+    end
+    if fSAVECHST
+        for iCBC=1:LENCBC
+            fCBC = RNGCBC(iCBC);
+            for i=1:IDXCHST(iCBC)
+                FileChnlSt = [ctFileChnlStPRE sprintf('_CBC%d_%d',fCBC,i) CHARIDXARCHIVE '.mat'];
+                load(FileChnlSt);
+                FIGCHST = figure('Name',sprintf('CBC%d %d-CSK Received Symbols',fCBC,M),'NumberTitle',FIGTITLE);
+                
+                switch fDECODER
+                    case {2}
+                        obs.showGamut();
+                end
+                hold on;
+                for j=1:size(CHST(iCBC).SYMS,2)
+                    I = find(CHST(iCBC).TxIdx == j);
+                    if ~isempty(I)
+                        switch fDECODER
+                            case {1,3}
+                                scatter3(CHST(iCBC).RxSymEst(1,I),CHST(iCBC).RxSymEst(2,I),CHST(iCBC).RxSymEst(3,I),MKTYP{j},'MarkerEdgeColor',MKCLR{j},'linewidth',1);
+                            case 2
+                                scatter(CHST(iCBC).RxSymEst(1,I),CHST(iCBC).RxSymEst(2,I),MKTYP{j},'MarkerEdgeColor',MKCLR{j},'linewidth',1);
+                        end
+                    end
+                end
+                
+                switch fDECODER
+                    case 1
+                        scatter3(CHST(iCBC).SYMS(1,:),CHST(iCBC).SYMS(2,:),CHST(iCBC).SYMS(3,:),80,'k','x','linewidth',2);
+                        view(3);
+                        rotate3d on;
+                    case 2
+                        scatter(CHST(iCBC).SYMS(1,:),CHST(iCBC).SYMS(2,:),80,'k','x','linewidth',2);
+                    case 3
+                        scatter3(CHST(iCBC).SYMS(1,:),CHST(iCBC).SYMS(2,:),CHST(iCBC).SYMS(3,:),80,'k','x','linewidth',2);
+                        axis([0 1 0 1 0 1]);
+                        view(3);
+                        rotate3d on;
+                end
+                
+                grid on;
+                
+                title(sprintf('%d-CSK received symbols for CBC%d\nSNR_{avg} = %0.2f(dB), BER = %0.1e',M,fCBC,CHST(iCBC).SNRdB,CHST(iCBC).BER));
+                if fSAVEALL
+                    fname = [ctDirData STRPREFIX sprintf('%d-CSK_CBC%d_ReceivedSymbols%d',M,fCBC,i) CHARIDXARCHIVE];
+                    saveas(FIGCHST,[fname '.png'],'png');
+                    saveas(FIGCHST,[fname '.fig'],'fig');
+                    saveas(FIGCHST,[fname '.eps'],'epsc');
+                end
+                if fCLOSEALL
+                    close(FIGCHST);
+                end
+                % Update Wait bar
+                LOOPCOUNT = LOOPCOUNT+1;
+                PROGRESS = LOOPCOUNT/TOTALLOOPS;
+                TELAPSED = toc(TSTART);
+                TREM = (TELAPSED/PROGRESS)-TELAPSED;
+                if fSHOWPGBAR
+                    waitbar(PROGRESS,hWB,sprintf('Plotting Results: %0.2f%% done...\nEstimated time remaining: %s',PROGRESS*100,getTimeString(TREM)));
+                end
+            end
+        end
+    end
     % ******************** PLOT AND SAVE BER vs SNR_opt *******************
     if LENCBC > 1
         sLGD = {}; hLGD = [];
