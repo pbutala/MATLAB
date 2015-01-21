@@ -91,8 +91,8 @@ BERRATIOS = [1 5 10 50 100 500 1000];
 BERTH = 1e-3;   BERTHMIN = 0.5*BERTH;       % BER thresholds;
 
 if fSAVECHST
-    RNGSNRST = 20:10:RNGSNRMAX;   LENSNRST = numel(RNGSNRST);
-    RNGBERST = power(10,[-3 -4]);     LENBERST = numel(RNGBERST);
+    RNGSNRST = 10:10:RNGSNRMAX;   LENSNRST = numel(RNGSNRST);
+    RNGBERST = [1e-3 5e-4 1e-4 5e-5];     LENBERST = numel(RNGBERST);
     IDXSNRST = ones(LENCBC,1);
     IDXBERST = ones(LENCBC,1);
 end
@@ -330,10 +330,12 @@ try
                     end
                 end
                 
-                IDXCHST(iCBC) = IDXCHST(iCBC) + 1;
                 if fSAVECHST
-                    FileChnlSt = [ctFileChnlStPRE sprintf('_CBC%d_%d',fCBC,IDXCHST(iCBC)) CHARIDXARCHIVE '.mat'];
-                    save(FileChnlSt,'CHST');
+                    if FLGST
+                        IDXCHST(iCBC) = IDXCHST(iCBC) + 1;
+                        FileChnlSt = [ctFileChnlStPRE sprintf('_CBC%d_%d',fCBC,IDXCHST(iCBC)) CHARIDXARCHIVE '.mat'];
+                        save(FileChnlSt,'CHST');
+                    end
                 end
                 %             clear CHST;
             end
