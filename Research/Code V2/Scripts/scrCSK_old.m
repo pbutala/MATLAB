@@ -7,20 +7,19 @@ clearvars;
 clc;
 
 % config
-RNGCBC = 1:9;                               % CBCs to consider
+RNGCBC = 1;                               % CBCs to consider
 M = power(2,2);
-TOTALBITS = 2e5;                            % Total bit for transmtter to simulate
-DELTASNR = [0.01 0.05 0.1 2 3 4 5];                % BER ratios to gracefully calculate next SNR
-% DELTASNR = [1 2 5 10 10 10 20];                                                   % SNR increment to gracefully calculate next SNR
+TOTALBITS = 1e4;                            % Total bit for transmtter to simulate
+% DELTASNR = [0.01 0.05 0.1 2 3 4 5];                % BER ratios to gracefully calculate next SNR
+DELTASNR = [1 2 5 10 10 10 20];                                                   % SNR increment to gracefully calculate next SNR
 
 % FLAGS
-fCLIPY0 = true;
 fSAVEALL = true;
 fCLOSEALL = true;
 fSAVECHST = true;
 fDECODER = 2; % 1.RGB 2.XYZ 3.TRIs
 fSHOWPGBAR = isequal(strfind(pwd,'graduate/pbutala'),[]);
-fARCHIVE = true;
+fARCHIVE = false;
 CHAROVERWRITE = '~';
 STRPREFIX = sprintf('M%02d_',M);
 if(fARCHIVE)
@@ -35,11 +34,7 @@ fs = filesep;
 ctFileCodeSrc = [mfilename('fullpath') '.m'];                           % get fullpath of current file
 [ctScrDir,~,~] = fileparts(ctFileCodeSrc);                              % get scripts dir
 cd(ctScrDir);                                                           % set scripts dir as pwd (reference)
-if fCLIPY0
-    ctDirRes = ['..' fs '..' fs '..' fs '..' fs 'MatlabResults' fs '20. CSKY0' fs];
-else
-    ctDirRes = ['..' fs '..' fs '..' fs '..' fs 'MatlabResults' fs '21. CSK' fs];
-end
+ctDirRes = ['..' fs '..' fs '..' fs '..' fs 'MatlabResults' fs '17. CSK' fs];
 ctDirOFDM = ['..' fs '..' fs '..' fs '..' fs 'OFDMcode' fs];
 ctDirData = [ctDirRes STRPREFIX 'Data' fs];
 % ctDirRes = '../../../../MatlabResults/14. CSK/';
@@ -96,8 +91,8 @@ BERRATIOS = [1 5 10 50 100 500 1000];
 BERTH = 1e-3;   BERTHMIN = 0.5*BERTH;       % BER thresholds;
 
 if fSAVECHST
-    RNGSNRST = 10:10:RNGSNRMAX;   LENSNRST = numel(RNGSNRST);
-    RNGBERST = [1e-3 5e-4 1e-4 5e-5];     LENBERST = numel(RNGBERST);
+    RNGSNRST = 20:10:RNGSNRMAX;   LENSNRST = numel(RNGSNRST);
+    RNGBERST = power(10,[-3 -4]);     LENBERST = numel(RNGBERST);
     IDXSNRST = ones(LENCBC,1);
     IDXBERST = ones(LENCBC,1);
 end
@@ -257,10 +252,10 @@ try
                 % channel
                 Y = H*X + W;
 %                 Y = H*X;
-                % clip received symbols
-                if fCLIPY0
-                    Y(Y<0) = 0;
-                end
+                
+                % JUST TO CHECK IF -VE VALUES CAUSE SYMS OUTSIDE GAMUT
+                Y(Y<0) = 0;
+                % NOT USED FOR PAPER
                 
                 %% Estimate transmitted vector
                 Xh = H\Y;
@@ -339,12 +334,10 @@ try
                     end
                 end
                 
+                IDXCHST(iCBC) = IDXCHST(iCBC) + 1;
                 if fSAVECHST
-                    if FLGST
-                        IDXCHST(iCBC) = IDXCHST(iCBC) + 1;
-                        FileChnlSt = [ctFileChnlStPRE sprintf('_CBC%d_%d',fCBC,IDXCHST(iCBC)) CHARIDXARCHIVE '.mat'];
-                        save(FileChnlSt,'CHST');
-                    end
+                    FileChnlSt = [ctFileChnlStPRE sprintf('_CBC%d_%d',fCBC,IDXCHST(iCBC)) CHARIDXARCHIVE '.mat'];
+                    save(FileChnlSt,'CHST');
                 end
                 %             clear CHST;
             end

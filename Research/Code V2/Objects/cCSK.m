@@ -55,28 +55,121 @@ classdef cCSK < handle
         function [x,y] = getSyms(obj)
             switch obj.M
                 case 4
-                    [x,y]=obj.getSyms4();
+                    [x,y]=obj.getSyms4(obj.CBC(1).x,obj.CBC(1).y,...
+                        obj.CBC(2).x,obj.CBC(2).y,...
+                        obj.CBC(3).x,obj.CBC(3).y);
                 case 8
-                    [x,y]=obj.getSyms8();
+                    [x,y]=obj.getSyms8(obj.CBC(1).x,obj.CBC(1).y,...
+                        obj.CBC(2).x,obj.CBC(2).y,...
+                        obj.CBC(3).x,obj.CBC(3).y);
                 case 16
-                    [x,y]=obj.getSyms16();
+                    [x,y]=obj.getSyms16(obj.CBC(1).x,obj.CBC(1).y,...
+                        obj.CBC(2).x,obj.CBC(2).y,...
+                        obj.CBC(3).x,obj.CBC(3).y);
                 otherwise
                     error('%d-CSK is not supported',obj.M);
             end
         end % getSyms
+        
+        function hax = drCenters(obj, obs,fsz)
+            hax = gca;
+            obs.showGamut(false);
+            hold on;
+            if ~exist('fsz','var')
+                fsz = 16;
+            end
+            %
+            [x,y,~] = obs.getCoordinates(obj.CB0.Center);
+            scatter(x, y, 80, 'o', 'k','LineWidth',2);
+            str = sprintf('CB_{0}(%dnm)',obj.CB0.Center);
+            text(x+0.035,y,str,'verticalalign','middle','FontSize',fsz);
+            %
+            [x,y,~] = obs.getCoordinates(obj.CB1.Center);
+            scatter(x, y, 80, 'o', 'k','LineWidth',2);
+            str = sprintf('CB_{1}(%dnm)',obj.CB1.Center);
+            text(x+0.015,y,str,'verticalalign','middle','FontSize',fsz);
+            %
+            [x,y,~] = obs.getCoordinates(obj.CB2.Center);
+            scatter(x, y, 80, 'o', 'k','LineWidth',2);
+            str = sprintf('CB_{2}(%dnm)',obj.CB2.Center);
+            text(x+0.015,y,str,'verticalalign','middle','FontSize',fsz);
+            %
+            [x,y,~] = obs.getCoordinates(obj.CB3.Center);
+            scatter(x, y, 80, 'o', 'k','LineWidth',2);
+            str = sprintf('CB_{3}(%dnm)',obj.CB3.Center);
+            text(x-0.3,y,str,'verticalalign','middle','FontSize',fsz);
+            %
+            [x,y,~] = obs.getCoordinates(obj.CB4.Center);
+            scatter(x, y, 80, 'o', 'k','LineWidth',2);
+            str = sprintf('CB_{4}(%dnm)',obj.CB4.Center);
+            text(x+0.020,y+0.045,str,'verticalalign','middle','FontSize',fsz);
+            %
+            [x,y,~] = obs.getCoordinates(obj.CB5.Center);
+            scatter(x, y, 80, 'o', 'k','LineWidth',2);
+            str = sprintf('CB_{5}(%dnm)',obj.CB5.Center);
+            text(x+0.015,y,str,'verticalalign','middle','FontSize',fsz);
+            %
+            [x,y,~] = obs.getCoordinates(obj.CB6.Center);
+            scatter(x, y, 80, 'o', 'k','LineWidth',2);
+            str = sprintf('CB_{6}(%dnm)',obj.CB6.Center);
+            text(x+0.01725,y-0.0525,str,'verticalalign','middle','FontSize',fsz);
+        end % drCenters
+        
+        function hax = drConstRules(obj,fsz,hax)
+            if ~exist('fsz','var')
+                fsz = 16;
+            end
+            if ~exist('hax','var')
+                figure;
+                hax = gca;
+            end
+            x1 = 1; y1 = 0;
+            x2 = 0.5; y2 = 1;
+            x3 = 0; y3 = 0;
+            switch obj.M
+                case 4
+                    [x,y] = obj.getSyms4(x1,y1,x2,y2,x3,y3);
+                case 8
+                    [x,y] = obj.getSyms8(x1,y1,x2,y2,x3,y3);
+                case 16
+                    [x,y] = obj.getSyms16(x1,y1,x2,y2,x3,y3);
+                otherwise
+                    error('%d-CSK is not supported',obj.M);
+            end
+            plot([x1,x2,x3,x1],[y1,y2,y3,y1],'b-','LineWidth',2);
+            hold on;
+            scatter(hax,x,y,80, 'o', 'r','LineWidth',2);
+            
+            % label points
+            for i=1:obj.M
+                str = sprintf('(%d)',i-1);
+                text(x(i)+0.015,y(i),str,'verticalalign','middle','FontSize',fsz,'color','r');
+            end
+            text(x1,y1+0.05,'I','verticalalign','middle','FontSize',fsz,'color','b');
+            text(x2-0.04,y2,'J','verticalalign','middle','FontSize',fsz,'color','b');
+            text(x3-0.01,y3+0.04,'K','verticalalign','middle','FontSize',fsz,'color','b');
+            % label axis ticks
+            set(hax,'XTickMode','Manual','XTick',unique(sort(x)),...
+                'XTickLabelMode','Manual','XTickLabel',num2str(unique(sort(x)'),'%0.2f'),...
+                'YTickMode','Manual','YTick',unique(sort(y)),...
+                'YTickLabelMode','Manual','YTickLabel',num2str(unique(sort(y)'),'%0.2f'));
+            grid on;
+            xlabel('{\Delta}x (normalized)')
+            ylabel('{\Delta}y (normalized)')
+        end
     end % methods
     
     methods(Access=private)
-        function [x,y] = getSyms4(obj)
-            x = [obj.CBC(2).x 0 obj.CBC(3).x obj.CBC(1).x];
-            y = [obj.CBC(2).y 0 obj.CBC(3).y obj.CBC(1).y];
+        function [x,y] = getSyms4(obj,x1,y1,x2,y2,x3,y3)
+            x = [x2 0 x3 x1];
+            y = [y2 0 y3 y1];
             x(2) = mean(x([1 3 4]));
             y(2) = mean(y([1 3 4]));
         end % getSyms4
         
-        function [x,y] = getSyms8(obj)
-            x = [0 0 0 0 obj.CBC(2).x obj.CBC(3).x 0 obj.CBC(1).x];
-            y = [0 0 0 0 obj.CBC(2).y obj.CBC(3).y 0 obj.CBC(1).y];
+        function [x,y] = getSyms8(obj,x1,y1,x2,y2,x3,y3)
+            x = [0 0 0 0 x2 x3 0 x1];
+            y = [0 0 0 0 y2 y3 0 y1];
             x(1)=(2*x(5)+x(6))/3; y(1)=(2*y(5)+y(6))/3;
             x(7)=(2*x(5)+x(8))/3; y(7)=(2*y(5)+y(8))/3;
             x(4)=(x(6)+x(8))/2; y(4)=(y(6)+y(8))/2;
@@ -89,11 +182,11 @@ classdef cCSK < handle
             x(3)=(2*xa+xb)/3; y(3)=(2*ya+yb)/3;
         end % getSyms8
         
-        function [x,y] = getSyms16(obj)
+        function [x,y] = getSyms16(obj,x1,y1,x2,y2,x3,y3)
             x = zeros(1,16); y = zeros(1,16);
-            x(1) = obj.CBC(2).x; y(1) = obj.CBC(2).y;
-            x(9) = obj.CBC(1).x; y(9) = obj.CBC(1).y;
-            x(10) = obj.CBC(3).x; y(10) = obj.CBC(3).y;
+            x(1) = x2; y(1) = y2;
+            x(9) = x1; y(9) = y1;
+            x(10) = x3; y(10) = y3;
             x(7) = mean(x([1 9 10])); y(7) = mean(y([1 9 10]));
             
             x(4)=(2*x(1)+x(10))/3; y(4)=(2*y(1)+y(10))/3;
@@ -112,14 +205,8 @@ classdef cCSK < handle
             x(14) = mean(x([5 9 13])); y(14) = mean(y([5 9 13]));
             x(15) = mean(x([7 13 16])); y(15) = mean(y([7 13 16]));
         end % getSyms16
-    end % private methods
+    end % private methods   
 end % cCSK
-
-
-
-
-
-
 
 
 

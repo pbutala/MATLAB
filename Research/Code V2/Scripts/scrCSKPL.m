@@ -97,7 +97,7 @@ try
             fname = [ctDirData STRPREFIX sprintf('CBC%d_SpectralSpreads',fCBC) CHARIDXARCHIVE];
             saveas(FIGSPD,[fname '.png'],'png');
             saveas(FIGSPD,[fname '.fig'],'fig');
-            saveas(FIGSPD,[fname '.eps'],'epsc');
+            saveas(FIGSPD,[fname '.eps'],'eps');
         end
         if fCLOSEALL
             close(FIGSPD);
@@ -141,7 +141,7 @@ try
             fname = [ctDirData STRPREFIX sprintf('CBC%d_Responsivity',fCBC) CHARIDXARCHIVE];
             saveas(FIGRESP,[fname '.png'],'png');
             saveas(FIGRESP,[fname '.fig'],'fig');
-            saveas(FIGRESP,[fname '.eps'],'epsc');
+            saveas(FIGRESP,[fname '.eps'],'eps');
         end
         if fCLOSEALL
             close(FIGRESP);
@@ -176,7 +176,7 @@ try
             fname = [ctDirData STRPREFIX sprintf('CBC%d_Gamut',fCBC) CHARIDXARCHIVE];
             saveas(FIGGMT,[fname '.png'],'png');
             saveas(FIGGMT,[fname '.fig'],'fig');
-            saveas(FIGGMT,[fname '.eps'],'epsc');
+            saveas(FIGGMT,[fname '.eps'],'eps');
         end
         if fCLOSEALL
             close(FIGGMT);
@@ -206,7 +206,7 @@ try
             fname = [ctDirData STRPREFIX sprintf('%d-CSK_CBC%d_Constellation',M,fCBC) CHARIDXARCHIVE];
             saveas(FIGCNST,[fname '.png'],'png');
             saveas(FIGCNST,[fname '.fig'],'fig');
-            saveas(FIGCNST,[fname '.eps'],'epsc');
+            saveas(FIGCNST,[fname '.eps'],'eps');
         end
         if fCLOSEALL
             close(FIGCNST);
@@ -268,7 +268,7 @@ try
                     fname = [ctDirData STRPREFIX sprintf('%d-CSK_CBC%d_ReceivedSymbols%d',M,fCBC,i) CHARIDXARCHIVE];
                     saveas(FIGCHST,[fname '.png'],'png');
                     saveas(FIGCHST,[fname '.fig'],'fig');
-                    saveas(FIGCHST,[fname '.eps'],'epsc');
+                    saveas(FIGCHST,[fname '.eps'],'eps');
                 end
                 if fCLOSEALL
                     close(FIGCHST);
@@ -316,7 +316,7 @@ try
             fname = [ctDirData STRPREFIX sprintf('%d-CSK_CBC%d_BERvsSNR',M,fCBC) CHARIDXARCHIVE];
             saveas(FIGBER(iCBC),[fname '.png'],'png');
             saveas(FIGBER(iCBC),[fname '.fig'],'fig');
-            saveas(FIGBER(iCBC),[fname '.eps'],'epsc');
+            saveas(FIGBER(iCBC),[fname '.eps'],'eps');
         end
         if fCLOSEALL
             close(FIGBER(iCBC));
@@ -377,7 +377,7 @@ try
             fname = [ctDirData STRPREFIX sprintf('%d-CSK_BERvsSNR',M) CHARIDXARCHIVE];
             saveas(FIGBERALL,[fname '.png'],'png');
             saveas(FIGBERALL,[fname '.fig'],'fig');
-            saveas(FIGBERALL,[fname '.eps'],'epsc');
+            saveas(FIGBERALL,[fname '.eps'],'eps');
         end
         if fCLOSEALL
             close(FIGBERALL);
@@ -395,7 +395,7 @@ try
             fname = [ctDirData STRPREFIX sprintf('%d-CSK_BERvsLSNR',M) CHARIDXARCHIVE];
             saveas(FIGLSNR,[fname '.png'],'png');
             saveas(FIGLSNR,[fname '.fig'],'fig');
-            saveas(FIGLSNR,[fname '.eps'],'epsc');
+            saveas(FIGLSNR,[fname '.eps'],'eps');
         end
         if fCLOSEALL
             close(FIGLSNR);

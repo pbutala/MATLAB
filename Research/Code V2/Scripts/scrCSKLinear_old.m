@@ -1,4 +1,5 @@
 % scrCSKLinear
+% scrCSK
 if exist('hWB','var') && ishandle(hWB)
     delete(hWB);
 end
@@ -7,20 +8,20 @@ clearvars;
 clc;
 
 % config
-RNGCBC = 1:9;                               % CBCs to consider
+RNGCBC = 1;                               % CBCs to consider
+% RNGCBC = 2;
 M = power(2,2);
-TOTALBITS = 2e5;                            % Total bit for transmtter to simulate
+TOTALBITS = 1e4;                            % Total bit for transmtter to simulate
 DELTASNR = [0.01 0.05 0.1 2 3 4 5];                % BER ratios to gracefully calculate next SNR
 % DELTASNR = [1 2 5 10 10 10 20];                                                   % SNR increment to gracefully calculate next SNR
 
 % FLAGS
-fCLIPY0 = true;
 fSAVEALL = true;
-fCLOSEALL = true;
+fCLOSEALL = false;
 fSAVECHST = true;
 fDECODER = 2; % 1.RGB 2.XYZ 3.TRIs
 fSHOWPGBAR = isequal(strfind(pwd,'graduate/pbutala'),[]);
-fARCHIVE = true;
+fARCHIVE = false;
 CHAROVERWRITE = '~';
 STRPREFIX = sprintf('M%02d_',M);
 if(fARCHIVE)
@@ -35,11 +36,7 @@ fs = filesep;
 ctFileCodeSrc = [mfilename('fullpath') '.m'];                           % get fullpath of current file
 [ctScrDir,ctScrFile,ctScrExt] = fileparts(ctFileCodeSrc);                              % get scripts dir
 cd(ctScrDir);                                                           % set scripts dir as pwd (reference)
-if fCLIPY0
-    ctDirRes = ['..' fs '..' fs '..' fs '..' fs 'MatlabResults' fs '20. CSKLinTrY0' fs];
-else
-    ctDirRes = ['..' fs '..' fs '..' fs '..' fs 'MatlabResults' fs '21. CSKLinTr' fs];
-end
+ctDirRes = ['..' fs '..' fs '..' fs '..' fs 'MatlabResults' fs '17. CSKLinearTr' fs];
 ctDirData = [ctDirRes STRPREFIX 'Data' fs];
 ctDirOFDM = ['..' fs '..' fs '..' fs '..' fs 'OFDMcode' fs];
 ctFileCodeDest = [ctDirData STRPREFIX ctScrFile CHARIDXARCHIVE ctScrExt];    % Script copy name
@@ -64,14 +61,6 @@ RNGSNRMINPL = 0; RNGSNRMAXPL = 25;
 RNGSNRLOOP = RNGSNRMAX - RNGSNRMIN + 1;                                         % Number of SNR in each SNR loop
 BERRATIOS = [1 5 10 50 100 500 1000];
 BERTH = 1e-3;   BERTHMIN = 0.5*BERTH;       % BER thresholds;
-
-if fSAVECHST
-    RNGSNRST = 10:10:RNGSNRMAX;   LENSNRST = numel(RNGSNRST);
-    RNGBERST = [1e-3 5e-4 1e-4 5e-5];     LENBERST = numel(RNGBERST);
-    IDXSNRST = ones(LENCBC,1);
-    IDXBERST = ones(LENCBC,1);
-end
-IDXCHST = zeros(LENCBC,1); % count number of states saved per CBC. used in scrCSKPLLinear
 
 %% logic
 try
@@ -141,30 +130,13 @@ try
             SNRrt = sqrt(SNR);
             BITERR = 0; BITCOUNT = 0;
             
-            if fSAVECHST
-                ARLEN = floor(TOTALBITS/BITSSYM);
-                SZRXSYMS = [3 ARLEN];
-                switch fDECODER
-                    case 1
-                        SYMSEST = SYMS(:,:,iCBC);
-                    case 2
-                        SYMSEST = [x;y;1-x-y];
-                    case 3
-                        SYMSEST = TRIS(:,:,iCBC);
-                end
-                CHST(iCBC) = cChnlState(ARLEN,SZRXSYMS,SYMSEST,H);
-                CHST(iCBC).SNRdB = RNGSNRDB(iSNR,iCBC);
-            end
-            
             % monte carlo iterations
             MCIDX = 0;
             while(BITCOUNT < TOTALBITS - BITSSYM + 1)
                 MCIDX  = MCIDX + 1;                         % increment monte-carlo index
                 BITS = randi([0 1],[1 BITSSYM]);            % Generate random bits
                 SYMIDX = bin2decMat(BITS)+1;
-                if fSAVECHST
-                    CHST(iCBC).TxIdx(MCIDX) = SYMIDX;
-                end
+                
                 X = P(:,SYMIDX,iCBC);
                 
                 % compute noise
@@ -179,10 +151,9 @@ try
                 % for all three colors)
                 Y = H*X+W;
                 
-                % clip received symbols
-                if fCLIPY0
-                    Y(Y<0) = 0;
-                end
+                % JUST TO CHECK IF -VE VALUES CAUSE SYMS OUTSIDE GAMUT
+                Y(Y<0) = 0;
+                % NOT USED FOR PAPER
                 
                 % estimate transmitted vector under constraint H=eye(3) and sum(P)=1;
                 Xh = Y/sum(Y,1);
@@ -196,10 +167,7 @@ try
                     dYSym(iSym) = sum((vYSym.*vYSym),1);
                 end
                 [~,SYMIDXh] = min(dYSym,[],2);
-                if fSAVECHST
-                    CHST(iCBC).RxSymEst(:,MCIDX) = Chrh;
-                    CHST(iCBC).RxIdx(MCIDX) = SYMIDXh;
-                end
+                
                 % estimate transmitted bits
                 BITSh = dec2binMat(SYMIDXh-1,log2(M));
                 
@@ -212,34 +180,6 @@ try
             
             % compute BER
             BER(iSNR,iCBC) = BITERR/BITCOUNT;
-            
-            if fSAVECHST
-                CHST(iCBC).BER = BER(iSNR,iCBC);
-                % Determine if state should be saved or not
-                FLGST = false;
-                if (IDXSNRST(iCBC) <= LENSNRST)
-                    if (RNGSNRDB(iSNR,iCBC) > RNGSNRST(IDXSNRST(iCBC)))
-                        FLGST = true;
-                        IDXSNRST(iCBC) = IDXSNRST(iCBC) + 1;
-                    end
-                end
-                
-                if (IDXBERST(iCBC) <= LENBERST)
-                    if (BER(iSNR,iCBC) < RNGBERST(IDXBERST(iCBC)))
-                        FLGST = true;
-                        IDXBERST(iCBC) = IDXBERST(iCBC) + 1;
-                    end
-                end
-                
-                if fSAVECHST
-                    if FLGST
-                        IDXCHST(iCBC) = IDXCHST(iCBC) + 1;
-                        FileChnlSt = [ctFileChnlStPRE sprintf('_CBC%d_%d',fCBC,IDXCHST(iCBC)) CHARIDXARCHIVE '.mat'];
-                        save(FileChnlSt,'CHST');
-                    end
-                end
-                %             clear CHST;
-            end
             
             % Calculate change in BER and SNR
             if iSNR>1

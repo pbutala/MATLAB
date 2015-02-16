@@ -86,6 +86,15 @@ classdef cCIE < handle
                 [X,Y,Z] = obj.getTristimulusValues(psd.npsd);
             elseif isa(psd,'cCurve')
                 [X,Y,Z] = obj.getTristimulusValues(psd);
+            elseif isscalar(psd) %  assume is wavelength
+                psd = floor(psd);
+                if((psd<380) || (psd>780))
+                    error('Wavelength must be between 380nm and 780nm');
+                end
+                Ys = zeros(1,401);
+                Ys(psd-379) = 1;
+                c = cCurve(380,1,780,Ys);
+                [X,Y,Z] = obj.getTristimulusValues(c);
             else
                 error('''psd'' argument must be of type cCurve');
             end
@@ -96,17 +105,6 @@ classdef cCIE < handle
                 
             if nargout == 0
                 error('no output arguments specified');
-%                 imshow('figCIEXYZ.png');
-%                 axis tight;
-%                 for iP = 1:numel(psd)
-% %                     x = 0.195 + c1(iP)*(0.835-0.195)/0.8;
-% %                     y = 0.165 + c2(iP)*(0.915-0.165)/0.9;
-%                     x = 32 + c1(iP)*(407-32)/0.8;
-%                     y = 435 + c2(iP)*(12-435)/0.9;
-%                     ah = annotation('ellipse','EdgeColor','k','LineWidth',2);
-%                     set(ah,'parent',gca);
-%                     set(ah,'position',[x y 10 10]);
-%                 end
             end
         end % end getCoordinates
         
@@ -136,17 +134,22 @@ classdef cCIE < handle
             end
         end
         
-        function hax = showGamut(obj)
+        function hax = showGamut(obj,fLabel)
             hax = gca;
             plot(gca,[obj.gmtX obj.gmtX(1)],[obj.gmtY obj.gmtY(1)],'k','LineWidth',2);
             axis([0 0.8 0 0.9]);
             axis square;
             grid on;
-            LDATXT = [380;470;490;500;510;520;540;560;580;600;780];
-            for iL = 1:length(obj.gmtL)
-                if ~isempty(find(LDATXT == obj.gmtL(iL),1))
-                    str = sprintf('  %d',obj.gmtL(iL));
-                    text(obj.gmtX(iL),obj.gmtY(iL),str);
+            if ~exist('fLabel','var')
+                fLabel = true;
+            end
+            if fLabel
+                LDATXT = [380;470;490;500;510;520;540;560;580;600;780];
+                for iL = 1:length(obj.gmtL)
+                    if ~isempty(find(LDATXT == obj.gmtL(iL),1))
+                        str = sprintf('  %d',obj.gmtL(iL));
+                        text(obj.gmtX(iL),obj.gmtY(iL),str);
+                    end
                 end
             end
             xlabel('x'); ylabel('y');
