@@ -5,11 +5,17 @@ end
 close all;
 clearvars -except M N;
 clc;
+%% set paths
+fs = filesep;
+ctFileCodeSrc = [mfilename('fullpath') '.m'];                           % get fullpath of current file
+[ctScrDir,~,~] = fileparts(ctFileCodeSrc);                              % get scripts dir
+cd(ctScrDir);                                                           % set scripts dir as pwd (reference)
+addpath(genpath('..'));
 
 % config
 xp = 1/3; yp = 1/3; % SET POINT TO GENERATE FOR ALL CBCs
-% M = power(2,1); % possible (M,N) combinations
-% N = 4;          % (2,4:5), (4,5:7), (8,7)
+M = 2; % possible (M,N) combinations
+N = 4;          % (2,4:5), (4,5:7), (8,7)
 MM = cMM(M,N);
 
 RNGMMCBC = MM.getCBCs();
@@ -39,10 +45,6 @@ end
 rng('default');
 
 %% set paths
-fs = filesep;
-ctFileCodeSrc = [mfilename('fullpath') '.m'];                           % get fullpath of current file
-[ctScrDir,~,~] = fileparts(ctFileCodeSrc);                              % get scripts dir
-cd(ctScrDir);                                                           % set scripts dir as pwd (reference)
 if fCLIPY0
     ctDirRes = ['..' fs '..' fs '..' fs '..' fs 'MatlabResults' fs '30. MM_clip' fs];
 else
@@ -61,8 +63,6 @@ if ~exist(ctDirData,'dir')                                              % if dat
 end
 ctMatDir = ['..' fs 'Matfiles' fs 'LEDPSD' fs];
 % ctMatDir = '../Matfiles/LEDPSD/';
-
-addpath(genpath('..'));
 addpath(genpath(ctDirOFDM));
 
 %% CONSTANTS
