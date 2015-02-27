@@ -55,9 +55,10 @@ try
     % Figure BER vs SNR config
     STRSNR = 'SNR';
     STRLSNR = 'LSNR';
-    PLCBCLCS = {'r';'g';'b';'r';'g';'b';'r';'g';'b'}; 
-    PLCBCLSS = {'--';'-.';':';'-.';':';'--';':';'--';'-.'}; 
-    PLCBCMKS = {'x';'+';'*';'s';'d';'h';'<';'v';'>'};
+    PLMMLCS = {'r';'g';'b';'r';'g';'b';'r';'g';'b'}; 
+    PLMMLSS = {'--';'-.';':';'-.';':';'--';':';'--';'-.'}; 
+    PLMMMKS = {'x';'+';'*';'s';'d';'h';'<';'v';'>'};
+    PLMMLEN = numel(PLMMLCS);
     
     LOOPCOUNT = 0;
     TOTALLOOPS = LENMMCBC + (LENMMCBC>1)*LENMMCBC;
@@ -73,9 +74,11 @@ try
     end
     
     for iMMCBC=1:LENMMCBC
-        LSTL = [PLCBCLCS{iMMCBC} PLCBCLSS{iMMCBC}];
-        MSTL = [PLCBCLCS{iMMCBC} PLCBCMKS{iMMCBC}];
-        PSTL = [PLCBCLCS{iMMCBC} PLCBCLSS{iMMCBC} PLCBCMKS{iMMCBC}];
+        PL1 = floor((iMMCBC-1)/PLMMLEN)+1;
+        PL2 = rem((iMMCBC-1),PLMMLEN)+1;
+        LSTL = [PLMMLCS{PL2} PLMMLSS{PL1}];
+        MSTL = [PLMMLCS{PL2} PLMMMKS{PL1}];
+        PSTL = [PLMMLCS{PL2} PLMMLSS{PL1} PLMMMKS{PL1}];
         FIGBER(iMMCBC) = figure('Name',sprintf('%d-MM CBs-%s BER vs SNR',M,mpC2Vstr{iMMCBC}),'NumberTitle',FIGTITLE);
         [Xp,Yp] = getCleanPoints(RNGSNROFST(:,iMMCBC),log10(BER(:,iMMCBC)),PLOTDMIN);  % Get points well spaced out
         semilogy(Xp,power(10,Yp),MSTL);                         % Semilog AVG BER vs SNR Marker

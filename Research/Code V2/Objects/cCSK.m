@@ -97,7 +97,7 @@ classdef cCSK < handle
             [x,y,~] = obs.getCoordinates(obj.CB3.Center);
             scatter(x, y, 80, 'o', 'k','LineWidth',2);
             str = sprintf('CB_{3}(%dnm)',obj.CB3.Center);
-            text(x-0.3,y,str,'verticalalign','middle','FontSize',fsz);
+            text(x-0.15,y+0.045,str,'verticalalign','middle','FontSize',fsz);
             %
             [x,y,~] = obs.getCoordinates(obj.CB4.Center);
             scatter(x, y, 80, 'o', 'k','LineWidth',2);

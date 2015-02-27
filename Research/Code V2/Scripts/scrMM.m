@@ -3,26 +3,23 @@ if exist('hWB','var') && ishandle(hWB)
     delete(hWB);
 end
 close all;
-clearvars;
+clearvars -except M N;
 clc;
 
 % config
-% RNGCBC = 1:9;     % CBCs to consider
-% Ensure #rx are same for all MMCBC below. !!
-RNGMMCBC = [1,7;...
-            2,8;...
-            3,7;...
-            4,8;...
-            5,7;...
-            6,8];% USE FOR 4-MM ONLY
 xp = 1/3; yp = 1/3; % SET POINT TO GENERATE FOR ALL CBCs
-M = power(2,1);
+% M = power(2,1); % possible (M,N) combinations
+% N = 4;          % (2,4:5), (4,5:7), (8,7)
+MM = cMM(M,N);
+
+RNGMMCBC = MM.getCBCs();
 LENMMCBC = size(RNGMMCBC,1);                     % number of CBCs to consider
+
 if ~isequal(size(RNGMMCBC,2),M)
     error('Number of symbols(%d) is not equal to M(%d)',size(RNGMMCBC,2),M);
 end
 TOTALBITS = 2e5;                            % Total bit for transmtter to simulate
-DELTASNR = [0.01 0.05 0.1 2 3 4 5];                % BER ratios to gracefully calculate next SNR
+DELTASNR = [0.01 0.05 0.1 0.5 1 2 3];                % BER ratios to gracefully calculate next SNR
 % DELTASNR = [1 2 5 10 10 10 20];                                                   % SNR increment to gracefully calculate next SNR
 
 % FLAGS
@@ -31,9 +28,9 @@ fSAVEALL = true;
 fCLOSEALL = true;
 fSAVECHST = false;
 fSHOWPGBAR = isequal(strfind(pwd,'graduate/pbutala'),[]);
-fARCHIVE = true;
+fARCHIVE = false;
 CHAROVERWRITE = '~';
-STRPREFIX = sprintf('M%02d_',M);
+STRPREFIX = sprintf('M%02d_N%02d_',M,N);
 if(fARCHIVE)
     CHARIDXARCHIVE = '';           % ARCHIVE INDEX
 else
@@ -56,8 +53,8 @@ ctDirData = [ctDirRes STRPREFIX 'Data' fs];
 % ctDirRes = '../../../../MatlabResults/14. CSK/';
 % ctDirData = [ctDirRes STRPREFIX 'Data/'];
 
-ctFileCodeDest = [ctDirData STRPREFIX 'scrCSK' CHARIDXARCHIVE '.m'];    % Script copy name
-ctFileVars = [ctDirData STRPREFIX 'datCSK' CHARIDXARCHIVE '.mat'];      % Data file name
+ctFileCodeDest = [ctDirData STRPREFIX 'scrMM' CHARIDXARCHIVE '.m'];    % Script copy name
+ctFileVars = [ctDirData STRPREFIX 'datMM' CHARIDXARCHIVE '.mat'];      % Data file name
 ctFileChnlStPRE = [ctDirData STRPREFIX 'datChnlStat'];                  % Channel state file name
 if ~exist(ctDirData,'dir')                                              % if data directory does NOT exist
     mkdir(ctDirData);                                                   % create data dir
@@ -150,7 +147,7 @@ try
         NRXrt = sqrt(NRX);
         
         mpC2V(:,iMMCBC) = sort(unique(mpC2S(:,:,iMMCBC)));
-        mpC2Vstr{iMMCBC} = num2str(mpC2V(:,iMMCBC)','%d');
+        mpC2Vstr{iMMCBC} = num2str(mpC2V(:,iMMCBC)'-1,'%d');
         
         SYMS = zeros(NTX,M);
         TRIS = zeros(NTX,M);
@@ -402,7 +399,7 @@ end
 % STREMAIL = ['Simulation ' STRPREFIX ' done. Starting plots.'];
 % sendmail('pankil.butala@gmail.com',STREMAIL);
 fprintf('--scrMM Done--\n');
-scrMMPL;                                                  % Call Show Results script
+% scrMMPL;                                                  % Call Show Results script
 
 
 
