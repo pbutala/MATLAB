@@ -25,12 +25,6 @@ classdef cMM < cCBC
                 otherwise
                     error('%d-MM is not supported',M);
             end
-%             switch N
-%                 case{4;5} 
-%                     obj.N = N;
-%                 otherwise
-%                     error('%d-N is not supported',N);
-%             end
             obj.N = N;
         end
         

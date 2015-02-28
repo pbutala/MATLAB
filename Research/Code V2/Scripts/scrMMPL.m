@@ -7,7 +7,7 @@ if (exist('hWB','var')&& ishandle(hWB))
 end
 
 close all;
-clearvars -except ctFileVars;
+clearvars -except ctFileVars PFX CNT DIR i;
 clc;
 load(ctFileVars);                                                             % LOAD DATA
 

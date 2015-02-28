@@ -18,7 +18,8 @@ M = 2; % possible (M,N) combinations
 N = 4;          % (2,4:5), (4,5:7), (8,7)
 MM = cMM(M,N);
 
-RNGMMCBC = MM.getCBCs();
+CBCs = MM.getCBCs();
+RNGMMCBC = CBCs(1:10,:);
 LENMMCBC = size(RNGMMCBC,1);                     % number of CBCs to consider
 
 if ~isequal(size(RNGMMCBC,2),M)
@@ -34,9 +35,9 @@ fSAVEALL = true;
 fCLOSEALL = true;
 fSAVECHST = false;
 fSHOWPGBAR = isequal(strfind(pwd,'graduate/pbutala'),[]);
-fARCHIVE = false;
+fARCHIVE = true;
 CHAROVERWRITE = '~';
-STRPREFIX = sprintf('M%02d_N%02d_',M,N);
+STRPREFIX = sprintf('M%d_N%d_a_',M,N);
 if(fARCHIVE)
     CHARIDXARCHIVE = '';           % ARCHIVE INDEX
 else
